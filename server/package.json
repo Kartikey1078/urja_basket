@@ -1,0 +1,32 @@
+{
+  "name": "urja-basket-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Urja Basket API — Express + TypeScript + MySQL (mysql2)",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:seed": "tsx scripts/seed-db.ts",
+    "db:seed-only": "tsx scripts/seed-db.ts --seed-only",
+    "db:migrate": "tsx scripts/apply-migrations.ts",
+    "db:init": "tsx scripts/apply-migrations.ts --init --demo"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@clerk/express": "^2.1.17",
+    "dotenv": "^16.4.0",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.0",
+    "razorpay": "^2.9.6"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

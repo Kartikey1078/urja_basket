@@ -1,0 +1,73 @@
+import { Router } from "express";
+import { asyncHandler } from "../../middleware/asyncHandler";
+import { requireAdmin } from "../../middleware/requireAdmin";
+import * as admin from "./admin.controller";
+import * as adminAnalytics from "./admin.analytics.controller";
+import * as adminInventory from "./admin.inventory.controller";
+import * as adminOrders from "./admin.orders.controller";
+import * as adminSettings from "./admin.settings.controller";
+import * as adminUsers from "./admin-users.controller";
+
+const r = Router();
+
+/** Sign-in verification for the admin Next.js app (internal header, not ADMIN_API_KEY). */
+r.post("/authenticate", asyncHandler(adminUsers.adminAuthenticate));
+
+r.use(requireAdmin);
+
+/** Categories */
+r.get("/categories", asyncHandler(admin.adminListCategories));
+r.get("/categories/:id", asyncHandler(admin.adminGetCategory));
+r.post("/categories", asyncHandler(admin.adminCreateCategory));
+r.patch("/categories/:id", asyncHandler(admin.adminUpdateCategory));
+r.delete("/categories/:id", asyncHandler(admin.adminDeleteCategory));
+
+/** Products — list/create before `/:id` */
+r.get("/products", asyncHandler(admin.adminListProducts));
+r.post("/products", asyncHandler(admin.adminCreateProduct));
+
+/** Variants nested under product (before /products/:id) */
+r.get("/products/:productId/variants", asyncHandler(admin.adminListVariants));
+r.post("/products/:productId/variants", asyncHandler(admin.adminCreateVariant));
+
+r.get("/products/:id", asyncHandler(admin.adminGetProduct));
+r.patch("/products/:id", asyncHandler(admin.adminUpdateProduct));
+r.delete("/products/:id", asyncHandler(admin.adminDeleteProduct));
+
+/** Variants by id */
+r.patch("/variants/:id", asyncHandler(admin.adminUpdateVariant));
+r.delete("/variants/:id", asyncHandler(admin.adminDeleteVariant));
+
+/** Reviews */
+r.get("/reviews", asyncHandler(admin.adminListReviews));
+r.patch("/reviews/:id", asyncHandler(admin.adminUpdateReview));
+r.delete("/reviews/:id", asyncHandler(admin.adminDeleteReview));
+
+/** Analytics & inventory */
+r.get("/analytics", asyncHandler(adminAnalytics.adminGetAnalytics));
+r.get("/inventory/summary", asyncHandler(adminInventory.adminGetInventorySummary));
+r.get("/inventory", asyncHandler(adminInventory.adminListInventory));
+r.get("/inventory/products/:productId/variants", asyncHandler(adminInventory.adminListInventoryVariants));
+r.patch("/inventory/products/:id/stock", asyncHandler(adminInventory.adminUpdateProductStock));
+r.patch("/inventory/variants/:id/stock", asyncHandler(adminInventory.adminUpdateVariantStock));
+
+/** Orders, customers, payments */
+r.get("/orders", asyncHandler(adminOrders.adminListOrders));
+r.get("/orders/:id", asyncHandler(adminOrders.adminGetOrder));
+r.patch("/orders/:id/mark-cod-paid", asyncHandler(adminOrders.adminMarkCodPaid));
+r.patch("/orders/:id/fulfillment", asyncHandler(adminOrders.adminUpdateFulfillment));
+r.get("/payments", asyncHandler(adminOrders.adminListPayments));
+r.get("/customers", asyncHandler(adminOrders.adminListCustomers));
+r.get("/customers/:id", asyncHandler(adminOrders.adminGetCustomer));
+
+/** Store settings */
+r.get("/settings", asyncHandler(adminSettings.adminGetSettings));
+r.patch("/settings", asyncHandler(adminSettings.adminUpdateSettings));
+
+/** Admin console users */
+r.get("/admin-users", asyncHandler(adminUsers.adminListAdminUsers));
+r.post("/admin-users", asyncHandler(adminUsers.adminCreateAdminUser));
+r.patch("/admin-users/:id", asyncHandler(adminUsers.adminUpdateAdminUser));
+r.delete("/admin-users/:id", asyncHandler(adminUsers.adminDeleteAdminUser));
+
+export { r as adminRouter };

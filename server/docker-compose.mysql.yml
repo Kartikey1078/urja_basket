@@ -1,0 +1,24 @@
+# Local MySQL for Urja Basket (optional)
+# Start: docker compose -f docker-compose.mysql.yml up -d
+# Then set server/.env: DB_PORT=3306, DB_PASSWORD=urja_root, DB_USER=root
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: urja-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: urja_root
+      MYSQL_DATABASE: urja_basket
+    volumes:
+      - urja_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-purja_root"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  urja_mysql_data:
