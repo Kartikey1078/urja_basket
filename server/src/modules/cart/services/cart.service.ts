@@ -3,8 +3,6 @@ import { findUserByClerkId } from "../../users/repositories/user.repository";
 import type { CartLineDto, CartResponse, CartTotals, GuestSyncItem } from "../cart.types";
 import * as cartRepo from "../repositories/cart.repository";
 import type { CartItemRow, ProductCartRow } from "../repositories/cart.repository";
-import { getPricingConfig } from "../../settings/settings.service";
-import { computeCartTotals } from "./cart-pricing.service";
 
 const MAX_QUANTITY = 99;
 
@@ -38,14 +36,17 @@ function rowToLineDto(row: CartItemRow): CartLineDto {
   };
 }
 
-async function buildCartResponse(cartId: number, rows: CartItemRow[]): Promise<CartResponse> {
+async function buildCartResponse(
+  cartId: number,
+  rows: CartItemRow[],
+  userId: number
+): Promise<CartResponse> {
   const items = rows.map(rowToLineDto);
-  const pricing = await getPricingConfig();
-  const totals = computeCartTotals(
-    items.map((item) => ({ unitPrice: item.price, quantity: item.quantity })),
-    pricing
+  const { buildCartTotalsWithCoupon } = await import(
+    "../../coupons/services/coupon-cart.service"
   );
-  return { cartId, items, totals };
+  const { totals, coupon } = await buildCartTotalsWithCoupon(items, cartId, userId);
+  return { cartId, items, totals, coupon };
 }
 
 async function resolveUserId(clerkId: string): Promise<number> {
@@ -62,10 +63,14 @@ async function getCartContext(clerkId: string) {
   return { userId, cartId };
 }
 
-export async function getCartForUser(clerkId: string): Promise<CartResponse> {
-  const { cartId } = await getCartContext(clerkId);
+async function buildResponseForUser(cartId: number, userId: number): Promise<CartResponse> {
   const rows = await cartRepo.listCartItems(cartId);
-  return await buildCartResponse(cartId, rows);
+  return buildCartResponse(cartId, rows, userId);
+}
+
+export async function getCartForUser(clerkId: string): Promise<CartResponse> {
+  const { userId, cartId } = await getCartContext(clerkId);
+  return buildResponseForUser(cartId, userId);
 }
 
 export async function addItemToCart(
@@ -89,7 +94,8 @@ export async function addItemToCart(
   }
 
   await cartRepo.touchCart(cartId);
-  return getCartForUser(clerkId);
+  const { userId } = await getCartContext(clerkId);
+  return buildResponseForUser(cartId, userId);
 }
 
 export async function updateCartItemQuantity(
@@ -106,7 +112,8 @@ export async function updateCartItemQuantity(
 
   await cartRepo.updateCartItemQuantity(lineItemId, cartId, qty);
   await cartRepo.touchCart(cartId);
-  return getCartForUser(clerkId);
+  const { userId } = await getCartContext(clerkId);
+  return buildResponseForUser(cartId, userId);
 }
 
 export async function removeCartItem(
@@ -121,7 +128,8 @@ export async function removeCartItem(
 
   await cartRepo.deleteCartItem(lineItemId, cartId);
   await cartRepo.touchCart(cartId);
-  return getCartForUser(clerkId);
+  const { userId } = await getCartContext(clerkId);
+  return buildResponseForUser(cartId, userId);
 }
 
 export async function syncGuestCart(
@@ -161,7 +169,14 @@ export async function syncGuestCart(
   }
 
   await cartRepo.touchCart(cartId);
-  return getCartForUser(clerkId);
+  const { userId } = await getCartContext(clerkId);
+  return buildResponseForUser(cartId, userId);
+}
+
+export async function removeCartCoupon(clerkId: string): Promise<CartResponse> {
+  const { userId, cartId } = await getCartContext(clerkId);
+  await cartRepo.clearCartCoupon(cartId);
+  return buildResponseForUser(cartId, userId);
 }
 
 async function resolveProduct(input: {
@@ -190,6 +205,8 @@ export function mapTotalsToLegacyBill(totals: CartTotals) {
     deliveryFee: totals.deliveryFee,
     deliveryFeeWaived: totals.deliveryFeeWaived,
     packagingCharges: totals.platformFee,
+    sitePromoDiscount: totals.sitePromoDiscount,
+    couponDiscount: totals.couponDiscount,
     discount: totals.discount,
     tax: totals.tax,
     toPay: totals.grandTotal,

@@ -11,6 +11,7 @@
     "db:seed": "tsx scripts/seed-db.ts",
     "db:seed-only": "tsx scripts/seed-db.ts --seed-only",
     "db:migrate": "tsx scripts/apply-migrations.ts",
+    "db:coupons": "tsx scripts/migrate-coupons-only.ts",
     "db:init": "tsx scripts/apply-migrations.ts --init --demo"
   },
   "engines": {

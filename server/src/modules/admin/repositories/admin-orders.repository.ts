@@ -79,17 +79,49 @@ type OrderListPacket = AdminOrderListRow & RowDataPacket;
 type PaymentListPacket = AdminPaymentListRow & RowDataPacket;
 type CustomerListPacket = AdminCustomerListRow & RowDataPacket;
 
-export async function listOrdersAdmin(options?: {
+function likePattern(term: string): string {
+  const escaped = term.replace(/[%_\\]/g, "\\$&");
+  return `%${escaped}%`;
+}
+
+export type AdminOrderListFilters = {
   status?: OrderStatus;
+  order?: string;
+  customer?: string;
+  user?: "guest" | "registered";
+  paymentMethod?: "online" | "cod";
   limit?: number;
-}): Promise<AdminOrderListRow[]> {
+};
+
+export async function listOrdersAdmin(options?: AdminOrderListFilters): Promise<AdminOrderListRow[]> {
   const limit = Math.min(200, Math.max(1, options?.limit ?? 100));
   const params: (string | number)[] = [];
-  let where = "";
+  const clauses: string[] = [];
+
   if (options?.status) {
-    where = "WHERE o.status = ?";
+    clauses.push("o.status = ?");
     params.push(options.status);
   }
+  if (options?.order?.trim()) {
+    clauses.push("o.order_number LIKE ?");
+    params.push(likePattern(options.order.trim()));
+  }
+  if (options?.customer?.trim()) {
+    const pattern = likePattern(options.customer.trim());
+    clauses.push("(o.customer_name LIKE ? OR o.customer_phone LIKE ?)");
+    params.push(pattern, pattern);
+  }
+  if (options?.user === "guest") {
+    clauses.push("o.user_id IS NULL");
+  } else if (options?.user === "registered") {
+    clauses.push("o.user_id IS NOT NULL");
+  }
+  if (options?.paymentMethod) {
+    clauses.push("o.payment_method = ?");
+    params.push(options.paymentMethod);
+  }
+
+  const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
   params.push(limit);
 
   const [rows] = await pool.query<OrderListPacket[]>(
@@ -156,18 +188,73 @@ export async function getOrderAdminDetail(orderId: number) {
   };
 }
 
-export async function listPaymentsAdmin(options?: {
+const PAYMENT_LIST_FROM = `FROM payments p
+     INNER JOIN orders o ON o.id = p.order_id
+     LEFT JOIN users u ON u.id = o.user_id`;
+
+export type AdminPaymentListFilters = {
   status?: PaymentStatus;
+  order?: string;
+  customer?: string;
+  payment?: string;
+  orderStatus?: OrderStatus;
+  user?: "guest" | "registered";
+  page?: number;
   limit?: number;
-}): Promise<AdminPaymentListRow[]> {
-  const limit = Math.min(200, Math.max(1, options?.limit ?? 100));
+};
+
+function buildPaymentListWhere(filters?: AdminPaymentListFilters): {
+  where: string;
+  params: (string | number)[];
+} {
+  const clauses: string[] = [];
   const params: (string | number)[] = [];
-  let where = "";
-  if (options?.status) {
-    where = "WHERE p.status = ?";
-    params.push(options.status);
+
+  if (filters?.status) {
+    clauses.push("p.status = ?");
+    params.push(filters.status);
   }
-  params.push(limit);
+  if (filters?.order?.trim()) {
+    clauses.push("o.order_number LIKE ?");
+    params.push(likePattern(filters.order.trim()));
+  }
+  if (filters?.customer?.trim()) {
+    const pattern = likePattern(filters.customer.trim());
+    clauses.push("(o.customer_name LIKE ? OR o.customer_phone LIKE ?)");
+    params.push(pattern, pattern);
+  }
+  if (filters?.payment?.trim()) {
+    const pattern = likePattern(filters.payment.trim());
+    clauses.push("(p.razorpay_payment_id LIKE ? OR p.razorpay_order_id LIKE ?)");
+    params.push(pattern, pattern);
+  }
+  if (filters?.orderStatus) {
+    clauses.push("o.status = ?");
+    params.push(filters.orderStatus);
+  }
+  if (filters?.user === "guest") {
+    clauses.push("o.user_id IS NULL");
+  } else if (filters?.user === "registered") {
+    clauses.push("o.user_id IS NOT NULL");
+  }
+
+  const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  return { where, params };
+}
+
+export async function listPaymentsAdminPaginated(
+  filters?: AdminPaymentListFilters
+): Promise<{ items: AdminPaymentListRow[]; total: number; page: number; limit: number }> {
+  const page = Math.max(1, filters?.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters?.limit ?? 20));
+  const offset = (page - 1) * limit;
+  const { where, params } = buildPaymentListWhere(filters);
+
+  const [countRows] = await pool.query<(RowDataPacket & { total: number })[]>(
+    `SELECT COUNT(*) AS total ${PAYMENT_LIST_FROM} ${where}`,
+    params
+  );
+  const total = Number(countRows[0]?.total ?? 0);
 
   const [rows] = await pool.query<PaymentListPacket[]>(
     `SELECT
@@ -175,15 +262,14 @@ export async function listPaymentsAdmin(options?: {
       p.amount_paise, p.currency, p.status, p.paid_at, p.created_at,
       o.order_number, o.status AS order_status, o.customer_name, o.customer_phone,
       o.user_id, u.email AS user_email
-     FROM payments p
-     INNER JOIN orders o ON o.id = p.order_id
-     LEFT JOIN users u ON u.id = o.user_id
+     ${PAYMENT_LIST_FROM}
      ${where}
      ORDER BY p.created_at DESC
-     LIMIT ?`,
-    params
+     LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
   );
-  return rows;
+
+  return { items: rows, total, page, limit };
 }
 
 export async function listCustomersAdmin(limit = 100): Promise<AdminCustomerListRow[]> {

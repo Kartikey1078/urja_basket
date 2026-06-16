@@ -1,8 +1,17 @@
+export type CartCouponDto = {
+  code: string;
+  title: string;
+  couponDiscount: number;
+  freeDelivery: boolean;
+};
+
 export type CartTotals = {
   subtotal: number;
   deliveryFee: number;
   deliveryFeeWaived: boolean;
   platformFee: number;
+  sitePromoDiscount: number;
+  couponDiscount: number;
   discount: number;
   tax: number;
   grandTotal: number;
@@ -26,6 +35,7 @@ export type CartResponse = {
   cartId: number;
   items: CartLineDto[];
   totals: CartTotals;
+  coupon: CartCouponDto | null;
 };
 
 export type GuestSyncItem = {

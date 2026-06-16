@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminPageLoader } from "@/components/loader";
 import {
   formatDate,
   formatMoney,
@@ -63,7 +64,7 @@ export function OrderDetailScreen() {
   }
 
   if (detail.isLoading) {
-    return <p className="text-sm text-slate-500">Loading order…</p>;
+    return <AdminPageLoader label="Loading order…" />;
   }
 
   if (detail.isError || !detail.data) {

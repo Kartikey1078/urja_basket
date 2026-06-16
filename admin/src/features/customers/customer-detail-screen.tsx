@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminPageLoader } from "@/components/loader";
 import { formatDate, formatMoney, OrderStatusBadge } from "@/components/status-badge";
 import { adminFetchJson } from "@/lib/api-client";
 import type { AdminCustomerDetail } from "@/lib/types";
@@ -24,7 +25,7 @@ export function CustomerDetailScreen() {
   }
 
   if (detail.isLoading) {
-    return <p className="text-sm text-slate-500">Loading…</p>;
+    return <AdminPageLoader label="Loading customer…" />;
   }
 
   if (detail.isError || !detail.data) {

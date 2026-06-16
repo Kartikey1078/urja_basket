@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminTableLoader } from "@/components/loader";
 import { formatDate, formatMoney } from "@/components/status-badge";
 import { adminFetchJson } from "@/lib/api-client";
 import type { AdminCustomerListRow } from "@/lib/types";
@@ -36,11 +37,7 @@ export function CustomersScreen() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.isLoading ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-slate-500">
-                  Loading…
-                </td>
-              </tr>
+              <AdminTableLoader colSpan={7} />
             ) : list.data?.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-4 py-8 text-slate-500">

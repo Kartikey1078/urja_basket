@@ -37,11 +37,14 @@ async function ordersFetch<T>(
 
 export async function fetchOrderTracking(
   orderId: number,
-  options?: { token?: string | null; phone?: string }
+  options?: { token?: string | null; phone?: string; bustCache?: boolean }
 ): Promise<OrderTracking> {
   const params = new URLSearchParams();
   if (options?.phone) {
     params.set("phone", options.phone);
+  }
+  if (options?.bustCache) {
+    params.set("_", String(Date.now()));
   }
   const qs = params.toString();
   return ordersFetch<OrderTracking>(

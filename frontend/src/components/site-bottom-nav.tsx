@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, Home, LayoutGrid, LogIn } from "lucide-react";
+import { Heart, Home, LayoutGrid, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 import { useWishlist } from "@/hooks/use-wishlist";
 
+import { CartNavBadge } from "./cart-nav-badge";
 import { WishlistNavBadge } from "./wishlist-nav-badge";
 
 /** Bottom bar icon + label tint */
@@ -35,13 +36,11 @@ const ITEMS = [
     active: categoriesActive,
   },
   {
-    href: "/login",
-    label: "Login",
-    Icon: LogIn,
+    href: "/cart",
+    label: "Cart",
+    Icon: ShoppingBag,
     active: (pathname: string) =>
-      pathname === "/login" ||
-      pathname.startsWith("/login/") ||
-      pathname.startsWith("/account"),
+      pathname === "/cart" || pathname.startsWith("/cart/"),
   },
   {
     href: "/watchlist",
@@ -63,8 +62,9 @@ export function SiteBottomNav() {
       <div className="mx-auto flex max-w-lg items-stretch justify-between gap-0.5 px-1.5">
         {ITEMS.map(({ href, label, Icon, active }) => {
           const isActive = active(pathname);
+          const isCart = href === "/cart";
           const isWatchlist = href === "/watchlist";
-          const watchlistAria =
+          const ariaLabel =
             isWatchlist && wishlistHydrated && wishlistCount > 0
               ? `Watchlist, ${wishlistCount} saved items`
               : label;
@@ -79,7 +79,7 @@ export function SiteBottomNav() {
                 isActive && "bg-[#284712]/12"
               )}
               style={{ color: NAV_TINT }}
-              aria-label={watchlistAria}
+              aria-label={ariaLabel}
             >
               <span className="relative inline-flex shrink-0">
                 <Icon
@@ -87,6 +87,7 @@ export function SiteBottomNav() {
                   strokeWidth={2}
                   aria-hidden
                 />
+                {isCart ? <CartNavBadge /> : null}
                 {isWatchlist ? <WishlistNavBadge /> : null}
               </span>
               <span

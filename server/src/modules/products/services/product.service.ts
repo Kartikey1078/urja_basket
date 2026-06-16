@@ -1,5 +1,7 @@
 import { HttpError } from "../../../errors/httpError";
+import * as nutritionTagRepo from "../../nutrition-tags/nutrition-tag.repository";
 import * as productRepo from "../repositories/product.repository";
+import { parseNutritionTags } from "../repositories/product.repository";
 
 function mapProduct(row: productRepo.ProductListRow) {
   const price =
@@ -32,6 +34,7 @@ function mapProduct(row: productRepo.ProductListRow) {
     isFeatured: Boolean(row.is_featured),
     isBestSeller: Boolean(row.is_best_seller),
     isOrganic: Boolean(row.is_organic),
+    nutritionTags: parseNutritionTags(row.nutrition_tags),
     minPrice: row.min_price === null ? null : Number(row.min_price),
     price,
     mrp,
@@ -70,6 +73,10 @@ function mapReview(r: productRepo.ReviewRow) {
 export async function listProductCards(filters?: productRepo.ProductCardFilters) {
   const rows = await productRepo.findAllProductCards(filters ?? {});
   return rows.map(mapProduct);
+}
+
+export async function listNutritionTags(categorySlug?: string) {
+  return nutritionTagRepo.listNutritionFilterOptions(categorySlug);
 }
 
 export async function getProductDetailBySlug(slug: string) {

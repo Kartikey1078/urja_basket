@@ -31,9 +31,16 @@ type CheckoutInput = {
 
 function clearLocalCart(isSignedIn: boolean) {
   if (isSignedIn) {
-    useCartStore.setState({ items: [], bill: null, mode: "authenticated" });
+    useCartStore.setState({
+      items: [],
+      bill: null,
+      appliedCoupon: null,
+      guestCouponCode: null,
+      mode: "authenticated",
+    });
   } else {
     useCartStore.getState().setGuestItems([]);
+    useCartStore.setState({ guestCouponCode: null });
   }
 }
 
@@ -78,7 +85,10 @@ export function useCheckout() {
       try {
         const token = isSignedIn ? await getToken() : null;
         const amountPaise = Math.round(amountInr * 100);
-        const cartItems = useCartStore.getState().items;
+        const cartState = useCartStore.getState();
+        const cartItems = cartState.items;
+        const couponCode =
+          cartState.appliedCoupon?.code ?? cartState.guestCouponCode ?? undefined;
 
         const result = await placeCheckoutOrder(
           {
@@ -86,6 +96,7 @@ export function useCheckout() {
             deliverySlot: deliverySlot ?? "express",
             paymentMethod,
             address: deliveryAddressToCheckoutPayload(address),
+            couponCode,
             items: isSignedIn
               ? undefined
               : cartItems.map((item) => ({

@@ -38,21 +38,26 @@ export async function insertOrder(input: {
   paymentMethod?: PaymentMethod;
   fulfillmentStatus?: FulfillmentStatus;
   estimatedDeliveryAt?: Date | null;
+  couponId?: number | null;
+  couponCode?: string | null;
+  couponDiscount?: number;
 }): Promise<number> {
   const status = input.status ?? "pending_payment";
   const paymentMethod = input.paymentMethod ?? "online";
   const fulfillmentStatus = input.fulfillmentStatus ?? "order_placed";
   const [result] = await pool.query<ResultSetHeader>(
     `INSERT INTO orders (
-      order_number, user_id, address_id, status, payment_method, fulfillment_status,
+      order_number, user_id, coupon_id, coupon_code, address_id, status, payment_method, fulfillment_status,
       delivery_slot, currency,
-      subtotal, delivery_fee, delivery_fee_waived, platform_fee, discount, tax,
+      subtotal, delivery_fee, delivery_fee_waived, platform_fee, discount, coupon_discount, tax,
       grand_total, amount_paise, customer_name, customer_phone, address_snapshot,
       razorpay_order_id, razorpay_receipt, estimated_delivery_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'INR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'INR', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       input.orderNumber,
       input.userId,
+      input.couponId ?? null,
+      input.couponCode ?? null,
       input.addressId,
       status,
       paymentMethod,
@@ -63,6 +68,7 @@ export async function insertOrder(input: {
       input.totals.deliveryFeeWaived ? 1 : 0,
       input.totals.platformFee,
       input.totals.discount,
+      input.couponDiscount ?? 0,
       input.totals.tax,
       input.totals.grandTotal,
       input.totals.amountPaise,

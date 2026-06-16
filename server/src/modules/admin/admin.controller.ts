@@ -1,8 +1,14 @@
 import type { Request, Response } from "express";
 import { HttpError } from "../../errors/httpError";
+import { normalizeNutritionTagsInput } from "../../lib/nutrition-tags";
 import * as categoryRepo from "../categories/repositories/category.repository";
 import * as productRepo from "../products/repositories/product.repository";
+import { parseNutritionTags } from "../products/repositories/product.repository";
 import * as reviewRepo from "../reviews/repositories/review.repository";
+
+function mapAdminProductRow<T extends { nutrition_tags: unknown }>(row: T) {
+  return { ...row, nutrition_tags: parseNutritionTags(row.nutrition_tags) };
+}
 
 function isMysqlDuplicate(err: unknown): boolean {
   return typeof err === "object" && err !== null && (err as { errno?: number }).errno === 1062;
@@ -88,16 +94,55 @@ export async function adminDeleteCategory(req: Request, res: Response) {
 }
 
 /** --- Products --- */
-export async function adminListProducts(_req: Request, res: Response) {
-  const data = await productRepo.findAllProductsAdmin();
-  res.json({ data });
+export async function adminListProducts(req: Request, res: Response) {
+  const q = typeof req.query.q === "string" ? req.query.q : undefined;
+  const categoryIdRaw = typeof req.query.categoryId === "string" ? req.query.categoryId : undefined;
+  const categoryId = categoryIdRaw ? Number(categoryIdRaw) : undefined;
+  const stockStatusRaw = typeof req.query.stockStatus === "string" ? req.query.stockStatus : undefined;
+  const sort = typeof req.query.sort === "string" ? req.query.sort : undefined;
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+
+  const stockStatus =
+    stockStatusRaw === "in_stock" || stockStatusRaw === "low_stock" || stockStatusRaw === "out_of_stock"
+      ? stockStatusRaw
+      : undefined;
+
+  const sortVal =
+    sort === "name_asc" ||
+    sort === "name_desc" ||
+    sort === "stock_asc" ||
+    sort === "stock_desc" ||
+    sort === "updated" ||
+    sort === "newest"
+      ? sort
+      : undefined;
+
+  const result = await productRepo.listProductsAdminPaginated({
+    q,
+    categoryId: categoryId && categoryId > 0 ? categoryId : undefined,
+    stockStatus,
+    sort: sortVal,
+    page,
+    limit,
+  });
+
+  res.json({
+    data: result.items.map(mapAdminProductRow),
+    meta: {
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: Math.max(1, Math.ceil(result.total / result.limit)),
+    },
+  });
 }
 
 export async function adminGetProduct(req: Request, res: Response) {
   const id = parseId(paramStr(req.params.id), "product id");
   const row = await productRepo.findProductById(id);
   if (!row) throw new HttpError(404, "Product not found");
-  res.json({ data: row });
+  res.json({ data: mapAdminProductRow(row) });
 }
 
 export async function adminCreateProduct(req: Request, res: Response) {
@@ -124,6 +169,7 @@ export async function adminCreateProduct(req: Request, res: Response) {
       is_featured: Boolean(b.is_featured),
       is_best_seller: Boolean(b.is_best_seller),
       is_organic: Boolean(b.is_organic),
+      nutrition_tags: normalizeNutritionTagsInput(b.nutrition_tags),
     });
     res.status(201).json({ data: { id: insertId } });
   } catch (e) {
@@ -156,6 +202,11 @@ export async function adminUpdateProduct(req: Request, res: Response) {
   if (b.is_featured !== undefined) patch.is_featured = Boolean(b.is_featured);
   if (b.is_best_seller !== undefined) patch.is_best_seller = Boolean(b.is_best_seller);
   if (b.is_organic !== undefined) patch.is_organic = Boolean(b.is_organic);
+  if (b.nutrition_tags !== undefined) {
+    patch.nutrition_tags = Array.isArray(b.nutrition_tags)
+      ? normalizeNutritionTagsInput(b.nutrition_tags)
+      : null;
+  }
   try {
     const ok = await productRepo.updateProduct(id, patch);
     if (!ok) throw new HttpError(404, "Product not found");

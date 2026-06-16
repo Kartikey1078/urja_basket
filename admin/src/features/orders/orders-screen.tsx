@@ -6,14 +6,17 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminPageLoader, AdminTableLoader } from "@/components/loader";
 import { formatDate, formatMoney, OrderStatusBadge } from "@/components/status-badge";
 import { adminFetchJson } from "@/lib/api-client";
-import type { AdminOrderListRow, OrderStatus } from "@/lib/types";
+import type { AdminOrderListRow, OrderStatus, PaymentMethod } from "@/lib/types";
 
 const inputClass =
   "mt-1 block w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25";
 const btnPrimary =
   "inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-700 px-3 text-sm font-semibold text-white hover:bg-emerald-800";
+const btnSecondary =
+  "inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50";
 
 const STATUSES: { value: OrderStatus | ""; label: string }[] = [
   { value: "", label: "All statuses" },
@@ -24,9 +27,38 @@ const STATUSES: { value: OrderStatus | ""; label: string }[] = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
+const USER_FILTERS: { value: "" | "guest" | "registered"; label: string }[] = [
+  { value: "", label: "All users" },
+  { value: "registered", label: "Registered" },
+  { value: "guest", label: "Guest" },
+];
+
+const PAY_FILTERS: { value: "" | PaymentMethod; label: string }[] = [
+  { value: "", label: "All pay types" },
+  { value: "online", label: "Online" },
+  { value: "cod", label: "COD" },
+];
+
+function buildOrdersApiPath(params: {
+  status: string;
+  order: string;
+  customer: string;
+  user: string;
+  pay: string;
+}) {
+  const sp = new URLSearchParams();
+  if (params.status) sp.set("status", params.status);
+  if (params.order.trim()) sp.set("order", params.order.trim());
+  if (params.customer.trim()) sp.set("customer", params.customer.trim());
+  if (params.user) sp.set("user", params.user);
+  if (params.pay) sp.set("pay", params.pay);
+  const qs = sp.toString();
+  return qs ? `orders?${qs}` : "orders";
+}
+
 export function OrdersScreen() {
   return (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+    <Suspense fallback={<AdminPageLoader />}>
       <OrdersInner />
     </Suspense>
   );
@@ -35,12 +67,19 @@ export function OrdersScreen() {
 function OrdersInner() {
   const searchParams = useSearchParams();
   const status = (searchParams.get("status") ?? "") as OrderStatus | "";
-  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  const order = searchParams.get("order") ?? "";
+  const customer = searchParams.get("customer") ?? "";
+  const user = searchParams.get("user") ?? "";
+  const pay = searchParams.get("pay") ?? "";
+
+  const apiPath = buildOrdersApiPath({ status, order, customer, user, pay });
 
   const list = useQuery({
-    queryKey: ["admin", "orders", status],
-    queryFn: () => adminFetchJson<{ data: AdminOrderListRow[] }>(`orders${qs}`).then((r) => r.data),
+    queryKey: ["admin", "orders", status, order, customer, user, pay],
+    queryFn: () => adminFetchJson<{ data: AdminOrderListRow[] }>(apiPath).then((r) => r.data),
   });
+
+  const hasActiveFilters = Boolean(status || order || customer || user || pay);
 
   return (
     <div>
@@ -49,8 +88,56 @@ function OrdersInner() {
         description="All storefront orders with customer, payment status, and Razorpay references."
       />
 
-      <form className="mb-6 flex max-w-md flex-col gap-3 sm:flex-row sm:items-end" action="/orders" method="get">
-        <label className="block flex-1 text-sm font-medium text-slate-700">
+      <form
+        className="mb-6 grid gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
+        action="/orders"
+        method="get"
+      >
+        <label className="block text-sm font-medium text-slate-700">
+          Order
+          <input
+            className={inputClass}
+            type="search"
+            name="order"
+            placeholder="Order number…"
+            defaultValue={order}
+          />
+        </label>
+
+        <label className="block text-sm font-medium text-slate-700">
+          Customer
+          <input
+            className={inputClass}
+            type="search"
+            name="customer"
+            placeholder="Name or phone…"
+            defaultValue={customer}
+          />
+        </label>
+
+        <label className="block text-sm font-medium text-slate-700">
+          User
+          <select className={inputClass} name="user" defaultValue={user}>
+            {USER_FILTERS.map((u) => (
+              <option key={u.value || "all"} value={u.value}>
+                {u.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block text-sm font-medium text-slate-700">
+          Pay
+          <select className={inputClass} name="pay" defaultValue={pay}>
+            {PAY_FILTERS.map((p) => (
+              <option key={p.value || "all"} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block text-sm font-medium text-slate-700">
           Status
           <select className={inputClass} name="status" defaultValue={status}>
             {STATUSES.map((s) => (
@@ -60,10 +147,25 @@ function OrdersInner() {
             ))}
           </select>
         </label>
-        <button type="submit" className={`${btnPrimary} shrink-0`}>
-          Filter
-        </button>
+
+        <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-1 xl:col-span-1">
+          <button type="submit" className={`${btnPrimary} flex-1`}>
+            Filter
+          </button>
+          {hasActiveFilters ? (
+            <Link href="/orders" className={btnSecondary}>
+              Clear
+            </Link>
+          ) : null}
+        </div>
       </form>
+
+      {hasActiveFilters ? (
+        <p className="mb-4 text-sm text-slate-600">
+          Showing filtered results
+          {list.data != null ? ` (${list.data.length})` : ""}.
+        </p>
+      ) : null}
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-[960px] w-full text-left text-sm">
@@ -81,15 +183,11 @@ function OrdersInner() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.isLoading ? (
-              <tr>
-                <td colSpan={8} className="px-4 py-8 text-slate-500">
-                  Loading…
-                </td>
-              </tr>
+              <AdminTableLoader colSpan={8} />
             ) : list.data?.length === 0 ? (
               <tr>
                 <td colSpan={8} className="px-4 py-8 text-slate-500">
-                  No orders yet.
+                  {hasActiveFilters ? "No orders match these filters." : "No orders yet."}
                 </td>
               </tr>
             ) : (

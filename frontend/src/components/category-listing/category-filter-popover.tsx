@@ -4,7 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useId, useRef } from "react";
 
 import type { PriceBounds, ProductFilters } from "@/lib/category-filters";
-import { countActiveFilters } from "@/lib/category-filters";
+import { countCatalogFilters } from "@/lib/category-filters";
+import { useAnchoredPopoverPosition } from "@/hooks/use-anchored-popover-position";
 import { cn } from "@/lib/utils";
 
 import { CategoryFilterFooter, CategoryFilterPanel } from "./category-filter-panel";
@@ -33,6 +34,13 @@ export function CategoryFilterPopover({
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const popoverStyle = useAnchoredPopoverPosition({
+    open,
+    anchorRef,
+    panelRef,
+    align: "start",
+  });
+
   const close = useCallback(() => onOpenChange(false), [onOpenChange]);
 
   useEffect(() => {
@@ -60,7 +68,7 @@ export function CategoryFilterPopover({
     };
   }, [open, close, anchorRef]);
 
-  const draftCount = countActiveFilters(draft);
+  const draftCount = countCatalogFilters(draft);
 
   return (
     <AnimatePresence>
@@ -70,14 +78,15 @@ export function CategoryFilterPopover({
           role="dialog"
           aria-modal="false"
           aria-labelledby={titleId}
+          style={popoverStyle}
           initial={{ opacity: 0, y: -6, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -4, scale: 0.98 }}
           transition={{ duration: 0.16, ease: [0.32, 0.72, 0, 1] }}
           className={cn(
-            "absolute left-0 top-[calc(100%+0.5rem)] z-50 flex w-[min(100vw-2rem,22rem)] flex-col",
+            "flex w-[min(100vw-2rem,22rem)] flex-col",
             "max-h-[min(70vh,32rem)] overflow-hidden rounded-2xl border border-neutral-200/90 bg-white",
-            "shadow-[0_16px_48px_rgba(15,23,42,0.14)] md:left-auto md:right-0"
+            "shadow-[0_16px_48px_rgba(15,23,42,0.14)]"
           )}
         >
           <div className="flex shrink-0 items-center justify-between border-b border-neutral-100 bg-neutral-50/80 px-4 py-3">

@@ -1,12 +1,13 @@
 "use client";
 
-import { Loader2, MapPin, Navigation } from "lucide-react";
+import { MapPin, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { reverseGeocode } from "@/lib/address/geocode";
 import { cn } from "@/lib/utils";
+import { UrjaLoader } from "@/components/ui/loader";
 
 type LocationButtonProps = {
   onLocated: (coords: {
@@ -78,7 +79,7 @@ export function LocationButton({ onLocated, className }: LocationButtonProps) {
     >
       <span className="bg-urja-forest text-urja-cream flex size-11 shrink-0 items-center justify-center rounded-xl shadow-md">
         {loading ? (
-          <Loader2 className="size-5 animate-spin" />
+          <UrjaLoader size="sm" srLabel="Detecting location" />
         ) : (
           <Navigation className="size-5" strokeWidth={2.25} />
         )}

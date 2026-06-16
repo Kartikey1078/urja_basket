@@ -7,6 +7,8 @@ import * as adminInventory from "./admin.inventory.controller";
 import * as adminOrders from "./admin.orders.controller";
 import * as adminSettings from "./admin.settings.controller";
 import * as adminUsers from "./admin-users.controller";
+import * as adminCoupons from "./admin.coupons.controller";
+import * as adminNutritionTags from "../nutrition-tags/admin.nutrition-tags.controller";
 
 const r = Router();
 
@@ -21,6 +23,12 @@ r.get("/categories/:id", asyncHandler(admin.adminGetCategory));
 r.post("/categories", asyncHandler(admin.adminCreateCategory));
 r.patch("/categories/:id", asyncHandler(admin.adminUpdateCategory));
 r.delete("/categories/:id", asyncHandler(admin.adminDeleteCategory));
+
+/** Nutrition tag catalog */
+r.get("/nutrition-tags", asyncHandler(adminNutritionTags.adminListNutritionTags));
+r.post("/nutrition-tags", asyncHandler(adminNutritionTags.adminCreateNutritionTag));
+r.patch("/nutrition-tags/:id", asyncHandler(adminNutritionTags.adminUpdateNutritionTag));
+r.delete("/nutrition-tags/:id", asyncHandler(adminNutritionTags.adminDeleteNutritionTag));
 
 /** Products — list/create before `/:id` */
 r.get("/products", asyncHandler(admin.adminListProducts));
@@ -50,6 +58,15 @@ r.get("/inventory", asyncHandler(adminInventory.adminListInventory));
 r.get("/inventory/products/:productId/variants", asyncHandler(adminInventory.adminListInventoryVariants));
 r.patch("/inventory/products/:id/stock", asyncHandler(adminInventory.adminUpdateProductStock));
 r.patch("/inventory/variants/:id/stock", asyncHandler(adminInventory.adminUpdateVariantStock));
+
+/** Coupons */
+r.get("/coupons/analytics", asyncHandler(adminCoupons.adminCouponAnalytics));
+r.get("/coupons/abuse-logs", asyncHandler(adminCoupons.adminCouponAbuseLogs));
+r.get("/coupons", asyncHandler(adminCoupons.adminListCoupons));
+r.post("/coupons", asyncHandler(adminCoupons.adminCreateCoupon));
+r.get("/coupons/:id", asyncHandler(adminCoupons.adminGetCoupon));
+r.patch("/coupons/:id", asyncHandler(adminCoupons.adminUpdateCoupon));
+r.delete("/coupons/:id", asyncHandler(adminCoupons.adminDeleteCoupon));
 
 /** Orders, customers, payments */
 r.get("/orders", asyncHandler(adminOrders.adminListOrders));

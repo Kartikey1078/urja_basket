@@ -1,7 +1,19 @@
 import type { Request, Response } from "express";
+import { normalizeNutritionTagsInput } from "../../../lib/nutrition-tags";
 import * as productService from "../services/product.service";
 import * as reviewService from "../../reviews/services/review.service";
 import { isProductSort } from "../repositories/product.repository";
+
+function parseNutritionTagsQuery(req: Request): string[] {
+  const raw = req.query.nutritionTags;
+  if (raw == null) return [];
+  const parts = Array.isArray(raw) ? raw : [raw];
+  return normalizeNutritionTagsInput(
+    parts.flatMap((item) =>
+      typeof item === "string" ? item.split(",").map((tag) => tag.trim()) : []
+    )
+  );
+}
 
 export async function list(req: Request, res: Response) {
   const categorySlug =
@@ -37,7 +49,17 @@ export async function list(req: Request, res: Response) {
     organic: truthy(req.query.organic),
     featured: truthy(req.query.featured),
     inStock: truthy(req.query.inStock),
+    nutritionTags: parseNutritionTagsQuery(req),
   });
+  res.json({ data });
+}
+
+export async function listNutritionTags(req: Request, res: Response) {
+  const categorySlug =
+    typeof req.query.categorySlug === "string" && req.query.categorySlug.trim() !== ""
+      ? req.query.categorySlug.trim()
+      : undefined;
+  const data = await productService.listNutritionTags(categorySlug);
   res.json({ data });
 }
 

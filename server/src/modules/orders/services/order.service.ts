@@ -7,6 +7,11 @@ import type { CartLineDto, CartResponse } from "../../cart/cart.types";
 import * as cartRepo from "../../cart/repositories/cart.repository";
 import * as cartService from "../../cart/services/cart.service";
 import { computeCartTotals } from "../../cart/services/cart-pricing.service";
+import * as couponRepo from "../../coupons/repositories/coupon.repository";
+import {
+  enrichLinesWithCategories,
+  validateCouponCode,
+} from "../../coupons/services/coupon-validation.service";
 import { getPricingConfig, getSiteSettings } from "../../settings/settings.service";
 import { findUserByClerkId } from "../../users/repositories/user.repository";
 import type {
@@ -68,7 +73,14 @@ async function buildSnapshotFromServerCart(clerkId: string): Promise<CheckoutSna
 }
 
 async function buildSnapshotFromGuestItems(
-  items: { productSlug: string; quantity: number }[]
+  items: { productSlug: string; quantity: number }[],
+  options?: {
+    couponCode?: string | null;
+    userId?: number | null;
+    phone?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+  }
 ): Promise<CheckoutSnapshot> {
   if (items.length === 0) {
     throw new HttpError(400, "Cart is empty");
@@ -98,9 +110,31 @@ async function buildSnapshotFromGuestItems(
     throw new HttpError(400, "No valid products in cart");
   }
   const pricing = await getPricingConfig();
+  let couponPricing: { couponDiscount: number; freeDelivery: boolean } | null = null;
+
+  if (options?.couponCode?.trim()) {
+    const enriched = await enrichLinesWithCategories(
+      lines.map((l) => ({ productId: l.productId, unitPrice: l.price, quantity: l.quantity }))
+    );
+    const subtotal = lines.reduce((s, l) => s + l.price * l.quantity, 0);
+    const applied = await validateCouponCode(options.couponCode.trim(), {
+      userId: options.userId ?? null,
+      phone: options.phone ?? null,
+      lines: enriched,
+      subtotal,
+      city: options.city ?? null,
+      postalCode: options.postalCode ?? null,
+    });
+    couponPricing = {
+      couponDiscount: applied.couponDiscount,
+      freeDelivery: applied.freeDelivery,
+    };
+  }
+
   const totals = computeCartTotals(
     lines.map((l) => ({ unitPrice: l.price, quantity: l.quantity })),
-    pricing
+    pricing,
+    couponPricing
   );
   return { items: lines, totals };
 }
@@ -139,6 +173,8 @@ type CheckoutContext = {
   addressId: number | null;
   receipt: string;
   orderNumber: string;
+  couponId: number | null;
+  couponCode: string | null;
 };
 
 async function resolveCheckoutContext(
@@ -161,23 +197,34 @@ async function resolveCheckoutContext(
       snapshot = await buildSnapshotFromServerCart(clerkId);
     } catch (err) {
       if (input.items?.length) {
-        snapshot = await buildSnapshotFromGuestItems(input.items);
+        snapshot = await buildSnapshotFromGuestItems(input.items, {
+          couponCode: input.couponCode,
+          userId,
+          phone: address.phoneNumber,
+          city: address.city,
+          postalCode: address.postalCode,
+        });
       } else {
         throw err;
       }
     }
   } else if (input.items?.length) {
-    snapshot = await buildSnapshotFromGuestItems(input.items);
+    snapshot = await buildSnapshotFromGuestItems(input.items, {
+      couponCode: input.couponCode,
+      userId: null,
+      phone: address.phoneNumber,
+      city: address.city,
+      postalCode: address.postalCode,
+    });
   } else {
     throw new HttpError(400, "Sign in or send cart items to place an order");
   }
 
-  let amountPaise = Math.round(snapshot.totals.grandTotal * 100);
+  const amountPaise = Math.round(snapshot.totals.grandTotal * 100);
   if (input.amountPaise != null && Number.isInteger(input.amountPaise)) {
-    const clientPaise = input.amountPaise;
-    const diff = Math.abs(clientPaise - amountPaise);
+    const diff = Math.abs(input.amountPaise - amountPaise);
     if (diff > 100) {
-      amountPaise = clientPaise;
+      throw new HttpError(400, "Order total mismatch. Refresh your cart and try again.");
     }
   }
   if (amountPaise < 100) {
@@ -186,6 +233,25 @@ async function resolveCheckoutContext(
 
   const addressId =
     address.addressId && address.addressId > 0 ? address.addressId : null;
+
+  let couponId: number | null = null;
+  let couponCode: string | null = null;
+  if (snapshot.totals.couponDiscount > 0) {
+    if (userId) {
+      const cartId = await cartRepo.getOrCreateCartId(userId);
+      const meta = await cartRepo.getCartCouponMeta(cartId);
+      if (meta?.applied_coupon_id) {
+        couponId = meta.applied_coupon_id;
+        couponCode = meta.applied_coupon_code;
+      }
+    } else if (input.couponCode?.trim()) {
+      const coupon = await couponRepo.findCouponByCode(input.couponCode.trim());
+      if (coupon) {
+        couponId = coupon.id;
+        couponCode = coupon.code;
+      }
+    }
+  }
 
   return {
     clerkId,
@@ -196,6 +262,8 @@ async function resolveCheckoutContext(
     addressId,
     receipt: `ub_${Date.now()}`,
     orderNumber: orderNumber(),
+    couponId,
+    couponCode,
   };
 }
 
@@ -229,6 +297,20 @@ async function createOrderRecord(
     paymentMethod: input.paymentMethod === "cod" ? "cod" : "online",
     fulfillmentStatus: "order_placed",
     estimatedDeliveryAt,
+    couponId: ctx.couponId,
+    couponCode: ctx.couponCode,
+    couponDiscount: snapshot.totals.couponDiscount,
+  });
+}
+
+async function recordCouponRedemption(ctx: CheckoutContext, orderId: number): Promise<void> {
+  if (!ctx.couponId || ctx.snapshot.totals.couponDiscount <= 0) return;
+  await couponRepo.insertRedemption({
+    couponId: ctx.couponId,
+    orderId,
+    userId: ctx.userId,
+    discountAmount: ctx.snapshot.totals.couponDiscount,
+    phone: ctx.address.phoneNumber,
   });
 }
 
@@ -253,6 +335,7 @@ async function clearCartForUser(userId: number | null, clerkId?: string | null):
   if (!userId || !clerkId) return;
   try {
     const cartId = await cartRepo.getOrCreateCartId(userId);
+    await cartRepo.clearCartCoupon(cartId);
     const rows = await cartRepo.listCartItems(cartId);
     for (const row of rows) {
       await cartRepo.deleteCartItem(row.id, cartId);
@@ -292,6 +375,8 @@ export async function createCheckoutWithCod(
   const ctx = await resolveCheckoutContext(req, input);
   const dbOrderId = await createOrderRecord(ctx.snapshot, input, ctx);
   await insertLines(dbOrderId, ctx.snapshot);
+  await recordCouponRedemption(ctx, dbOrderId);
+  await couponRepo.confirmRedemption(dbOrderId);
 
   const codRef = `COD-${ctx.orderNumber}`;
   await orderRepo.insertPayment({
@@ -322,6 +407,7 @@ export async function createCheckoutWithRazorpay(
   const ctx = await resolveCheckoutContext(req, input);
   const dbOrderId = await createOrderRecord(ctx.snapshot, input, ctx);
   await insertLines(dbOrderId, ctx.snapshot);
+  await recordCouponRedemption(ctx, dbOrderId);
 
   try {
     const rzp = await razorpayCheckout.createRazorpayOrder({
@@ -353,6 +439,7 @@ export async function createCheckoutWithRazorpay(
     };
   } catch (err) {
     await orderRepo.markOrderFailed(dbOrderId);
+    await couponRepo.rollbackRedemption(dbOrderId);
     const dbMapped = mapDbError(err);
     if (dbMapped) throw dbMapped;
     throw err;
@@ -384,6 +471,7 @@ export async function markCodOrderPaidByAdmin(orderId: number): Promise<{
 
   const collectedRef = `COD-COLLECTED-${Date.now()}`;
   await orderRepo.markOrderPaid(order.id);
+  await couponRepo.confirmRedemption(order.id);
   await orderRepo.updateFulfillmentStatus(order.id, "delivered");
   await orderRepo.markCodPaymentCollected({
     orderId: order.id,
@@ -430,6 +518,7 @@ export async function completeRazorpayPayment(input: {
     razorpayPaymentId: input.razorpayPaymentId,
     razorpaySignature: input.razorpaySignature,
   });
+  await couponRepo.confirmRedemption(order.id);
 
   await clearCartForUser(order.user_id, input.clerkId);
 

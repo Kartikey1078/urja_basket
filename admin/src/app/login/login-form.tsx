@@ -3,10 +3,12 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { AdminSpinner } from "@/components/loader";
+
 const inputClass =
   "mt-1 block w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-900 shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25";
 const btnPrimary =
-  "inline-flex min-h-11 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50";
 
 export function LoginForm() {
   const router = useRouter();
@@ -79,7 +81,8 @@ export function LoginForm() {
               {error}
             </p>
           ) : null}
-          <button type="submit" className={`${btnPrimary} w-full`} disabled={loading}>
+          <button type="submit" className={`${btnPrimary} w-full gap-2`} disabled={loading}>
+            {loading ? <AdminSpinner size="sm" className="border-white/30 border-t-white" /> : null}
             {loading ? "Signing in…" : "Continue"}
           </button>
         </form>

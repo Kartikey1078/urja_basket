@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminPageLoader } from "@/components/loader";
 import { AdminApiError, adminFetchJson } from "@/lib/api-client";
 import type { SiteSettings } from "@/lib/types";
 
@@ -90,7 +91,7 @@ export function SettingsScreen() {
   });
 
   if (settings.isLoading || !form) {
-    return <p className="text-sm text-slate-500">Loading settings…</p>;
+    return <AdminPageLoader label="Loading settings…" />;
   }
 
   if (settings.isError) {

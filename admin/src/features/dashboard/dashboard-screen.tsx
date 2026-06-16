@@ -3,6 +3,7 @@
 import { useQueries } from "@tanstack/react-query";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminSpinner } from "@/components/loader";
 import { adminFetchJson } from "@/lib/api-client";
 import type { Category, ProductListRow } from "@/lib/types";
 
@@ -59,7 +60,14 @@ function StatCard({
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-2 text-3xl font-bold tabular-nums text-slate-900">
-        {loading ? "—" : value ?? "—"}
+        {loading ? (
+          <span className="inline-flex items-center gap-2 text-slate-400">
+            <AdminSpinner size="sm" />
+            <span className="sr-only">Loading</span>
+          </span>
+        ) : (
+          value ?? "—"
+        )}
       </p>
     </div>
   );

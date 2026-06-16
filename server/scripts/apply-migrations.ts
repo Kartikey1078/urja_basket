@@ -22,6 +22,9 @@ const CHECKOUT_MIGRATIONS = [
   "008_order_tracking.sql",
   "009_site_settings.sql",
   "010_admin_users.sql",
+  "011_coupons_system.sql",
+  "012_nutrition_tags.sql",
+  "013_nutrition_tag_catalog.sql",
 ] as const;
 
 const DEMO_SEEDS = ["db/seed-cart.sql", "db/seed-address.sql"] as const;
@@ -106,13 +109,31 @@ async function main() {
   const [tables] = await connection.query<mysql.RowDataPacket[]>(
     `SELECT TABLE_NAME FROM information_schema.TABLES
      WHERE TABLE_SCHEMA = ? AND TABLE_NAME IN (
-       'users','carts','cart_items','user_addresses','orders','order_items','payments','products','categories'
+       'users','carts','cart_items','user_addresses','orders','order_items','payments','products','categories',
+       'coupons','coupon_redemptions','coupon_abuse_logs'
      )
      ORDER BY TABLE_NAME`,
     [database]
   );
 
-  console.log("\nTables present:", tables.map((r) => r.TABLE_NAME).join(", ") || "(none)");
+  const tableNames = tables.map((r) => r.TABLE_NAME as string);
+  console.log("\nTables present:", tableNames.join(", ") || "(none)");
+
+  const couponTables = ["coupons", "coupon_redemptions", "coupon_abuse_logs"];
+  const missingCoupons = couponTables.filter((t) => !tableNames.includes(t));
+  if (missingCoupons.length > 0) {
+    console.warn(
+      "\nCoupon tables missing:",
+      missingCoupons.join(", "),
+      "\n→ Run: npm run db:coupons"
+    );
+  } else {
+    const [couponRows] = await connection.query<mysql.RowDataPacket[]>(
+      "SELECT COUNT(*) AS c FROM coupons"
+    );
+    console.log("Coupons seeded:", couponRows[0]?.c ?? 0);
+  }
+
   await connection.end();
   console.log("\nDone. Restart the API server (npm run dev).");
 }

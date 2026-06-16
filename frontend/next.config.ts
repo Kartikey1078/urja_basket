@@ -1,8 +1,20 @@
 import type { NextConfig } from "next";
 
+const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(
+  /\/+$/,
+  ""
+);
+
 const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
+  },
+  /** Proxy Express API through Next dev server — same-origin fetches in the browser. */
+  async rewrites() {
+    return [
+      { source: "/api/v1/:path*", destination: `${apiBase}/api/v1/:path*` },
+      { source: "/api/me", destination: `${apiBase}/api/me` },
+    ];
   },
   async redirects() {
     return [
@@ -29,6 +41,11 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "media.istockphoto.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "**.edgeone.app",
         pathname: "/**",
       },
     ],

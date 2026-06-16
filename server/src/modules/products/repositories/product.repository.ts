@@ -1,5 +1,7 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { pool } from "../../../database/pool";
+import { normalizeNutritionTagsInput, parseNutritionTags } from "../../../lib/nutrition-tags";
+import { getSiteSettings } from "../../settings/settings.service";
 
 export type ProductListRow = RowDataPacket & {
   id: number;
@@ -15,6 +17,7 @@ export type ProductListRow = RowDataPacket & {
   is_featured: number;
   is_best_seller: number;
   is_organic: number;
+  nutrition_tags: unknown;
   created_at: Date;
   updated_at: Date;
   category_name: string;
@@ -55,6 +58,7 @@ export type ProductCardFilters = {
   organic?: boolean;
   featured?: boolean;
   inStock?: boolean;
+  nutritionTags?: string[];
 };
 
 const MIN_PRICE_SQL = `(
@@ -111,6 +115,16 @@ export async function findAllProductCards(
       )
     )`);
   }
+  if (filters.nutritionTags && filters.nutritionTags.length > 0) {
+    const tagConditions = filters.nutritionTags.map(
+      (_, index) =>
+        `JSON_CONTAINS(COALESCE(p.nutrition_tags, JSON_ARRAY()), JSON_QUOTE(:nutritionTag${index}))`
+    );
+    conditions.push(`(${tagConditions.join(" OR ")})`);
+    filters.nutritionTags.forEach((tag, index) => {
+      params[`nutritionTag${index}`] = tag;
+    });
+  }
 
   const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const orderClause = orderClauseForSort(filters.sort);
@@ -130,6 +144,7 @@ export async function findAllProductCards(
         p.is_featured,
         p.is_best_seller,
         p.is_organic,
+        p.nutrition_tags,
         p.created_at,
         p.updated_at,
         c.name AS category_name,
@@ -207,6 +222,7 @@ export async function findProductBySlug(slug: string): Promise<ProductListRow | 
         p.is_featured,
         p.is_best_seller,
         p.is_organic,
+        p.nutrition_tags,
         p.created_at,
         p.updated_at,
         c.name AS category_name,
@@ -292,6 +308,7 @@ export type ProductAdminRow = RowDataPacket & {
   is_featured: number;
   is_best_seller: number;
   is_organic: number;
+  nutrition_tags: unknown;
   created_at: Date;
   updated_at: Date;
 };
@@ -301,25 +318,115 @@ export type ProductAdminListRow = ProductAdminRow & {
   category_slug: string;
 };
 
-export async function findAllProductsAdmin(): Promise<ProductAdminListRow[]> {
-  const [rows] = await pool.query<ProductAdminListRow[]>(
-    `SELECT
+export type AdminProductStockStatus = "in_stock" | "low_stock" | "out_of_stock";
+
+export type AdminProductListFilters = {
+  q?: string;
+  categoryId?: number;
+  stockStatus?: AdminProductStockStatus;
+  sort?: "newest" | "name_asc" | "name_desc" | "stock_asc" | "stock_desc" | "updated";
+  page?: number;
+  limit?: number;
+};
+
+const ADMIN_PRODUCT_SELECT = `SELECT
         p.id, p.name, p.slug, p.short_description, p.full_description, p.category_id,
         p.main_image, p.stock, p.average_rating, p.total_reviews,
-        p.is_featured, p.is_best_seller, p.is_organic, p.created_at, p.updated_at,
-        c.name AS category_name, c.slug AS category_slug
-     FROM products p
-     INNER JOIN categories c ON c.id = p.category_id
-     ORDER BY p.id DESC`
+        p.is_featured, p.is_best_seller, p.is_organic, p.nutrition_tags,
+        p.created_at, p.updated_at,
+        c.name AS category_name, c.slug AS category_slug`;
+
+const ADMIN_PRODUCT_FROM = `FROM products p
+     INNER JOIN categories c ON c.id = p.category_id`;
+
+async function buildAdminProductListWhere(filters?: AdminProductListFilters): Promise<{
+  where: string;
+  params: (string | number)[];
+}> {
+  const conditions: string[] = [];
+  const params: (string | number)[] = [];
+
+  if (filters?.q?.trim()) {
+    conditions.push("(p.name LIKE ? OR p.slug LIKE ? OR c.name LIKE ?)");
+    const term = `%${filters.q.trim()}%`;
+    params.push(term, term, term);
+  }
+  if (filters?.categoryId && filters.categoryId > 0) {
+    conditions.push("p.category_id = ?");
+    params.push(filters.categoryId);
+  }
+  if (filters?.stockStatus) {
+    const { lowStockThreshold } = await getSiteSettings();
+    if (filters.stockStatus === "out_of_stock") {
+      conditions.push("p.stock = 0");
+    } else if (filters.stockStatus === "low_stock") {
+      conditions.push("p.stock > 0 AND p.stock <= ?");
+      params.push(lowStockThreshold);
+    } else {
+      conditions.push("p.stock > ?");
+      params.push(lowStockThreshold);
+    }
+  }
+
+  const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+  return { where, params };
+}
+
+function adminProductOrderBy(sort?: AdminProductListFilters["sort"]): string {
+  switch (sort) {
+    case "name_asc":
+      return "p.name ASC";
+    case "name_desc":
+      return "p.name DESC";
+    case "stock_asc":
+      return "p.stock ASC, p.name ASC";
+    case "stock_desc":
+      return "p.stock DESC, p.name ASC";
+    case "updated":
+      return "p.updated_at DESC";
+    case "newest":
+    default:
+      return "p.id DESC";
+  }
+}
+
+export async function listProductsAdminPaginated(filters?: AdminProductListFilters): Promise<{
+  items: ProductAdminListRow[];
+  total: number;
+  page: number;
+  limit: number;
+}> {
+  const page = Math.max(1, filters?.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters?.limit ?? 20));
+  const offset = (page - 1) * limit;
+  const { where, params } = await buildAdminProductListWhere(filters);
+  const orderBy = adminProductOrderBy(filters?.sort);
+
+  const [countRows] = await pool.query<(RowDataPacket & { total: number })[]>(
+    `SELECT COUNT(*) AS total ${ADMIN_PRODUCT_FROM} ${where}`,
+    params
   );
-  return rows;
+  const total = Number(countRows[0]?.total ?? 0);
+
+  const [rows] = await pool.query<ProductAdminListRow[]>(
+    `${ADMIN_PRODUCT_SELECT} ${ADMIN_PRODUCT_FROM} ${where} ORDER BY ${orderBy} LIMIT ? OFFSET ?`,
+    [...params, limit, offset]
+  );
+
+  return { items: rows, total, page, limit };
+}
+
+/** @deprecated Use listProductsAdminPaginated */
+export async function findAllProductsAdmin(): Promise<ProductAdminListRow[]> {
+  const { items } = await listProductsAdminPaginated({ page: 1, limit: 10_000 });
+  return items;
 }
 
 export async function findProductById(id: number): Promise<ProductAdminRow | null> {
   const [rows] = await pool.query<ProductAdminRow[]>(
     `SELECT id, name, slug, short_description, full_description, category_id, main_image,
             stock, average_rating, total_reviews, is_featured, is_best_seller, is_organic,
-            created_at, updated_at
+            nutrition_tags, created_at, updated_at
      FROM products WHERE id = :id LIMIT 1`,
     { id }
   );
@@ -337,14 +444,17 @@ export async function insertProduct(input: {
   is_featured?: boolean;
   is_best_seller?: boolean;
   is_organic?: boolean;
+  nutrition_tags?: string[];
 }): Promise<number> {
+  const nutritionTags = normalizeNutritionTagsInput(input.nutrition_tags);
   const [r] = await pool.execute<ResultSetHeader>(
     `INSERT INTO products (
         name, slug, short_description, full_description, category_id, main_image,
-        stock, average_rating, total_reviews, is_featured, is_best_seller, is_organic
+        stock, average_rating, total_reviews, is_featured, is_best_seller, is_organic,
+        nutrition_tags
      ) VALUES (
         :name, :slug, :short_description, :full_description, :category_id, :main_image,
-        :stock, 0.00, 0, :is_featured, :is_best_seller, :is_organic
+        :stock, 0.00, 0, :is_featured, :is_best_seller, :is_organic, :nutrition_tags
      )`,
     {
       name: input.name,
@@ -357,6 +467,7 @@ export async function insertProduct(input: {
       is_featured: input.is_featured ? 1 : 0,
       is_best_seller: input.is_best_seller ? 1 : 0,
       is_organic: input.is_organic ? 1 : 0,
+      nutrition_tags: nutritionTags.length > 0 ? JSON.stringify(nutritionTags) : null,
     }
   );
   return r.insertId;
@@ -375,6 +486,7 @@ export async function updateProduct(
     is_featured: boolean;
     is_best_seller: boolean;
     is_organic: boolean;
+    nutrition_tags: string[] | null;
   }>
 ): Promise<boolean> {
   const fields: string[] = [];
@@ -405,6 +517,11 @@ export async function updateProduct(
   if (input.is_organic !== undefined) {
     fields.push("is_organic = :is_organic");
     params.is_organic = input.is_organic ? 1 : 0;
+  }
+  if (input.nutrition_tags !== undefined) {
+    const tags = input.nutrition_tags === null ? [] : normalizeNutritionTagsInput(input.nutrition_tags);
+    fields.push("nutrition_tags = :nutrition_tags");
+    params.nutrition_tags = tags.length > 0 ? JSON.stringify(tags) : null;
   }
   if (fields.length === 0) return true;
   const [r] = await pool.execute<ResultSetHeader>(
@@ -500,3 +617,35 @@ export async function updateVariant(
 export async function deleteVariant(id: number): Promise<void> {
   await pool.execute(`DELETE FROM product_variants WHERE id = :id`, { id });
 }
+
+export async function findDistinctNutritionTags(categorySlug?: string): Promise<string[]> {
+  const conditions: string[] = ["p.nutrition_tags IS NOT NULL"];
+  const params: Record<string, string> = {};
+
+  if (categorySlug) {
+    conditions.push("c.slug = :categorySlug");
+    params.categorySlug = categorySlug;
+  }
+
+  const [rows] = await pool.query<(RowDataPacket & { nutrition_tags: unknown })[]>(
+    `SELECT p.nutrition_tags
+     FROM products p
+     INNER JOIN categories c ON c.id = p.category_id
+     WHERE ${conditions.join(" AND ")}`,
+    params
+  );
+
+  const seen = new Set<string>();
+  const tags: string[] = [];
+  for (const row of rows) {
+    for (const tag of parseNutritionTags(row.nutrition_tags)) {
+      const key = tag.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      tags.push(tag);
+    }
+  }
+  return tags.sort((a, b) => a.localeCompare(b));
+}
+
+export { parseNutritionTags };

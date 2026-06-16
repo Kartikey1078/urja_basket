@@ -5,15 +5,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PriceBounds, ProductFilters } from "@/lib/category-filters";
 import {
-  EMPTY_PRODUCT_FILTERS,
-  countActiveFilters,
-  getFilterSummary,
+  clearCatalogFilters,
+  countCatalogFilters,
   normalizeFiltersForApi,
 } from "@/lib/category-filters";
 import { cn } from "@/lib/utils";
 
 import { CategoryFilterPopover } from "./category-filter-popover";
 import { CategoryFilterSheet } from "./category-filter-sheet";
+import { UrjaLoader } from "@/components/ui/loader";
 
 const DESKTOP_MQ = "(min-width: 768px)";
 
@@ -52,16 +52,16 @@ export function CategoryFilterButton({
     });
   }, [applied]);
 
-  const appliedCount = countActiveFilters(applied);
-  const summary = getFilterSummary(applied);
+  const appliedCount = countCatalogFilters(applied);
 
   const handleApply = () => {
     onApply(normalizeFiltersForApi(draft, priceBounds));
   };
 
   const handleClear = () => {
-    setDraft(EMPTY_PRODUCT_FILTERS);
-    onApply(EMPTY_PRODUCT_FILTERS);
+    const next = clearCatalogFilters(applied);
+    setDraft(next);
+    onApply(next);
   };
 
   return (
@@ -73,32 +73,27 @@ export function CategoryFilterButton({
         disabled={isLoading}
         onClick={toggle}
         className={cn(
-          "text-foreground relative inline-flex max-w-full items-center gap-2 rounded-lg border bg-white shadow-sm transition",
-          "hover:bg-neutral-50 disabled:cursor-wait disabled:opacity-60",
-          open ? "border-emerald-600/40 ring-2 ring-emerald-600/15" : "border-neutral-300",
-          "px-3 py-2 text-sm font-medium md:min-h-10 md:px-4 md:py-2.5"
+          "text-urja-forest relative inline-flex max-w-full items-center gap-1.5 rounded-md border bg-white/90 transition",
+          "hover:border-urja-forest/25 hover:bg-white disabled:cursor-wait disabled:opacity-60",
+          open ? "border-urja-forest/30 ring-1 ring-urja-gold/30" : "border-urja-forest/15",
+          "px-2.5 py-1.5 text-xs font-semibold sm:px-3 sm:py-1.5"
         )}
       >
-        <SlidersHorizontal
-          className={cn("text-muted-foreground size-4 shrink-0", isLoading && "animate-pulse")}
-          strokeWidth={1.75}
-        />
-        <span className="md:hidden">Filters</span>
-        <span className="hidden min-w-0 flex-col items-start gap-0.5 text-left leading-tight md:flex">
-          <span className="text-[11px] font-medium tracking-wide text-neutral-500 uppercase">
-            Filters
-          </span>
-          <span className="max-w-[11rem] truncate font-semibold text-neutral-900">{summary}</span>
-        </span>
+        {isLoading ? (
+          <UrjaLoader size="xs" srLabel="Loading filters" />
+        ) : (
+          <SlidersHorizontal className="text-urja-forest/55 size-3.5 shrink-0" strokeWidth={2} />
+        )}
+        <span className="truncate">Filters</span>
         <ChevronDown
           className={cn(
-            "text-muted-foreground hidden size-4 shrink-0 transition-transform md:block",
+            "text-urja-forest/45 size-3.5 shrink-0 transition-transform",
             open && "rotate-180"
           )}
           strokeWidth={2}
         />
         {appliedCount > 0 ? (
-          <span className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-emerald-700 text-[10px] font-bold text-white md:static md:ml-0.5 md:size-auto md:rounded-full md:px-2 md:py-0.5 md:text-[10px]">
+          <span className="bg-urja-gold/35 text-urja-forest ml-0.5 flex size-4 items-center justify-center rounded-full text-[9px] font-bold">
             {appliedCount}
           </span>
         ) : null}

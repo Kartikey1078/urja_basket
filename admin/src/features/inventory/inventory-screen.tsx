@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminInlineLoader, AdminPageLoader } from "@/components/loader";
 import { StockStatusBadge } from "@/components/stock-status-badge";
 import { AdminApiError, adminFetchJson } from "@/lib/api-client";
 import type { Category, InventoryListRow, InventorySummary, InventoryVariantRow, StockStatus } from "@/lib/types";
@@ -40,7 +41,7 @@ function buildInventoryQuery(params: {
 
 export function InventoryScreen() {
   return (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading inventory…</p>}>
+    <Suspense fallback={<AdminPageLoader label="Loading inventory…" />}>
       <InventoryInner />
     </Suspense>
   );
@@ -246,7 +247,11 @@ function InventoryInner() {
       </form>
 
       <p className="mb-3 text-sm text-slate-600">
-        {list.isPending ? "Loading…" : `${list.data?.length ?? 0} product(s)`}
+        {list.isPending ? (
+          <AdminInlineLoader label="Loading…" />
+        ) : (
+          `${list.data?.length ?? 0} product(s)`
+        )}
         {stockStatus ? ` · filtered: ${stockStatus.replace(/_/g, " ")}` : ""}
       </p>
 
@@ -368,7 +373,7 @@ function InventoryRow({
         <tr className="bg-slate-50/50">
           <td colSpan={8} className="px-4 py-4">
             {variantsLoading ? (
-              <p className="text-sm text-slate-500">Loading variants…</p>
+              <AdminInlineLoader label="Loading variants…" />
             ) : variants?.length ? (
               <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
                 <table className="w-full text-sm">

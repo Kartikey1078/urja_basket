@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminPageLoader } from "@/components/loader";
 import { formatDate, formatMoney, OrderStatusBadge } from "@/components/status-badge";
 import { adminFetchJson } from "@/lib/api-client";
 import type { AnalyticsOverview } from "@/lib/types";
@@ -15,7 +16,7 @@ export function AnalyticsScreen() {
   });
 
   if (isPending) {
-    return <p className="text-sm text-slate-500">Loading analytics…</p>;
+    return <AdminPageLoader label="Loading analytics…" />;
   }
 
   if (error || !data) {

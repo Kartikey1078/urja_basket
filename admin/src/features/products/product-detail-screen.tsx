@@ -3,9 +3,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { NutritionTagsEditor } from "@/components/nutrition-tags-editor";
 import { PageHeader } from "@/components/page-header";
+import { AdminPageLoader } from "@/components/loader";
 import { AdminApiError, adminFetchJson } from "@/lib/api-client";
 import type { Category, ProductDetail, ProductVariant } from "@/lib/types";
 
@@ -34,6 +36,7 @@ export function ProductDetailScreen() {
   const id = Number(params.id);
   const qc = useQueryClient();
   const [banner, setBanner] = useState<string | null>(null);
+  const [nutritionTags, setNutritionTags] = useState<string[]>([]);
 
   const product = useQuery({
     queryKey: ["admin", "product", id],
@@ -81,6 +84,12 @@ export function ProductDetailScreen() {
     onError: (e) => setBanner(formatErr(e)),
   });
 
+  useEffect(() => {
+    if (product.data) {
+      setNutritionTags(product.data.nutrition_tags ?? []);
+    }
+  }, [product.data]);
+
   if (!Number.isInteger(id) || id <= 0) {
     return <p className="text-sm text-red-700">Invalid product id.</p>;
   }
@@ -101,7 +110,7 @@ export function ProductDetailScreen() {
     return (
       <div>
         <PageHeader title="Product" />
-        <p className="text-sm text-slate-500">Loading…</p>
+        <AdminPageLoader />
       </div>
     );
   }
@@ -144,6 +153,7 @@ export function ProductDetailScreen() {
               is_featured: fd.get("is_featured") === "on",
               is_best_seller: fd.get("is_best_seller") === "on",
               is_organic: fd.get("is_organic") === "on",
+              nutrition_tags: nutritionTags,
             });
           }}
         >
@@ -215,6 +225,11 @@ export function ProductDetailScreen() {
               Organic
             </label>
           </div>
+          <NutritionTagsEditor
+            className="lg:col-span-2"
+            value={nutritionTags}
+            onChange={setNutritionTags}
+          />
           <div className="flex flex-col gap-2 sm:flex-row lg:col-span-2">
             <button type="submit" className={btnPrimary} disabled={updateProduct.isPending}>
               {updateProduct.isPending ? "Saving…" : "Save product"}

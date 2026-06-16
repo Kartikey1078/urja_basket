@@ -35,7 +35,24 @@ export function CartBillSummary({ bill }: CartBillSummaryProps) {
             {formatInr(bill.packagingCharges)}
           </dd>
         </div>
-        {bill.discount > 0 ? (
+        {(bill.sitePromoDiscount ?? 0) > 0 ? (
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Promo discount</dt>
+            <dd className="font-semibold text-[#4B7E37]">
+              -{formatInr(bill.sitePromoDiscount!)}
+            </dd>
+          </div>
+        ) : null}
+        {(bill.couponDiscount ?? 0) > 0 ? (
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Coupon discount</dt>
+            <dd className="font-semibold text-[#4B7E37]">
+              -{formatInr(bill.couponDiscount!)}
+            </dd>
+          </div>
+        ) : null}
+        {bill.discount > 0 &&
+        !(bill.sitePromoDiscount || bill.couponDiscount) ? (
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Discount</dt>
             <dd className="font-semibold text-[#4B7E37]">-{formatInr(bill.discount)}</dd>

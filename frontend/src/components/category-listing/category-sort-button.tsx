@@ -3,11 +3,12 @@
 import { ArrowUpDown, ChevronDown } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { getSortOptionLabel, type ProductSortValue } from "@/lib/category-sort";
+import { type ProductSortValue } from "@/lib/category-sort";
 import { cn } from "@/lib/utils";
 
 import { CategorySortPopover } from "./category-sort-popover";
 import { CategorySortSheet } from "./category-sort-sheet";
+import { UrjaLoader } from "@/components/ui/loader";
 
 const DESKTOP_MQ = "(min-width: 768px)";
 
@@ -40,8 +41,6 @@ export function CategorySortButton({
     setOpen((prev) => !prev);
   }, []);
 
-  const activeLabel = getSortOptionLabel(value);
-
   return (
     <div ref={anchorRef} className={cn("relative", className)}>
       <button
@@ -51,28 +50,21 @@ export function CategorySortButton({
         disabled={isLoading}
         onClick={toggle}
         className={cn(
-          "text-foreground inline-flex max-w-full items-center gap-2 rounded-lg border bg-white shadow-sm transition",
-          "hover:bg-neutral-50 disabled:cursor-wait disabled:opacity-60",
-          open ? "border-emerald-600/40 ring-2 ring-emerald-600/15" : "border-neutral-300",
-          "px-3 py-2 text-sm font-medium md:min-h-10 md:px-4 md:py-2.5"
+          "text-urja-forest inline-flex max-w-full items-center gap-1.5 rounded-md border bg-white/90 transition",
+          "hover:border-urja-forest/25 hover:bg-white disabled:cursor-wait disabled:opacity-60",
+          open ? "border-urja-forest/30 ring-1 ring-urja-gold/30" : "border-urja-forest/15",
+          "px-2.5 py-1.5 text-xs font-semibold sm:px-3 sm:py-1.5"
         )}
       >
-        <ArrowUpDown
-          className={cn("text-muted-foreground size-4 shrink-0", isLoading && "animate-pulse")}
-          strokeWidth={1.75}
-        />
-        <span className="md:hidden">Sort</span>
-        <span className="hidden min-w-0 flex-col items-start gap-0.5 text-left leading-tight md:flex">
-          <span className="text-[11px] font-medium tracking-wide text-neutral-500 uppercase">
-            Sort
-          </span>
-          <span className="max-w-[11rem] truncate font-semibold text-neutral-900">
-            {activeLabel ?? "Default"}
-          </span>
-        </span>
+        {isLoading ? (
+          <UrjaLoader size="xs" srLabel="Loading sort options" />
+        ) : (
+          <ArrowUpDown className="text-urja-forest/55 size-3.5 shrink-0" strokeWidth={2} />
+        )}
+        <span className="truncate">Sort</span>
         <ChevronDown
           className={cn(
-            "text-muted-foreground hidden size-4 shrink-0 transition-transform md:block",
+            "text-urja-forest/45 size-3.5 shrink-0 transition-transform",
             open && "rotate-180"
           )}
           strokeWidth={2}

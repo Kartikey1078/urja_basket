@@ -24,7 +24,6 @@ const NAV_LINKS = [
   { href: "/categories/dry-fruits", label: "Dry Fruits" },
   { href: "/categories/gift-hampers", label: "Gift Hampers" },
   { href: "/combos", label: "Combos" },
-  { href: "/about", label: "About Us" },
 ] as const;
 
 function DesktopDeliveryStrip() {

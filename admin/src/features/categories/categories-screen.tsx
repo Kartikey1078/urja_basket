@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminTableLoader } from "@/components/loader";
 import { AdminApiError, adminFetchJson } from "@/lib/api-client";
 import { cn } from "@/lib/cn";
 import type { Category } from "@/lib/types";
@@ -117,11 +118,7 @@ export function CategoriesScreen() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.isPending ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  Loading…
-                </td>
-              </tr>
+              <AdminTableLoader colSpan={5} />
             ) : null}
             {list.error ? (
               <tr>

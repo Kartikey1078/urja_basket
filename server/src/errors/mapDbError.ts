@@ -22,9 +22,23 @@ export function mapDbError(err: unknown): HttpError | null {
   }
 
   if (code === "ER_NO_SUCH_TABLE") {
+    const msg = e.message ?? "";
+    if (msg.includes("coupon")) {
+      return new HttpError(
+        503,
+        "Coupon tables missing. Run: cd server && npm run db:coupons"
+      );
+    }
     return new HttpError(
       503,
       "Database tables missing. Run: cd server && npm run db:init (new DB) or npm run db:migrate"
+    );
+  }
+
+  if (code === "ER_BAD_FIELD_ERROR" && (e.message ?? "").includes("coupon")) {
+    return new HttpError(
+      503,
+      "Coupon columns missing on carts/orders. Run: cd server && npm run db:coupons"
     );
   }
 

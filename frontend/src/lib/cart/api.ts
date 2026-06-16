@@ -7,6 +7,8 @@ export type ServerCartTotals = {
   deliveryFee: number;
   deliveryFeeWaived: boolean;
   platformFee: number;
+  sitePromoDiscount: number;
+  couponDiscount: number;
   discount: number;
   tax: number;
   grandTotal: number;
@@ -30,6 +32,12 @@ export type ServerCartPayload = {
   cartId: number;
   items: ServerCartLine[];
   totals: ServerCartTotals;
+  coupon: {
+    code: string;
+    title: string;
+    couponDiscount: number;
+    freeDelivery: boolean;
+  } | null;
 };
 
 async function cartFetch<T>(
@@ -79,6 +87,8 @@ export function serverTotalsToBill(totals: ServerCartTotals): BillSummary {
     deliveryFee: totals.deliveryFee,
     deliveryFeeWaived: totals.deliveryFeeWaived,
     packagingCharges: totals.platformFee,
+    sitePromoDiscount: totals.sitePromoDiscount ?? 0,
+    couponDiscount: totals.couponDiscount ?? 0,
     discount: totals.discount,
     tax: totals.tax,
     toPay: totals.grandTotal,
@@ -89,11 +99,13 @@ export function serverTotalsToBill(totals: ServerCartTotals): BillSummary {
 export async function fetchServerCart(token: string): Promise<{
   items: CartItem[];
   bill: BillSummary;
+  coupon: ServerCartPayload["coupon"];
 }> {
   const data = await cartFetch<ServerCartPayload>("/api/v1/cart", token);
   return {
     items: data.items.map(serverLineToCartItem),
     bill: serverTotalsToBill(data.totals),
+    coupon: data.coupon,
   };
 }
 

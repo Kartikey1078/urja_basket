@@ -1,6 +1,7 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 
 import { pool } from "../../../database/pool";
+import { isMissingCouponSchemaError } from "../../../lib/coupon-schema";
 
 export type ProductCartRow = RowDataPacket & {
   id: number;
@@ -179,4 +180,58 @@ export async function deleteCartItem(lineItemId: number, cartId: number): Promis
 
 export async function touchCart(cartId: number): Promise<void> {
   await pool.query("UPDATE carts SET updated_at = CURRENT_TIMESTAMP WHERE id = ?", [cartId]);
+}
+
+export type CartCouponRow = {
+  applied_coupon_id: number | null;
+  applied_coupon_code: string | null;
+  coupon_locked_until: Date | null;
+};
+
+export async function getCartCouponMeta(cartId: number): Promise<CartCouponRow | null> {
+  try {
+    const [rows] = await pool.query<
+      (RowDataPacket & {
+        applied_coupon_id: number | null;
+        applied_coupon_code: string | null;
+        coupon_locked_until: Date | null;
+      })[]
+    >(
+      `SELECT applied_coupon_id, applied_coupon_code, coupon_locked_until
+       FROM carts WHERE id = ? LIMIT 1`,
+      [cartId]
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      applied_coupon_id: row.applied_coupon_id != null ? Number(row.applied_coupon_id) : null,
+      applied_coupon_code: row.applied_coupon_code,
+      coupon_locked_until: row.coupon_locked_until,
+    };
+  } catch (err) {
+    if (isMissingCouponSchemaError(err)) return null;
+    throw err;
+  }
+}
+
+export async function setCartCoupon(
+  cartId: number,
+  couponId: number,
+  code: string,
+  lockMinutes = 15
+): Promise<void> {
+  await pool.query(
+    `UPDATE carts SET applied_coupon_id = ?, applied_coupon_code = ?,
+      coupon_locked_until = DATE_ADD(NOW(), INTERVAL ? MINUTE)
+     WHERE id = ?`,
+    [couponId, code, lockMinutes, cartId]
+  );
+}
+
+export async function clearCartCoupon(cartId: number): Promise<void> {
+  await pool.query(
+    `UPDATE carts SET applied_coupon_id = NULL, applied_coupon_code = NULL, coupon_locked_until = NULL
+     WHERE id = ?`,
+    [cartId]
+  );
 }

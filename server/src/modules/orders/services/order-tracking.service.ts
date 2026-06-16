@@ -68,35 +68,6 @@ function isTrackableOrder(order: OrderRow): boolean {
   return true;
 }
 
-function simulatedFulfillment(order: OrderRow): FulfillmentStatus {
-  if (
-    order.fulfillment_status === "delivered" ||
-    order.fulfillment_status === "cancelled"
-  ) {
-    return order.fulfillment_status;
-  }
-
-  const created = new Date(order.created_at).getTime();
-  const elapsedMin = (Date.now() - created) / 60_000;
-  const etaMin =
-    SLOT_ETA_MINUTES[order.delivery_slot ?? "express"] ?? 18;
-
-  if (elapsedMin >= etaMin) return "delivered";
-  if (elapsedMin >= Math.max(4, etaMin * 0.45)) return "out_for_delivery";
-  if (elapsedMin >= 2) return "preparing";
-  return "order_placed";
-}
-
-async function maybeAdvanceFulfillment(order: OrderRow): Promise<OrderRow> {
-  if (!isTrackableOrder(order)) return order;
-  const next = simulatedFulfillment(order);
-  if (next === order.fulfillment_status) return order;
-
-  await orderRepo.updateFulfillmentStatus(order.id, next);
-  const refreshed = await orderRepo.findOrderById(order.id);
-  return refreshed ?? order;
-}
-
 function stepState(
   stepId: FulfillmentStatus,
   current: FulfillmentStatus
@@ -189,8 +160,6 @@ export async function getOrderTracking(
   if (!isTrackableOrder(order)) {
     throw new HttpError(400, "Order is not available for tracking yet");
   }
-
-  order = await maybeAdvanceFulfillment(order);
 
   const items = await orderRepo.listOrderItems(orderId);
   const current = order.fulfillment_status;

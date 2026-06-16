@@ -74,6 +74,7 @@ export type CreateCheckoutInput = {
   address: AddressSnapshot;
   items?: CheckoutItemInput[];
   paymentMethod?: PaymentMethod;
+  couponCode?: string | null;
 };
 
 export type OrderRow = {

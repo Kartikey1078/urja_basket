@@ -4,7 +4,7 @@ import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { useCallback, useEffect, useId, useRef } from "react";
 
 import type { PriceBounds, ProductFilters } from "@/lib/category-filters";
-import { countActiveFilters } from "@/lib/category-filters";
+import { countCatalogFilters } from "@/lib/category-filters";
 import { cn } from "@/lib/utils";
 
 import { CategoryFilterFooter, CategoryFilterPanel } from "./category-filter-panel";
@@ -56,7 +56,7 @@ export function CategoryFilterSheet({
     }
   };
 
-  const draftCount = countActiveFilters(draft);
+  const draftCount = countCatalogFilters(draft);
 
   return (
     <AnimatePresence>

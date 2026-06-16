@@ -14,6 +14,7 @@ import { CartDeliveryBanner } from "@/components/cart/cart-delivery-banner";
 import { CartHeader } from "@/components/cart/cart-header";
 import { CartLineItem } from "@/components/cart/cart-line-item";
 import { CartSkeleton } from "@/components/cart/cart-skeleton";
+import { UrjaOverlayLoader } from "@/components/ui/loader";
 import { useCart } from "@/hooks/use-cart";
 import { useDeliveryAddress } from "@/hooks/use-delivery-address";
 import { useCheckout } from "@/hooks/use-checkout";
@@ -141,19 +142,27 @@ function CartScreenContent() {
           </section>
         ) : (
           <>
-            <ul className="space-y-3" aria-label="Cart items">
-              <AnimatePresence initial={false}>
-                {items.map((item) => (
-                  <li key={item.id}>
-                    <CartLineItem
-                      item={item}
-                      onQuantityChange={(qty) => setQuantity(item.id, qty)}
-                      onRemove={() => removeItem(item.id)}
-                    />
-                  </li>
-                ))}
-              </AnimatePresence>
-            </ul>
+            <div className="relative">
+              {loading && items.length > 0 ? (
+                <UrjaOverlayLoader label="Updating cart…" />
+              ) : null}
+              <ul
+                className={`space-y-3 ${loading && items.length > 0 ? "opacity-60" : ""}`}
+                aria-label="Cart items"
+              >
+                <AnimatePresence initial={false}>
+                  {items.map((item) => (
+                    <li key={item.id}>
+                      <CartLineItem
+                        item={item}
+                        onQuantityChange={(qty) => setQuantity(item.id, qty)}
+                        onRemove={() => removeItem(item.id)}
+                      />
+                    </li>
+                  ))}
+                </AnimatePresence>
+              </ul>
+            </div>
 
             {items.length > 0 ? <CartDeliveryBanner /> : null}
 

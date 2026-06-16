@@ -89,6 +89,23 @@ export function CategoryProductCard({ product, className }: CategoryProductCardP
           </span>
         </div>
         <p className="text-muted-foreground text-xs sm:text-sm">{product.weight}</p>
+        {product.nutritionTags && product.nutritionTags.length > 0 ? (
+          <ul className="flex flex-wrap gap-1" aria-label="Nutrition highlights">
+            {product.nutritionTags.slice(0, 3).map((tag) => (
+              <li
+                key={tag}
+                className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 ring-1 ring-emerald-200/80 sm:text-xs"
+              >
+                {tag}
+              </li>
+            ))}
+            {product.nutritionTags.length > 3 ? (
+              <li className="text-muted-foreground text-[10px] font-medium sm:text-xs">
+                +{product.nutritionTags.length - 3}
+              </li>
+            ) : null}
+          </ul>
+        ) : null}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="text-foreground text-base font-bold sm:text-lg">
             {formatInr(product.price)}

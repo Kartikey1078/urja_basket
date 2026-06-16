@@ -1,7 +1,9 @@
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { BestsellerProductCard } from "@/components/bestseller-product-card";
+import { BestsellersSectionSkeleton } from "@/components/bestsellers-section-skeleton";
 import { fetchBestsellerProducts, type ApiProduct } from "@/lib/api-products";
 
 type BadgeKind = "bestseller" | "discount";
@@ -39,11 +41,7 @@ function toBestsellerItem(p: ApiProduct): BestsellerItem {
   };
 }
 
-/**
- * Bestsellers: larger cards on mobile scroll; grid from md up.
- * Data from GET /api/v1/products?bestSeller=1
- */
-export async function BestsellersSection() {
+async function BestsellersSectionContent() {
   const raw = await fetchBestsellerProducts();
   const products = raw.map(toBestsellerItem);
 
@@ -91,5 +89,17 @@ export async function BestsellersSection() {
         )}
       </div>
     </section>
+  );
+}
+
+/**
+ * Bestsellers: larger cards on mobile scroll; grid from md up.
+ * Data from GET /api/v1/products?bestSeller=1
+ */
+export function BestsellersSection() {
+  return (
+    <Suspense fallback={<BestsellersSectionSkeleton />}>
+      <BestsellersSectionContent />
+    </Suspense>
   );
 }

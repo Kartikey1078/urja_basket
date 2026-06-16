@@ -1,9 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { SlidersHorizontal } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
-import { fetchProducts } from "@/lib/api-products";
+import { fetchNutritionTags, fetchProducts } from "@/lib/api-products";
 import type { CategoryProduct } from "@/lib/category-product-types";
 import {
   EMPTY_PRODUCT_FILTERS,
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 import { CategoryBreadcrumbs } from "./category-breadcrumbs";
 import { CategoryListingToolbar } from "./category-listing-toolbar";
+import { CategoryProductGridSkeleton } from "./category-product-grid-skeleton";
 import { CategoryProductCard } from "./category-product-card";
 
 type CategoryProductListingClientProps = {
@@ -40,6 +42,13 @@ export function CategoryProductListingClient({
     () => getPriceBoundsFromProducts(initialProducts),
     [initialProducts]
   );
+
+  const { data: nutritionOptions = [] } = useQuery({
+    queryKey: ["nutrition-tags", categorySlug],
+    queryFn: () => fetchNutritionTags(categorySlug || undefined),
+    staleTime: 60_000,
+    retry: 2,
+  });
 
   const hasQueryOverrides =
     sort !== null || countActiveFilters(filters) > 0;
@@ -74,7 +83,9 @@ export function CategoryProductListingClient({
   }, []);
 
   const isRefetching = isFetching && hasQueryOverrides;
-  const showGrid = !isError && products.length > 0;
+  const isInitialLoading = isFetching && products.length === 0;
+  const showLoadingGrid = isRefetching || isInitialLoading;
+  const showGrid = !isError && (products.length > 0 || showLoadingGrid);
   const showEmpty = !isError && !isFetching && products.length === 0;
 
   return (
@@ -85,14 +96,13 @@ export function CategoryProductListingClient({
       <div className="mx-auto max-w-7xl space-y-5 px-4 py-8 sm:px-6 lg:space-y-6 lg:px-8 lg:py-10">
         <CategoryBreadcrumbs categoryLabel={categoryLabel} />
         <CategoryListingToolbar
-          productCount={products.length}
           sort={sort}
           onSortSelect={handleSortSelect}
           filters={filters}
           onFiltersApply={handleFiltersApply}
           priceBounds={priceBounds}
-          isSortLoading={isRefetching}
-          isFilterLoading={isRefetching}
+          nutritionOptions={nutritionOptions}
+          isLoading={isRefetching || isInitialLoading}
         />
 
         {isError ? (
@@ -115,38 +125,40 @@ export function CategoryProductListingClient({
         ) : null}
 
         {showEmpty ? (
-          <p className="text-muted-foreground rounded-lg border border-dashed bg-white/60 px-4 py-10 text-center text-sm sm:text-base">
-            No products match your filters. Try adjusting or clearing filters.
-          </p>
+          <div className="flex flex-col items-center rounded-2xl border border-dashed border-urja-forest/20 bg-white px-6 py-12 text-center">
+            <span className="bg-urja-gold/25 text-urja-forest mb-4 inline-flex size-12 items-center justify-center rounded-full">
+              <SlidersHorizontal className="size-6" strokeWidth={1.75} />
+            </span>
+            <p className="text-urja-forest text-base font-bold">No products match</p>
+            <p className="text-muted-foreground mt-1 max-w-sm text-sm">
+              {countActiveFilters(filters) > 0
+                ? "Try removing a filter or widening your price range."
+                : "Nothing in this category right now. Check back soon."}
+            </p>
+            {countActiveFilters(filters) > 0 ? (
+              <button
+                type="button"
+                onClick={() => handleFiltersApply(EMPTY_PRODUCT_FILTERS)}
+                className="bg-urja-forest text-urja-cream hover:bg-urja-forest/90 mt-5 min-h-10 rounded-xl px-5 text-sm font-bold shadow-sm"
+              >
+                Clear all filters
+              </button>
+            ) : null}
+          </div>
         ) : null}
 
         {showGrid ? (
-          <div className="relative">
-            {isRefetching ? (
-              <div
-                className="pointer-events-none absolute inset-0 z-10 flex items-start justify-center rounded-lg bg-white/55 pt-16 backdrop-blur-[1px]"
-                aria-live="polite"
-                aria-busy="true"
-              >
-                <span className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-md">
-                  <span className="size-4 animate-spin rounded-full border-2 border-emerald-700 border-t-transparent" />
-                  Updating…
-                </span>
-              </div>
-            ) : null}
-            <ul
-              className={cn(
-                "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5",
-                isRefetching && "opacity-60"
-              )}
-            >
+          showLoadingGrid ? (
+            <CategoryProductGridSkeleton count={8} />
+          ) : (
+            <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
               {products.map((product) => (
                 <li key={product.slug}>
                   <CategoryProductCard product={product} />
                 </li>
               ))}
             </ul>
-          </div>
+          )
         ) : null}
       </div>
     </section>

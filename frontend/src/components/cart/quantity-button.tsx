@@ -2,10 +2,12 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { memo, useCallback, useRef, type ReactNode } from "react";
 
 import { useCart } from "@/hooks/use-cart";
 import { useCartItemQuantity } from "@/hooks/use-cart-item-quantity";
+import { showAddedToCartToast } from "@/lib/cart/added-to-cart-feedback";
 import type { CartProductInput } from "@/lib/cart/types";
 import { cn } from "@/lib/utils";
 
@@ -55,9 +57,11 @@ export const QuantityButton = memo(function QuantityButton({
   className,
   compact = false,
 }: QuantityButtonProps) {
+  const router = useRouter();
   const quantity = useCartItemQuantity(product.slug);
   const { addItem, increaseQuantity, decreaseQuantity, hydrated } = useCart();
   const pending = useRef(false);
+  const wasZero = useRef(false);
 
   const run = useCallback(async (action: () => Promise<void>) => {
     if (pending.current) return;
@@ -69,7 +73,18 @@ export const QuantityButton = memo(function QuantityButton({
     }
   }, []);
 
-  const handleAdd = () => void run(() => addItem(product, 1));
+  const handleAdd = () => {
+    wasZero.current = quantity === 0;
+    void run(async () => {
+      await addItem(product, 1);
+      if (wasZero.current) {
+        showAddedToCartToast({
+          product,
+          onViewCart: () => router.push("/cart"),
+        });
+      }
+    });
+  };
   const handleIncrease = () => void run(() => increaseQuantity(product));
   const handleDecrease = () => void run(() => decreaseQuantity(product));
 

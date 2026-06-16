@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
+import { AdminPageLoader, AdminTableLoader } from "@/components/loader";
 import { AdminApiError, adminFetchJson } from "@/lib/api-client";
 import type { Review } from "@/lib/types";
 
@@ -23,7 +24,7 @@ function formatErr(e: unknown): string {
 
 export function ReviewsScreen() {
   return (
-    <Suspense fallback={<p className="text-sm text-slate-500">Loading…</p>}>
+    <Suspense fallback={<AdminPageLoader />}>
       <ReviewsInner />
     </Suspense>
   );
@@ -105,11 +106,7 @@ function ReviewsInner() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.isPending ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                  Loading…
-                </td>
-              </tr>
+              <AdminTableLoader colSpan={5} />
             ) : null}
             {list.error ? (
               <tr>

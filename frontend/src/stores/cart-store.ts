@@ -10,18 +10,31 @@ import {
 } from "@/lib/cart/api";
 import { CART_STORAGE_KEY } from "@/lib/cart/constants";
 import { productToCartItem } from "@/lib/cart/pricing";
-import type { BillSummary, CartItem, CartMode, CartProductInput } from "@/lib/cart/types";
+import type {
+  AppliedCartCoupon,
+  BillSummary,
+  CartItem,
+  CartMode,
+  CartProductInput,
+} from "@/lib/cart/types";
 
 type CartState = {
   items: CartItem[];
   bill: BillSummary | null;
+  appliedCoupon: AppliedCartCoupon | null;
+  guestCouponCode: string | null;
   mode: CartMode;
   loading: boolean;
   syncing: boolean;
   error: string | null;
 
   setGuestItems: (items: CartItem[]) => void;
-  applyServerCart: (items: CartItem[], bill: BillSummary) => void;
+  applyServerCart: (
+    items: CartItem[],
+    bill: BillSummary,
+    coupon?: AppliedCartCoupon | null
+  ) => void;
+  setGuestCouponCode: (code: string | null) => void;
 
   getItemQuantity: (productSlug: string) => number;
   addItem: (product: CartProductInput, quantity?: number, token?: string | null) => Promise<void>;
@@ -40,19 +53,25 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       bill: null,
+      appliedCoupon: null,
+      guestCouponCode: null,
       mode: "guest",
       loading: false,
       syncing: false,
       error: null,
 
       setGuestItems: (items) => {
-        set({ items, mode: "guest", bill: null, error: null });
+        set({ items, mode: "guest", bill: null, appliedCoupon: null, error: null });
       },
 
-      applyServerCart: (items, bill) => {
+      setGuestCouponCode: (guestCouponCode) => set({ guestCouponCode }),
+
+      applyServerCart: (items, bill, coupon = null) => {
         set({
           items,
           bill: { ...bill, authoritative: true },
+          appliedCoupon: coupon,
+          guestCouponCode: coupon?.code ?? null,
           mode: "authenticated",
           loading: false,
           syncing: false,
@@ -197,7 +216,7 @@ export const useCartStore = create<CartState>()(
         set({ loading: true, error: null });
         try {
           const result = await fetchServerCart(token);
-          get().applyServerCart(result.items, result.bill);
+          get().applyServerCart(result.items, result.bill, result.coupon);
         } catch (err) {
           set({ loading: false, error: toErrorMessage(err) });
           throw err;

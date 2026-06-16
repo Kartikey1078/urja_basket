@@ -2,11 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { FloatingInput } from "@/components/address/floating-input";
+import { UrjaLoader } from "@/components/ui/loader";
 import { LocationButton } from "@/components/address/location-button";
 import { addressFormSchema, type AddressFormSchema } from "@/lib/address/validation";
 import {
@@ -154,6 +155,11 @@ export function AddressForm({
           <h3 className="text-urja-forest mb-3 text-xs font-bold tracking-wide uppercase">
             Address details
           </h3>
+          <div
+            className={cn(
+              embedded && "thin-scrollbar max-h-56 overflow-y-auto overscroll-contain pr-1 sm:max-h-64"
+            )}
+          >
           <div className="mb-4 flex gap-2">
             {TYPE_PILLS.map((t) => (
               <motion.button
@@ -194,6 +200,7 @@ export function AddressForm({
               error={errors.landmark?.message}
               {...register("landmark")}
             />
+          </div>
           </div>
         </section>
 
@@ -267,7 +274,7 @@ export function AddressForm({
             onCancel ? "flex-[2]" : "w-full"
           )}
         >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : null}
+          {saving ? <UrjaLoader size="xs" srLabel="Saving address" /> : null}
           {submitLabel}
         </button>
       </div>

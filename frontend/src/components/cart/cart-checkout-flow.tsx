@@ -211,7 +211,7 @@ export function CartCheckoutFlow({
               </div>
             </div>
 
-            <div className="p-4">
+            <div className="thin-scrollbar max-h-[min(72vh,36rem)] overflow-y-auto overscroll-contain p-4">
               <AnimatePresence mode="wait">
                 {step === 1 ? (
                   <motion.div
@@ -250,7 +250,7 @@ export function CartCheckoutFlow({
                       </p>
                     ) : null}
 
-                    {selected && panel !== "form" ? (
+                    {selected && panel !== "form" && panel !== "list" ? (
                       <motion.div layout>
                         <AddressCard
                           address={selected}
@@ -293,7 +293,7 @@ export function CartCheckoutFlow({
                           className="space-y-3"
                         >
                           {signedIn && addresses.length > 0 ? (
-                            <ul className="max-h-64 space-y-2 overflow-y-auto overscroll-contain pr-0.5">
+                            <ul className="thin-scrollbar max-h-72 space-y-2 overflow-y-auto overscroll-contain pr-1">
                               {addresses.map((addr) => (
                                 <li key={addr.id}>
                                   <AddressCard

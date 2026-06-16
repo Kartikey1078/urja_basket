@@ -1,16 +1,17 @@
 "use client";
 
 import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Phone, RefreshCw } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { OrderTrackingTimeline } from "@/components/orders/order-tracking-timeline";
+import { UrjaLoader } from "@/components/ui/loader";
 import { fetchOrderTracking } from "@/lib/orders/api";
 import { getLastOrder } from "@/lib/orders/last-order";
 
@@ -24,8 +25,12 @@ function OrderTrackingInner() {
   const params = useParams();
   const searchParams = useSearchParams();
   const orderId = Number(params.id);
-  const { getToken, isSignedIn } = useAuth();
+  const queryClient = useQueryClient();
+  const { getToken, isSignedIn, isLoaded } = useAuth();
   const lastOrder = useMemo(() => getLastOrder(), []);
+  const guestPhone =
+    !isSignedIn && lastOrder?.orderId === orderId ? lastOrder.phone : undefined;
+  const [manualRefreshing, setManualRefreshing] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("placed") === "1") {
@@ -36,23 +41,53 @@ function OrderTrackingInner() {
     }
   }, [searchParams, orderId]);
 
+  const trackingQueryKey = useMemo(
+    () => ["order-tracking", orderId, isSignedIn, guestPhone] as const,
+    [orderId, isSignedIn, guestPhone]
+  );
+
   const tracking = useQuery({
-    queryKey: ["order-tracking", orderId, isSignedIn],
+    queryKey: trackingQueryKey,
     queryFn: async () => {
       const token = isSignedIn ? await getToken() : null;
-      const phone =
-        !isSignedIn && lastOrder?.orderId === orderId ? lastOrder.phone : undefined;
-      return fetchOrderTracking(orderId, { token, phone });
+      return fetchOrderTracking(orderId, { token, phone: guestPhone });
     },
-    enabled: Number.isInteger(orderId) && orderId > 0,
+    enabled: isLoaded && Number.isInteger(orderId) && orderId > 0,
+    staleTime: 0,
+    structuralSharing: false,
     refetchInterval: (query) => (query.state.data?.isActive ? 5000 : false),
   });
+
+  const handleRefresh = useCallback(async () => {
+    setManualRefreshing(true);
+    try {
+      const token = isSignedIn ? await getToken() : null;
+      const data = await fetchOrderTracking(orderId, {
+        token,
+        phone: guestPhone,
+        bustCache: true,
+      });
+      queryClient.setQueryData(trackingQueryKey, data);
+      toast.success("Status updated", { duration: 1500 });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not refresh");
+    } finally {
+      setManualRefreshing(false);
+    }
+  }, [
+    orderId,
+    isSignedIn,
+    guestPhone,
+    getToken,
+    queryClient,
+    trackingQueryKey,
+  ]);
 
   if (!Number.isInteger(orderId) || orderId <= 0) {
     return <p className="px-4 py-8 text-sm text-red-700">Invalid order.</p>;
   }
 
-  if (tracking.isLoading) {
+  if (!isLoaded || tracking.isLoading) {
     return (
       <div className="bg-urja-cream flex min-h-dvh items-center justify-center">
         <p className="text-sm text-slate-600">Loading live tracking…</p>
@@ -97,13 +132,16 @@ function OrderTrackingInner() {
           {t.isActive ? (
             <button
               type="button"
-              onClick={() => void tracking.refetch()}
-              className="flex size-10 items-center justify-center rounded-full bg-white/10"
+              onClick={() => void handleRefresh()}
+              disabled={manualRefreshing || tracking.isFetching}
+              className="flex size-10 items-center justify-center rounded-full bg-white/10 disabled:opacity-60"
               aria-label="Refresh"
             >
-              <RefreshCw
-                className={cnRefresh(tracking.isFetching)}
-              />
+              {manualRefreshing || tracking.isFetching ? (
+                <UrjaLoader size="xs" variant="light" srLabel="Refreshing" />
+              ) : (
+                <RefreshCw className="size-5" />
+              )}
             </button>
           ) : null}
         </div>
@@ -197,10 +235,6 @@ function OrderTrackingInner() {
       </div>
     </div>
   );
-}
-
-function cnRefresh(fetching: boolean) {
-  return `size-5 ${fetching ? "animate-spin" : ""}`;
 }
 
 export function OrderTrackingScreen() {

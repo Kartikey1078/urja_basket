@@ -22,6 +22,7 @@ export type CreatePaymentOrderInput = {
   address: CheckoutAddressPayload;
   items?: { productSlug: string; quantity: number }[];
   paymentMethod?: PaymentMethod;
+  couponCode?: string | null;
 };
 
 export type CodOrderResponse = {

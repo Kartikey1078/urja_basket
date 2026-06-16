@@ -31,11 +31,20 @@ export type BillSummary = {
   deliveryFee: number;
   deliveryFeeWaived: boolean;
   packagingCharges: number;
+  sitePromoDiscount?: number;
+  couponDiscount?: number;
   discount: number;
   tax?: number;
   toPay: number;
   /** True when totals come from backend */
   authoritative?: boolean;
+};
+
+export type AppliedCartCoupon = {
+  code: string;
+  title: string;
+  couponDiscount: number;
+  freeDelivery: boolean;
 };
 
 export type CartMode = "guest" | "authenticated";
