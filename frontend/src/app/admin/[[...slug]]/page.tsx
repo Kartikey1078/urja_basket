@@ -1,7 +1,14 @@
 import { redirect } from "next/navigation";
 
 /** Standalone admin app (see repo `/admin`). */
-const DEFAULT_ADMIN_ORIGIN = "http://localhost:3001";
+function adminOrigin(): string {
+  const base = process.env.NEXT_PUBLIC_ADMIN_URL?.replace(/\/$/, "");
+  if (base) return base;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("NEXT_PUBLIC_ADMIN_URL is required in production.");
+  }
+  return "http://localhost:3001";
+}
 
 export default async function LegacyAdminRedirect({
   params,
@@ -9,7 +16,7 @@ export default async function LegacyAdminRedirect({
   params: Promise<{ slug?: string[] }>;
 }) {
   const { slug } = await params;
-  const base = (process.env.NEXT_PUBLIC_ADMIN_URL ?? DEFAULT_ADMIN_ORIGIN).replace(/\/$/, "");
+  const base = adminOrigin();
   const path = slug?.filter(Boolean).join("/") ?? "";
   if (path) {
     redirect(`${base}/${path}`);

@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import mysql from "mysql2/promise";
 
+import { resolveDbConfig } from "../src/config/db";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverRoot = path.resolve(__dirname, "..");
 dotenv.config({ path: path.join(serverRoot, ".env") });
@@ -59,25 +61,22 @@ async function verify(connection: mysql.Connection, database: string) {
 }
 
 async function main() {
-  const host = process.env.DB_HOST ?? "127.0.0.1";
-  const port = Number(process.env.DB_PORT ?? 3306);
-  const user = process.env.DB_USER ?? "root";
-  const password = process.env.DB_PASSWORD ?? "";
-  const database = process.env.DB_NAME ?? "urja_basket";
+  const db = resolveDbConfig();
 
   const filePath = path.join(serverRoot, "database", "migrations", COUPON_MIGRATION);
   if (!fs.existsSync(filePath)) {
     throw new Error(`Missing ${COUPON_MIGRATION}`);
   }
 
-  console.log(`Connecting to MySQL at ${host}:${port} (database: ${database})...`);
+  console.log(`Connecting to MySQL at ${db.host}:${db.port} (database: ${db.database})...`);
 
   const connection = await mysql.createConnection({
-    host,
-    port,
-    user,
-    password,
-    database,
+    host: db.host,
+    port: db.port,
+    user: db.user,
+    password: db.password,
+    database: db.database,
+    ssl: db.ssl,
     multipleStatements: true,
   });
 
@@ -86,7 +85,7 @@ async function main() {
   await connection.query(sql);
   console.log(`Applied ${COUPON_MIGRATION}`);
 
-  await verify(connection, database);
+  await verify(connection, db.database);
   await connection.end();
 
   console.log("\nDone. Restart the API: cd server && npm run dev");

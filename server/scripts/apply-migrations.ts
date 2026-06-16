@@ -4,6 +4,8 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 import mysql from "mysql2/promise";
 
+import { resolveDbConfig } from "../src/config/db";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverRoot = path.resolve(__dirname, "..");
 dotenv.config({ path: path.join(serverRoot, ".env") });
@@ -47,33 +49,31 @@ async function main() {
   const init = process.argv.includes("--init");
   const demo = process.argv.includes("--demo");
 
-  const host = process.env.DB_HOST ?? "127.0.0.1";
-  const port = Number(process.env.DB_PORT ?? 3306);
-  const user = process.env.DB_USER ?? "root";
-  const password = process.env.DB_PASSWORD ?? "";
-  const database = process.env.DB_NAME ?? "urja_basket";
+  const db = resolveDbConfig();
 
-  console.log(`Connecting to MySQL at ${host}:${port}...`);
+  console.log(`Connecting to MySQL at ${db.host}:${db.port}/${db.database}...`);
 
   const admin = await mysql.createConnection({
-    host,
-    port,
-    user,
-    password,
+    host: db.host,
+    port: db.port,
+    user: db.user,
+    password: db.password,
+    ssl: db.ssl,
     multipleStatements: true,
   });
 
   await admin.query(
-    `CREATE DATABASE IF NOT EXISTS \`${database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    `CREATE DATABASE IF NOT EXISTS \`${db.database}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
   );
   await admin.end();
 
   const connection = await mysql.createConnection({
-    host,
-    port,
-    user,
-    password,
-    database,
+    host: db.host,
+    port: db.port,
+    user: db.user,
+    password: db.password,
+    database: db.database,
+    ssl: db.ssl,
     multipleStatements: true,
   });
 
@@ -113,7 +113,7 @@ async function main() {
        'coupons','coupon_redemptions','coupon_abuse_logs'
      )
      ORDER BY TABLE_NAME`,
-    [database]
+    [db.database]
   );
 
   const tableNames = tables.map((r) => r.TABLE_NAME as string);

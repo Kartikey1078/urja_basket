@@ -3,6 +3,8 @@ import path from "node:path";
 
 import dotenv from "dotenv";
 
+import { resolveDbConfig } from "./db";
+
 /** Load `.env` from the `server/` package root (not `process.cwd()`), so admin/API work when started from any directory. */
 const serverRoot = path.resolve(__dirname, "../..");
 dotenv.config({ path: path.join(serverRoot, ".env") });
@@ -19,7 +21,18 @@ function required(name: string, fallback?: string): string {
 }
 
 function corsOrigins(): string[] {
-  const raw = process.env.CORS_ORIGIN ?? "http://localhost:3000";
+  const raw = process.env.CORS_ORIGIN;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (!raw) {
+    if (isProduction) {
+      throw new Error(
+        "CORS_ORIGIN is required in production (comma-separated storefront + admin URLs)."
+      );
+    }
+    return ["http://localhost:3000", "http://localhost:3001"];
+  }
+
   return raw
     .split(",")
     .map((origin) => origin.trim())
@@ -34,13 +47,7 @@ export const env = {
     secretKey: required("CLERK_SECRET_KEY"),
     publishableKey: process.env.CLERK_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
   },
-  db: {
-    host: required("DB_HOST", "127.0.0.1"),
-    port: Number(process.env.DB_PORT ?? 3306),
-    user: required("DB_USER", "root"),
-    password: process.env.DB_PASSWORD ?? "",
-    database: required("DB_NAME", "urja_basket"),
-  },
+  db: resolveDbConfig(),
   razorpay: {
     keyId: process.env.RAZORPAY_KEY_ID ?? "",
     keySecret: process.env.RAZORPAY_KEY_SECRET ?? "",

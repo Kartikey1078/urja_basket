@@ -1,8 +1,11 @@
-import { env } from "./config/env";
 import { createApp } from "./app";
+import { env } from "./config/env";
 
 const app = createApp();
+const host = "0.0.0.0";
 
-app.listen(env.port, () => {
-  console.log(`Urja Basket API listening on http://localhost:${env.port}`);
+app.listen(env.port, host, () => {
+  console.log(
+    `Urja Basket API listening on ${host}:${env.port} (${env.nodeEnv})`
+  );
 });

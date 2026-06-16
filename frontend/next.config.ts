@@ -1,9 +1,17 @@
 import type { NextConfig } from "next";
 
-const apiBase = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(
-  /\/+$/,
-  ""
-);
+function resolveApiBase(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (raw) return raw;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_API_URL is required for production builds (Railway storefront)."
+    );
+  }
+  return "http://localhost:4000";
+}
+
+const apiBase = resolveApiBase();
 
 const nextConfig: NextConfig = {
   turbopack: {
