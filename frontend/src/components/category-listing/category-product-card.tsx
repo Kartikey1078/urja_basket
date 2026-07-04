@@ -1,6 +1,5 @@
 import { Star } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 import type { CategoryProduct } from "@/lib/category-product-types";
 import { cn } from "@/lib/utils";
@@ -45,7 +44,6 @@ type CategoryProductCardProps = {
 };
 
 export function CategoryProductCard({ product, className }: CategoryProductCardProps) {
-  const href = `/products/${product.slug}`;
   const off = discountPercent(product.price, product.mrp);
 
   return (
@@ -56,15 +54,13 @@ export function CategoryProductCard({ product, className }: CategoryProductCardP
       )}
     >
       <div className="bg-muted/40 relative aspect-square w-full shrink-0">
-        <Link href={href} className="absolute inset-0 z-0 block" aria-label={`View ${product.name}`}>
-          <Image
-            src={product.image}
-            alt=""
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover"
-          />
-        </Link>
+        <Image
+          src={product.image}
+          alt={product.name}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover"
+        />
         {product.isBestseller ? (
           <div className="pointer-events-none absolute top-2 left-2 z-10 sm:top-3 sm:left-3">
             <BestsellerBadge />
@@ -77,11 +73,9 @@ export function CategoryProductCard({ product, className }: CategoryProductCardP
         />
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-3 sm:gap-2.5 sm:p-4">
-        <Link href={href} className="text-left">
-          <h2 className="text-foreground line-clamp-2 text-sm font-bold leading-snug hover:underline sm:text-base">
-            {product.name}
-          </h2>
-        </Link>
+        <h2 className="text-foreground line-clamp-2 text-sm font-bold leading-snug sm:text-base">
+          {product.name}
+        </h2>
         <div className="flex flex-wrap items-center gap-1.5">
           <ProductStarRating value={product.rating} />
           <span className="text-muted-foreground text-xs sm:text-sm">

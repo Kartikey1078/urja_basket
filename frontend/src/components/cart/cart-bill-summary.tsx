@@ -1,68 +1,70 @@
 import { formatInr } from "@/lib/cart/pricing";
 import type { BillSummary } from "@/lib/cart/types";
 
+import { cartCardClass } from "./cart-shell";
+
 type CartBillSummaryProps = {
   bill: BillSummary;
 };
 
 export function CartBillSummary({ bill }: CartBillSummaryProps) {
   return (
-    <section className="rounded-2xl border border-black/[0.06] bg-white p-4 shadow-sm">
-      <h2 className="text-urja-forest mb-3 text-base font-bold">Bill Summary</h2>
-      <dl className="space-y-2.5 text-sm">
+    <section className={`${cartCardClass} p-4 sm:p-5`}>
+      <h2 className="text-sm font-semibold text-stone-900">Order summary</h2>
+
+      <dl className="mt-4 space-y-3 text-sm">
         <div className="flex justify-between gap-4">
-          <dt className="text-muted-foreground">Item Total</dt>
-          <dd className="text-urja-forest font-medium">{formatInr(bill.itemTotal)}</dd>
+          <dt className="text-stone-500">Items</dt>
+          <dd className="font-medium tabular-nums text-stone-900">{formatInr(bill.itemTotal)}</dd>
         </div>
         <div className="flex justify-between gap-4">
-          <dt className="text-muted-foreground">Delivery Fee</dt>
-          <dd className="flex items-center gap-2 font-medium">
+          <dt className="text-stone-500">Delivery</dt>
+          <dd className="font-medium tabular-nums">
             {bill.deliveryFeeWaived ? (
-              <>
-                <span className="text-muted-foreground line-through">
-                  {formatInr(bill.deliveryFee)}
-                </span>
-                <span className="text-[#4B7E37] font-bold">FREE</span>
-              </>
+              <span className="text-urja-forest">Free</span>
             ) : (
-              <span className="text-urja-forest">{formatInr(bill.deliveryFee)}</span>
+              <span className="text-stone-900">{formatInr(bill.deliveryFee)}</span>
             )}
           </dd>
         </div>
         <div className="flex justify-between gap-4">
-          <dt className="text-muted-foreground">Packaging Charges</dt>
-          <dd className="text-urja-forest font-medium">
+          <dt className="text-stone-500">Packaging</dt>
+          <dd className="font-medium tabular-nums text-stone-900">
             {formatInr(bill.packagingCharges)}
           </dd>
         </div>
         {(bill.sitePromoDiscount ?? 0) > 0 ? (
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Promo discount</dt>
-            <dd className="font-semibold text-[#4B7E37]">
-              -{formatInr(bill.sitePromoDiscount!)}
+            <dt className="text-stone-500">Promo</dt>
+            <dd className="font-medium tabular-nums text-emerald-700">
+              −{formatInr(bill.sitePromoDiscount!)}
             </dd>
           </div>
         ) : null}
         {(bill.couponDiscount ?? 0) > 0 ? (
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Coupon discount</dt>
-            <dd className="font-semibold text-[#4B7E37]">
-              -{formatInr(bill.couponDiscount!)}
+            <dt className="text-stone-500">Coupon</dt>
+            <dd className="font-medium tabular-nums text-emerald-700">
+              −{formatInr(bill.couponDiscount!)}
             </dd>
           </div>
         ) : null}
-        {bill.discount > 0 &&
-        !(bill.sitePromoDiscount || bill.couponDiscount) ? (
+        {bill.discount > 0 && !(bill.sitePromoDiscount || bill.couponDiscount) ? (
           <div className="flex justify-between gap-4">
-            <dt className="text-muted-foreground">Discount</dt>
-            <dd className="font-semibold text-[#4B7E37]">-{formatInr(bill.discount)}</dd>
+            <dt className="text-stone-500">Discount</dt>
+            <dd className="font-medium tabular-nums text-emerald-700">
+              −{formatInr(bill.discount)}
+            </dd>
           </div>
         ) : null}
-        <div className="border-border/60 flex justify-between gap-4 border-t pt-3">
-          <dt className="text-urja-forest text-base font-bold">To Pay</dt>
-          <dd className="text-urja-forest text-lg font-bold">{formatInr(bill.toPay)}</dd>
-        </div>
       </dl>
+
+      <div className="mt-4 flex items-center justify-between gap-4 rounded-xl bg-[#eef3ef] px-4 py-3">
+        <span className="text-sm font-medium text-stone-700">Total payable</span>
+        <span className="text-xl font-semibold tabular-nums text-stone-900">
+          {formatInr(bill.toPay)}
+        </span>
+      </div>
     </section>
   );
 }

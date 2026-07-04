@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
-import { Banknote, Check, ChevronRight, Clock, CreditCard, MapPin, Plus } from "lucide-react";
+import { Banknote, Check, ChevronDown, ChevronRight, CreditCard, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -11,7 +11,6 @@ import { AddressForm } from "@/components/address/address-form";
 import { AddressCard } from "@/components/address/address-card";
 import { useDeliveryAddress } from "@/hooks/use-delivery-address";
 import { useAddressContext } from "@/providers/address-provider";
-import { estimateDeliveryMinutes } from "@/lib/address/geocode";
 import {
   addressToFormValues,
   formValuesToDeliveryAddress,
@@ -23,6 +22,7 @@ import { useCheckoutStore } from "@/stores/checkout-store";
 import { cn } from "@/lib/utils";
 
 import { CartDeliverySlots } from "./cart-delivery-slots";
+import { cartCardClass } from "./cart-shell";
 
 type CheckoutStep = 1 | 2 | 3;
 type AddressPanel = "collapsed" | "list" | "form";
@@ -71,6 +71,7 @@ export function CartCheckoutFlow({
   const [panel, setPanel] = useState<AddressPanel>("collapsed");
   const [editing, setEditing] = useState<DeliveryAddress | null>(null);
   const [saving, setSaving] = useState(false);
+  const [checkoutDetailsOpen, setCheckoutDetailsOpen] = useState(true);
 
   const signedIn = isLoaded && isSignedIn && addressesReady;
 
@@ -95,6 +96,7 @@ export function CartCheckoutFlow({
     if (open) {
       setStep(1);
       setPaymentStepReached(false);
+      setCheckoutDetailsOpen(true);
       if (!selected && addresses.length === 0) {
         setPanel("form");
       } else {
@@ -121,6 +123,27 @@ export function CartCheckoutFlow({
     }
   }, [focusPaymentStep, open, setPaymentStepReached]);
 
+  useEffect(() => {
+    if (panel === "form") {
+      setCheckoutDetailsOpen(true);
+    }
+  }, [panel]);
+
+  const goToStep = useCallback(
+    (target: CheckoutStep) => {
+      if ((target === 2 || target === 3) && !selected) {
+        toast.error("Add a delivery address first");
+        return;
+      }
+      setStep(target);
+      if (target === 1) {
+        setEditing(null);
+        setPanel(selected || addresses.length > 0 ? "list" : "form");
+      }
+    },
+    [addresses.length, selected]
+  );
+
   const handleSave = useCallback(
     async (values: AddressFormValues) => {
       setSaving(true);
@@ -132,12 +155,14 @@ export function CartCheckoutFlow({
           setPanel("list");
           setEditing(null);
           toast.success("Address saved");
+          setStep(2);
         } else {
           const guest = formValuesToDeliveryAddress(values, 0);
           setGuestAddress(guest);
           setPanel("list");
           setEditing(null);
           toast.success("Address saved for this order");
+          setStep(2);
         }
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not save address");
@@ -148,10 +173,21 @@ export function CartCheckoutFlow({
     [editing?.id, saveAddress, setGuestAddress, setSelectedAddress, signedIn]
   );
 
-  const eta = estimateDeliveryMinutes();
+  const checkoutSubtitle =
+    step === 2
+      ? "Choose delivery time"
+      : step === 3
+        ? "Select payment method"
+        : selected?.formatted
+          ? selected.formatted
+          : editing
+            ? "Update your delivery details"
+            : "Quick — only 4 fields";
+
+  const isAddressForm = checkoutDetailsOpen && step === 1 && panel === "form";
 
   if (!hydrated) {
-    return <div className="h-24 animate-pulse rounded-2xl bg-white/80" />;
+    return <div className="h-24 animate-pulse rounded-2xl bg-stone-100" />;
   }
 
   return (
@@ -163,55 +199,93 @@ export function CartCheckoutFlow({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
             transition={{ type: "spring", stiffness: 380, damping: 32 }}
-            className="overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-black/[0.05]"
+            className={cartCardClass}
           >
-            {/* Step indicator */}
-            <div className="border-b border-black/[0.05] px-4 py-3">
-              <div className="flex items-center justify-between gap-2">
-                {STEPS.map((s, i) => {
-                  const active = step === s.id;
-                  const done = step > s.id;
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => {
-                        if (s.id === 1) setStep(1);
-                        if (s.id === 2 && selected) setStep(2);
-                        if (s.id === 3 && selected) setStep(3);
-                      }}
-                      className="flex min-w-0 flex-1 flex-col items-center gap-1"
-                    >
-                      <span
-                        className={cn(
-                          "flex size-7 items-center justify-center rounded-full text-xs font-bold transition",
-                          done
-                            ? "bg-urja-forest text-urja-cream"
-                            : active
-                              ? "bg-urja-forest text-urja-cream shadow-md"
-                              : "bg-black/[0.06] text-muted-foreground"
-                        )}
-                      >
-                        {done ? <Check className="size-3.5" strokeWidth={3} /> : s.id}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-[10px] font-bold uppercase tracking-wide",
-                          active ? "text-urja-forest" : "text-muted-foreground"
-                        )}
-                      >
-                        {s.label}
-                      </span>
-                      {i < STEPS.length - 1 ? (
-                        <span className="absolute hidden" aria-hidden />
-                      ) : null}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setCheckoutDetailsOpen((v) => !v)}
+              className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3.5 text-left sm:min-h-11 sm:px-5"
+              aria-expanded={checkoutDetailsOpen}
+            >
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#eef3ef] text-urja-forest">
+                  <MapPin className="size-4" strokeWidth={2} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-stone-900">
+                    {selected
+                      ? selected.fullName
+                      : editing
+                        ? "Edit delivery address"
+                        : "Add delivery address"}
+                  </span>
+                  <span className="block truncate text-xs text-stone-500">{checkoutSubtitle}</span>
+                </span>
+              </span>
+              <ChevronDown
+                className={cn(
+                  "size-5 shrink-0 text-stone-400 transition",
+                  checkoutDetailsOpen && "rotate-180"
+                )}
+              />
+            </button>
 
-            <div className="thin-scrollbar max-h-[min(72vh,36rem)] overflow-y-auto overscroll-contain p-4">
+            {checkoutDetailsOpen ? (
+              <>
+                <div className="border-t border-stone-100 px-4 py-3 sm:px-5">
+                  <div
+                    className="flex rounded-xl bg-stone-100 p-1"
+                    role="tablist"
+                    aria-label="Checkout steps"
+                  >
+                    {STEPS.map((s) => {
+                      const active = step === s.id;
+                      const done = step > s.id;
+                      const locked = (s.id === 2 || s.id === 3) && !selected;
+                      return (
+                        <button
+                          key={s.id}
+                          type="button"
+                          role="tab"
+                          aria-selected={active}
+                          disabled={locked}
+                          onClick={() => goToStep(s.id)}
+                          className={cn(
+                            "flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg px-2 text-[11px] font-semibold uppercase tracking-wide transition sm:min-h-9 sm:text-xs",
+                            active && "bg-urja-forest text-white shadow-sm",
+                            !active && done && "bg-[#eef3ef] text-urja-forest",
+                            !active && !done && !locked && "text-stone-600 hover:text-stone-900",
+                            locked && "cursor-not-allowed text-stone-400 opacity-60"
+                          )}
+                        >
+                          {done && !active ? (
+                            <Check className="size-3.5 shrink-0" strokeWidth={2.5} />
+                          ) : (
+                            <span
+                              className={cn(
+                                "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                                active && "bg-white/25 text-white",
+                                !active && done && "bg-urja-forest/15 text-urja-forest",
+                                !active && !done && "bg-stone-200 text-stone-600"
+                              )}
+                            >
+                              {s.id}
+                            </span>
+                          )}
+                          <span className="truncate">{s.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div
+                  className={cn(
+                    "border-t border-stone-100 p-4 sm:p-5",
+                    !isAddressForm &&
+                      "thin-scrollbar max-h-[min(70vh,32rem)] overflow-y-auto overscroll-contain"
+                  )}
+                >
               <AnimatePresence mode="wait">
                 {step === 1 ? (
                   <motion.div
@@ -221,69 +295,35 @@ export function CartCheckoutFlow({
                     exit={{ opacity: 0, x: -12 }}
                     className="space-y-4"
                   >
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-urja-forest text-base font-bold">Delivery address</h2>
-                      <span className="bg-urja-forest/10 text-urja-forest inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold">
-                        <Clock className="size-3" />
-                        {eta} min
-                      </span>
-                    </div>
-
-                    {addressError ? (
-                      <p
-                        className="rounded-xl bg-destructive/10 text-destructive px-3 py-2 text-xs"
-                        role="alert"
-                      >
-                        {addressError}. You can still add an address below, or sign in after
-                        starting MySQL and running{" "}
-                        <code className="font-mono text-[10px]">npm run db:migrate</code> in{" "}
-                        <code className="font-mono text-[10px]">server/</code>.
-                      </p>
-                    ) : null}
-
-                    {!signedIn ? (
-                      <p className="text-muted-foreground rounded-xl bg-amber-50 px-3 py-2 text-xs">
-                        <Link href="/login" className="text-urja-forest font-semibold underline">
-                          Sign in
-                        </Link>{" "}
-                        to save addresses for next time.
-                      </p>
-                    ) : null}
-
-                    {selected && panel !== "form" && panel !== "list" ? (
-                      <motion.div layout>
-                        <AddressCard
-                          address={selected}
-                          selected
-                          onSelect={() => setPanel("list")}
-                          onEdit={() => {
-                            setEditing(selected);
-                            setPanel("form");
-                          }}
-                        />
-                      </motion.div>
-                    ) : null}
-
                     <AnimatePresence mode="wait">
                       {panel === "form" ? (
-                        <motion.div
-                          key="form"
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                        >
+                        <div key="form" className="space-y-3">
+                          {addressError ? (
+                            <p
+                              className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900"
+                              role="alert"
+                            >
+                              Could not load saved addresses. You can still enter one below.
+                            </p>
+                          ) : null}
+
+                          {!signedIn ? (
+                            <p className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600">
+                              <Link href="/login" className="font-medium text-urja-forest underline">
+                                Sign in
+                              </Link>{" "}
+                              to reuse saved addresses next time.
+                            </p>
+                          ) : null}
+
                           <AddressForm
                             embedded
                             initial={editing ? addressToFormValues(editing) : null}
                             saving={saving}
-                            submitLabel={editing ? "Update address" : "Save address"}
-                            onCancel={() => {
-                              setPanel("list");
-                              setEditing(null);
-                            }}
+                            submitLabel={editing ? "Update & continue" : "Save & continue"}
                             onSubmit={handleSave}
                           />
-                        </motion.div>
+                        </div>
                       ) : panel === "list" ? (
                         <motion.div
                           key="list"
@@ -292,6 +332,9 @@ export function CartCheckoutFlow({
                           exit={{ opacity: 0 }}
                           className="space-y-3"
                         >
+                          <h2 className="text-base font-medium text-stone-900">
+                            Where should we deliver?
+                          </h2>
                           {signedIn && addresses.length > 0 ? (
                             <ul className="thin-scrollbar max-h-72 space-y-2 overflow-y-auto overscroll-contain pr-1">
                               {addresses.map((addr) => (
@@ -306,6 +349,7 @@ export function CartCheckoutFlow({
                                     onEdit={() => {
                                       setEditing(addr);
                                       setPanel("form");
+                                      setCheckoutDetailsOpen(true);
                                     }}
                                     onDelete={async () => {
                                       try {
@@ -338,20 +382,21 @@ export function CartCheckoutFlow({
                             onClick={() => {
                               setEditing(null);
                               setPanel("form");
+                              setCheckoutDetailsOpen(true);
                             }}
-                            className="border-urja-forest/20 text-urja-forest hover:bg-urja-forest/5 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-3.5 text-sm font-bold transition"
+                            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 bg-stone-50 text-sm font-medium text-stone-700 transition hover:border-stone-400 hover:bg-stone-100 sm:min-h-11"
                           >
                             <Plus className="size-4" />
-                            Add new address
+                            Add address
                           </button>
 
                           {selected ? (
                             <button
                               type="button"
                               onClick={() => setStep(2)}
-                              className="bg-urja-forest text-urja-cream flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold shadow-md"
+                              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-urja-forest text-sm font-medium text-white sm:min-h-11"
                             >
-                              Continue to delivery time
+                              Choose delivery time
                               <ChevronRight className="size-4" />
                             </button>
                           ) : null}
@@ -369,24 +414,15 @@ export function CartCheckoutFlow({
                     exit={{ opacity: 0, x: -12 }}
                     className="space-y-4"
                   >
-                    <h2 className="text-urja-forest text-base font-bold">Delivery time</h2>
+                    <h2 className="text-base font-medium text-stone-900">When should we deliver?</h2>
                     <CartDeliverySlots selected={slot} onSelect={onSlotChange} />
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setStep(1)}
-                        className="flex-1 rounded-2xl border border-black/10 py-3 text-sm font-bold text-urja-forest"
-                      >
-                        Back
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setStep(3)}
-                        className="bg-urja-forest text-urja-cream flex-[2] rounded-2xl py-3 text-sm font-bold shadow-md"
-                      >
-                        Continue
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStep(3)}
+                      className="inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-urja-forest text-sm font-medium text-white sm:min-h-11"
+                    >
+                      Continue
+                    </button>
                   </motion.div>
                 ) : null}
 
@@ -399,10 +435,10 @@ export function CartCheckoutFlow({
                     className="space-y-4"
                   >
                     <div className="text-center">
-                      <h2 className="text-urja-forest text-base font-bold">How would you like to pay?</h2>
-                      <p className="text-muted-foreground mt-1 text-sm">
+                      <h2 className="text-base font-medium text-stone-900">Payment method</h2>
+                      <p className="mt-1 text-sm text-stone-600">
                         Delivering to{" "}
-                        <span className="text-urja-forest font-semibold">{selected?.city}</span>
+                        <span className="font-medium text-stone-900">{selected?.city}</span>
                       </p>
                     </div>
 
@@ -411,21 +447,28 @@ export function CartCheckoutFlow({
                         type="button"
                         onClick={() => setPaymentMethod("online")}
                         className={cn(
-                          "flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition",
+                          "flex min-h-14 items-center gap-3 rounded-xl border p-3.5 text-left transition sm:min-h-[3.75rem]",
                           paymentMethod === "online"
-                            ? "border-urja-forest bg-urja-forest/5"
-                            : "border-black/8 bg-white"
+                            ? "border-urja-forest bg-[#eef3ef]"
+                            : "border-stone-200 bg-stone-50 hover:border-stone-300"
                         )}
                       >
-                        <span className="bg-urja-forest/10 text-urja-forest flex size-10 shrink-0 items-center justify-center rounded-full">
+                        <span
+                          className={cn(
+                            "flex size-10 shrink-0 items-center justify-center rounded-md",
+                            paymentMethod === "online"
+                              ? "bg-urja-forest text-white"
+                              : "bg-stone-100 text-stone-600"
+                          )}
+                        >
                           <CreditCard className="size-5" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="text-urja-forest block text-sm font-bold">Pay online</span>
-                          <span className="text-muted-foreground text-xs">UPI, card, netbanking via Razorpay</span>
+                          <span className="block text-sm font-medium text-stone-900">Pay online</span>
+                          <span className="text-xs text-stone-500">UPI, card, netbanking</span>
                         </span>
                         {paymentMethod === "online" ? (
-                          <Check className="text-urja-forest size-5 shrink-0" />
+                          <Check className="size-5 shrink-0 text-urja-forest" />
                         ) : null}
                       </button>
 
@@ -433,50 +476,48 @@ export function CartCheckoutFlow({
                         type="button"
                         onClick={() => setPaymentMethod("cod")}
                         className={cn(
-                          "flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition",
+                          "flex min-h-14 items-center gap-3 rounded-xl border p-3.5 text-left transition sm:min-h-[3.75rem]",
                           paymentMethod === "cod"
-                            ? "border-urja-forest bg-urja-forest/5"
-                            : "border-black/8 bg-white"
+                            ? "border-urja-forest bg-[#eef3ef]"
+                            : "border-stone-200 bg-stone-50 hover:border-stone-300"
                         )}
                       >
-                        <span className="bg-urja-forest/10 text-urja-forest flex size-10 shrink-0 items-center justify-center rounded-full">
+                        <span
+                          className={cn(
+                            "flex size-10 shrink-0 items-center justify-center rounded-md",
+                            paymentMethod === "cod"
+                              ? "bg-urja-forest text-white"
+                              : "bg-stone-100 text-stone-600"
+                          )}
+                        >
                           <Banknote className="size-5" />
                         </span>
                         <span className="min-w-0 flex-1">
-                          <span className="text-urja-forest block text-sm font-bold">Cash on delivery</span>
-                          <span className="text-muted-foreground text-xs">
-                            Pay when your order arrives — no online payment now
-                          </span>
+                          <span className="block text-sm font-medium text-stone-900">Cash on delivery</span>
+                          <span className="text-xs text-stone-500">Pay when order arrives</span>
                         </span>
                         {paymentMethod === "cod" ? (
-                          <Check className="text-urja-forest size-5 shrink-0" />
+                          <Check className="size-5 shrink-0 text-urja-forest" />
                         ) : null}
                       </button>
                     </div>
 
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setStep(2)}
-                        className="flex-1 rounded-2xl border border-black/10 py-3 text-sm font-bold text-urja-forest"
-                      >
-                        Back
-                      </button>
-                    </div>
-                    <p className="text-muted-foreground text-center text-xs">
-                      Tap <span className="font-semibold text-urja-forest">Place order</span> below when
+                    <p className="text-center text-xs text-stone-500">
+                      Tap <span className="font-medium text-stone-800">Place order</span> below when
                       ready
                     </p>
                   </motion.div>
                 ) : null}
               </AnimatePresence>
-            </div>
+                </div>
+              </>
+            ) : null}
           </motion.div>
         ) : (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="rounded-2xl border border-black/[0.06] bg-white p-4 shadow-sm"
+            className={`${cartCardClass} p-4 sm:p-5`}
           >
             {selected ? (
               <button
@@ -484,31 +525,27 @@ export function CartCheckoutFlow({
                 onClick={() => onOpenChange(true)}
                 className="w-full text-left"
               >
-                <div className="mb-2 flex items-center justify-between">
-                  <span className="text-urja-forest text-sm font-bold">Delivery address</span>
-                  <span className="text-urja-forest text-xs font-semibold">Change</span>
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium text-stone-900">Delivery address</span>
+                  <span className="text-xs font-medium text-urja-forest">Change</span>
                 </div>
-                <p className="text-urja-forest text-sm font-semibold">{selected.fullName}</p>
-                <p className="text-muted-foreground mt-0.5 line-clamp-2 text-sm">
-                  {selected.formatted}
-                </p>
+                <p className="text-sm font-medium text-stone-900">{selected.fullName}</p>
+                <p className="mt-0.5 line-clamp-2 text-sm text-stone-600">{selected.formatted}</p>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={() => onOpenChange(true)}
-                className="flex w-full items-center gap-3 text-left"
+                className="flex min-h-12 w-full items-center gap-3 text-left sm:min-h-11"
               >
-                <span className="bg-urja-forest/10 text-urja-forest flex size-10 items-center justify-center rounded-full">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#eef3ef] text-urja-forest">
                   <MapPin className="size-5" />
                 </span>
-                <span>
-                  <span className="text-urja-forest block text-sm font-bold">
-                    Add delivery address
-                  </span>
-                  <span className="text-muted-foreground text-xs">Tap to continue checkout</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-stone-900">Add delivery address</span>
+                  <span className="text-xs text-stone-500">Quick — only 4 fields</span>
                 </span>
-                <ChevronRight className="text-urja-forest ml-auto size-5" />
+                <ChevronRight className="size-5 shrink-0 text-stone-400" />
               </button>
             )}
           </motion.div>

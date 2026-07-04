@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
 
 import { BestsellerBadge } from "@/components/category-listing/bestseller-badge";
 import { QuantityButton } from "@/components/cart/quantity-button";
@@ -24,8 +23,6 @@ function formatRupee(n: number) {
 }
 
 export function BestsellerProductCard({ product }: { product: BestsellerCardProduct }) {
-  const href = `/products/${product.slug}`;
-
   return (
     <article
       className={cn(
@@ -33,19 +30,13 @@ export function BestsellerProductCard({ product }: { product: BestsellerCardProd
       )}
     >
       <div className="bg-muted/40 relative aspect-square w-full shrink-0">
-        <Link
-          href={href}
-          className="absolute inset-0 z-0 block"
-          aria-label={`View ${product.name}`}
-        >
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 168px, (max-width: 768px) 192px, 33vw"
-            className="object-cover"
-          />
-        </Link>
+        <Image
+          src={product.image}
+          alt={product.name}
+          fill
+          sizes="(max-width: 640px) 168px, (max-width: 768px) 192px, 33vw"
+          className="object-cover"
+        />
         <div className="pointer-events-none absolute top-1.5 left-1.5 z-10 sm:top-2 sm:left-2">
           {product.badge === "bestseller" ? (
             <BestsellerBadge compact />
@@ -70,11 +61,9 @@ export function BestsellerProductCard({ product }: { product: BestsellerCardProd
         />
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-2 sm:gap-2 sm:p-2.5 md:gap-2 md:p-3">
-        <Link href={href} className="text-left">
-          <h3 className="text-foreground line-clamp-2 min-h-[2.75rem] text-[11px] font-bold leading-snug hover:underline sm:min-h-[3rem] sm:text-xs md:min-h-0 md:text-sm lg:text-base">
-            {product.name}
-          </h3>
-        </Link>
+        <h3 className="text-foreground line-clamp-2 min-h-[2.75rem] text-left text-[11px] font-bold leading-snug sm:min-h-[3rem] sm:text-xs md:min-h-0 md:text-sm lg:text-base">
+          {product.name}
+        </h3>
         <p className="text-muted-foreground text-left text-[10px] sm:text-xs md:text-sm">
           {product.weight}
         </p>

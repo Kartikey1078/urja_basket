@@ -59,15 +59,13 @@ export function WatchlistScreen() {
             )}
           >
             <div className="bg-muted/40 relative aspect-square">
-              <Link href={`/products/${product.slug}`} className="absolute inset-0 block">
-                <Image
-                  src={product.image}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 640px) 50vw, 25vw"
-                  className="object-cover"
-                />
-              </Link>
+              <Image
+                src={product.image}
+                alt={product.name}
+                fill
+                sizes="(max-width: 640px) 50vw, 25vw"
+                className="object-cover"
+              />
               <WishlistHeartButton
                 product={product}
                 className="absolute top-2 right-2 z-10 size-8"
@@ -75,12 +73,9 @@ export function WatchlistScreen() {
               />
             </div>
             <div className="space-y-1 p-3">
-              <Link
-                href={`/products/${product.slug}`}
-                className="text-foreground line-clamp-2 text-sm font-bold hover:underline"
-              >
+              <p className="text-foreground line-clamp-2 text-sm font-bold">
                 {product.name}
-              </Link>
+              </p>
               <p className="text-muted-foreground text-xs">{product.weight}</p>
               <p className="text-foreground text-base font-bold">{formatInr(product.price)}</p>
             </div>

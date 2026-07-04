@@ -20,7 +20,8 @@ import { NutritionTagsEditor } from "@/components/nutrition-tags-editor";
 import { PageHeader } from "@/components/page-header";
 import { AdminInlineLoader, AdminPageLoader, AdminTableLoader } from "@/components/loader";
 import { StockStatusBadge } from "@/components/stock-status-badge";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast, formatAdminError } from "@/lib/admin-toast";
 import { cn } from "@/lib/cn";
 import type { Category, PaginatedMeta, ProductListRow, StockStatus } from "@/lib/types";
 
@@ -32,12 +33,6 @@ const btnSecondary =
   "inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50";
 
 type ProductSort = "newest" | "name_asc" | "name_desc" | "stock_asc" | "stock_desc" | "updated";
-
-function formatErr(e: unknown): string {
-  if (e instanceof AdminApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return "Request failed";
-}
 
 function stockStatusFromCount(stock: number, lowThreshold = 10): StockStatus {
   if (stock <= 0) return "out_of_stock";
@@ -89,8 +84,8 @@ function ProductsInner() {
   const searchParams = useSearchParams();
   const qc = useQueryClient();
 
-  const [banner, setBanner] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [createNutritionTags, setCreateNutritionTags] = useState<string[]>([]);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
 
   const q = searchParams.get("q") ?? "";
@@ -120,12 +115,12 @@ function ProductsInner() {
     mutationFn: (body: Record<string, unknown>) =>
       adminFetchJson<{ data: { id: number } }>("products", { method: "POST", json: body }),
     onSuccess: (res) => {
-      setBanner(null);
+      adminToast.created("Product");
       setShowCreate(false);
       void qc.invalidateQueries({ queryKey: ["admin", "products"] });
       router.push(`/products/${res.data.id}`);
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const applyFilters = useCallback(
@@ -182,12 +177,6 @@ function ProductsInner() {
           </button>
         }
       />
-
-      {banner ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
-          {banner}
-        </div>
-      ) : null}
 
       {showCreate ? (
         <section className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 shadow-sm sm:p-6">
@@ -410,7 +399,7 @@ function ProductsInner() {
               ) : products.error ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-12 text-center text-red-700">
-                    {formatErr(products.error)}
+                    {formatAdminError(products.error)}
                   </td>
                 </tr>
               ) : items.length === 0 ? (

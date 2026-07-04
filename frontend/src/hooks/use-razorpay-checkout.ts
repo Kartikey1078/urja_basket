@@ -81,11 +81,7 @@ export function useRazorpayCheckout() {
               toast.success("Order placed successfully!", {
                 description: `${result.orderNumber} · Payment ${result.razorpayPaymentId.slice(0, 12)}…`,
               });
-              if (isSignedIn) {
-                useCartStore.setState({ items: [], bill: null, mode: "authenticated" });
-              } else {
-                useCartStore.getState().setGuestItems([]);
-              }
+              useCartStore.getState().clearAfterOrder();
             } catch (e) {
               toast.error(
                 e instanceof Error ? e.message : "Payment received but verification failed"

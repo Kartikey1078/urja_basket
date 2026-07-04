@@ -9,6 +9,7 @@ import * as adminSettings from "./admin.settings.controller";
 import * as adminUsers from "./admin-users.controller";
 import * as adminCoupons from "./admin.coupons.controller";
 import * as adminNutritionTags from "../nutrition-tags/admin.nutrition-tags.controller";
+import * as posController from "../pos/pos.controller";
 
 const r = Router();
 
@@ -72,6 +73,9 @@ r.delete("/coupons/:id", asyncHandler(adminCoupons.adminDeleteCoupon));
 r.get("/orders", asyncHandler(adminOrders.adminListOrders));
 r.get("/orders/:id", asyncHandler(adminOrders.adminGetOrder));
 r.patch("/orders/:id/mark-cod-paid", asyncHandler(adminOrders.adminMarkCodPaid));
+r.patch("/orders/:id/confirm", asyncHandler(adminOrders.adminConfirmCodOrder));
+r.patch("/orders/:id/cancel", asyncHandler(adminOrders.adminCancelOrder));
+r.patch("/orders/:id/refund", asyncHandler(adminOrders.adminRefundOrder));
 r.patch("/orders/:id/fulfillment", asyncHandler(adminOrders.adminUpdateFulfillment));
 r.get("/payments", asyncHandler(adminOrders.adminListPayments));
 r.get("/customers", asyncHandler(adminOrders.adminListCustomers));
@@ -86,5 +90,15 @@ r.get("/admin-users", asyncHandler(adminUsers.adminListAdminUsers));
 r.post("/admin-users", asyncHandler(adminUsers.adminCreateAdminUser));
 r.patch("/admin-users/:id", asyncHandler(adminUsers.adminUpdateAdminUser));
 r.delete("/admin-users/:id", asyncHandler(adminUsers.adminDeleteAdminUser));
+
+/** Point of sale (walk-in) */
+r.get("/pos/products/search", asyncHandler(posController.searchProducts));
+r.post("/pos/orders", asyncHandler(posController.createOrder));
+r.post("/pos/orders/checkout/cash", asyncHandler(posController.checkoutCash));
+r.get("/pos/orders", asyncHandler(posController.listOrders));
+r.get("/pos/orders/:id", asyncHandler(posController.getOrder));
+r.get("/pos/orders/:id/invoice", asyncHandler(posController.getInvoice));
+r.post("/pos/orders/:id/pay/cash", asyncHandler(posController.payCash));
+r.post("/pos/orders/:id/cancel", asyncHandler(posController.cancelOrder));
 
 export { r as adminRouter };

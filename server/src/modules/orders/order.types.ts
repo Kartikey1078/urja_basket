@@ -7,7 +7,7 @@ export type OrderStatus =
   | "failed"
   | "cancelled";
 export type PaymentMethod = "online" | "cod";
-export type PaymentStatus = "created" | "paid" | "failed" | "pending_collection";
+export type PaymentStatus = "created" | "paid" | "failed" | "pending_collection" | "refunded";
 
 export type FulfillmentStatus =
   | "order_placed"
@@ -103,6 +103,7 @@ export type OrderRow = {
   fulfillment_status: FulfillmentStatus;
   estimated_delivery_at: Date | null;
   delivered_at: Date | null;
+  inventory_deducted_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };

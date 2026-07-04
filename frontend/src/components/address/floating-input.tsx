@@ -1,7 +1,5 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-
 import { cn } from "@/lib/utils";
 
 type FloatingInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
@@ -13,16 +11,16 @@ export function FloatingInput({ label, error, className, id, ...props }: Floatin
   const inputId = id ?? props.name;
 
   return (
-    <div className="relative">
+    <div className="relative w-full min-w-0">
       <input
         id={inputId}
         placeholder=" "
         className={cn(
-          "peer w-full rounded-2xl border bg-white px-4 pb-3 pt-6 text-[15px] outline-none transition-all",
+          "peer w-full min-h-12 rounded-xl border bg-white px-3 pb-2 pt-5 text-base outline-none transition sm:min-h-11 sm:text-sm",
           "placeholder:text-transparent",
           error
-            ? "border-red-300 ring-2 ring-red-100 focus:border-red-400"
-            : "border-black/[0.08] shadow-sm focus:border-urja-forest focus:ring-2 focus:ring-urja-forest/12",
+            ? "border-red-300 focus:border-red-400 focus:ring-1 focus:ring-red-200"
+            : "border-stone-200 focus:border-urja-forest focus:ring-2 focus:ring-urja-forest/15",
           className
         )}
         {...props}
@@ -30,26 +28,19 @@ export function FloatingInput({ label, error, className, id, ...props }: Floatin
       <label
         htmlFor={inputId}
         className={cn(
-          "pointer-events-none absolute left-4 text-muted-foreground transition-all",
-          "top-4 text-[15px] peer-focus:top-2 peer-focus:text-xs peer-focus:font-medium peer-focus:text-urja-forest",
-          "peer-[:not(:placeholder-shown)]:top-2 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:font-medium"
+          "pointer-events-none absolute left-3 text-stone-500 transition-all",
+          "top-3.5 text-base sm:top-3 sm:text-sm",
+          "peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-urja-forest",
+          "peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs"
         )}
       >
         {label}
       </label>
-      <AnimatePresence>
-        {error ? (
-          <motion.p
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            className="mt-1.5 px-1 text-xs text-red-500"
-            role="alert"
-          >
-            {error}
-          </motion.p>
-        ) : null}
-      </AnimatePresence>
+      {error ? (
+        <p className="mt-1 text-xs text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

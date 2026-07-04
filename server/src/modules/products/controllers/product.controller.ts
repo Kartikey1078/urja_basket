@@ -59,7 +59,15 @@ export async function listNutritionTags(req: Request, res: Response) {
     typeof req.query.categorySlug === "string" && req.query.categorySlug.trim() !== ""
       ? req.query.categorySlug.trim()
       : undefined;
-  const data = await productService.listNutritionTags(categorySlug);
+  const bestSellerParam = req.query.bestSeller ?? req.query.bestseller;
+  const onlyBestSeller =
+    bestSellerParam === "1" ||
+    bestSellerParam === "true" ||
+    bestSellerParam === "yes";
+  const data = await productService.listNutritionTags({
+    categorySlug,
+    onlyBestSeller,
+  });
   res.json({ data });
 }
 

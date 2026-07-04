@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { CartPeekBar } from "@/components/cart/cart-peek-bar";
+import { ActiveOrderFab } from "@/components/orders/active-order-fab";
 import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +30,12 @@ export function ConditionalSiteChrome({ children }: { children: React.ReactNode 
   );
 
   if (minimal) {
-    return <>{children}</>;
+    return (
+      <>
+        {children}
+        <ActiveOrderFab />
+      </>
+    );
   }
 
   return (
@@ -47,6 +53,7 @@ export function ConditionalSiteChrome({ children }: { children: React.ReactNode 
         <SiteFooter />
       </div>
       <CartPeekBar />
+      <ActiveOrderFab />
       <SiteBottomNav />
     </>
   );

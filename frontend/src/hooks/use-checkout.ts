@@ -15,6 +15,7 @@ import { openRazorpayCheckout } from "@/lib/payments/razorpay-checkout";
 import type { DeliveryAddress } from "@/lib/address/types";
 import type { DeliverySlotId } from "@/lib/cart/types";
 import { saveLastOrder } from "@/lib/orders/last-order";
+import { saveActiveOrder } from "@/lib/orders/active-order";
 import type { PaymentMethodChoice } from "@/stores/checkout-store";
 import { useCheckoutStore } from "@/stores/checkout-store";
 import { useCartStore } from "@/stores/cart-store";
@@ -29,19 +30,8 @@ type CheckoutInput = {
   onPlaced?: () => void;
 };
 
-function clearLocalCart(isSignedIn: boolean) {
-  if (isSignedIn) {
-    useCartStore.setState({
-      items: [],
-      bill: null,
-      appliedCoupon: null,
-      guestCouponCode: null,
-      mode: "authenticated",
-    });
-  } else {
-    useCartStore.getState().setGuestItems([]);
-    useCartStore.setState({ guestCouponCode: null });
-  }
+function clearLocalCart() {
+  useCartStore.getState().clearAfterOrder();
 }
 
 function goToTracking(
@@ -56,6 +46,7 @@ function goToTracking(
     return;
   }
   saveLastOrder({ orderId, orderNumber, phone });
+  saveActiveOrder({ orderId, orderNumber, phone });
   useCheckoutStore.getState().clearCheckout();
   onPlaced?.();
   router.replace(`/orders/track/${orderId}?placed=1`);
@@ -108,7 +99,7 @@ export function useCheckout() {
         );
 
         if (isCodOrderResponse(result)) {
-          clearLocalCart(Boolean(isSignedIn));
+          clearLocalCart();
           setProcessing(false);
           goToTracking(
             router,
@@ -147,7 +138,7 @@ export function useCheckout() {
                 },
                 token
               );
-              clearLocalCart(Boolean(isSignedIn));
+              clearLocalCart();
               setProcessing(false);
               goToTracking(
                 router,

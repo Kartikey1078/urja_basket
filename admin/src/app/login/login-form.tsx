@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { AdminSpinner } from "@/components/loader";
+import { adminToast } from "@/lib/admin-toast";
 
 const inputClass =
   "mt-1 block w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-base text-slate-900 shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25";
@@ -31,9 +32,12 @@ export function LoginForm() {
       });
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
-        setError(j.error ?? "Sign-in failed");
+        const message = j.error ?? "Sign-in failed";
+        setError(message);
+        adminToast.error(message);
         return;
       }
+      adminToast.success("Signed in successfully.");
       router.replace(from.startsWith("/") ? from : "/dashboard");
       router.refresh();
     } finally {

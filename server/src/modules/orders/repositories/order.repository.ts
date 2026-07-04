@@ -209,6 +209,21 @@ export async function markOrderFailed(orderId: number): Promise<void> {
   await pool.query("UPDATE orders SET status = 'failed' WHERE id = ?", [orderId]);
 }
 
+export async function updateOrderStatus(orderId: number, status: OrderStatus): Promise<void> {
+  await pool.query("UPDATE orders SET status = ? WHERE id = ?", [status, orderId]);
+}
+
+export async function markOrderCancelled(orderId: number): Promise<void> {
+  await pool.query("UPDATE orders SET status = 'cancelled' WHERE id = ?", [orderId]);
+}
+
+export async function markPaymentRefunded(orderId: number): Promise<void> {
+  await pool.query(
+    `UPDATE payments SET status = 'refunded' WHERE order_id = ? AND status = 'paid'`,
+    [orderId]
+  );
+}
+
 export async function markPaymentPaid(input: {
   orderId: number;
   razorpayPaymentId: string;

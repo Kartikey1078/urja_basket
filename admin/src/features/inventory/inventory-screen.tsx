@@ -8,7 +8,8 @@ import { Suspense, useCallback, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { AdminInlineLoader, AdminPageLoader } from "@/components/loader";
 import { StockStatusBadge } from "@/components/stock-status-badge";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast } from "@/lib/admin-toast";
 import type { Category, InventoryListRow, InventorySummary, InventoryVariantRow, StockStatus } from "@/lib/types";
 
 const inputClass =
@@ -17,12 +18,6 @@ const btnPrimary =
   "inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-700 px-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50";
 const btnGhost =
   "inline-flex min-h-9 items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50";
-
-function formatErr(e: unknown): string {
-  if (e instanceof AdminApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return "Request failed";
-}
 
 function buildInventoryQuery(params: {
   q: string;
@@ -51,7 +46,6 @@ function InventoryInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const qc = useQueryClient();
-  const [banner, setBanner] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
 
@@ -93,10 +87,10 @@ function InventoryInner() {
         json: { stock: args.stock },
       }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.saved("Stock");
       void qc.invalidateQueries({ queryKey: ["admin", "inventory"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const updateVariantStock = useMutation({
@@ -106,13 +100,13 @@ function InventoryInner() {
         json: { stock: args.stock },
       }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.saved("Variant stock");
       void qc.invalidateQueries({ queryKey: ["admin", "inventory"] });
       if (expandedId) {
         void qc.invalidateQueries({ queryKey: ["admin", "inventory", "variants", expandedId] });
       }
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const applyFilters = useCallback(
@@ -156,12 +150,6 @@ function InventoryInner() {
         title="Inventory"
         description="Search and filter stock, update quantities inline, and expand variants."
       />
-
-      {banner ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
-          {banner}
-        </div>
-      ) : null}
 
       {summary.data ? (
         <div className="mb-6 flex flex-wrap gap-2">

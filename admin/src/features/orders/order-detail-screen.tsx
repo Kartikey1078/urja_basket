@@ -3,7 +3,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminPageLoader } from "@/components/loader";
@@ -13,17 +12,19 @@ import {
   OrderStatusBadge,
   PaymentStatusBadge,
 } from "@/components/status-badge";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast } from "@/lib/admin-toast";
 import type { AdminOrderDetail } from "@/lib/types";
 
 const btnPrimary =
   "inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50";
+const btnDanger =
+  "inline-flex min-h-10 items-center justify-center rounded-lg border border-red-300 bg-white px-4 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-50";
 
 export function OrderDetailScreen() {
   const params = useParams();
   const id = Number(params.id);
   const qc = useQueryClient();
-  const [banner, setBanner] = useState<string | null>(null);
 
   const detail = useQuery({
     queryKey: ["admin", "order", id],
@@ -38,10 +39,12 @@ export function OrderDetailScreen() {
         json: { fulfillmentStatus },
       }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.updated("Delivery status");
       void qc.invalidateQueries({ queryKey: ["admin", "order", id] });
+      void qc.invalidateQueries({ queryKey: ["admin", "orders"] });
+      void qc.invalidateQueries({ queryKey: ["admin", "inventory"] });
     },
-    onError: (e) => setBanner(e instanceof AdminApiError ? e.message : "Update failed"),
+    onError: (e) => adminToast.fromError(e, "Update failed"),
   });
 
   const markCodPaid = useMutation({
@@ -50,13 +53,61 @@ export function OrderDetailScreen() {
         method: "PATCH",
       }),
     onSuccess: (res) => {
-      setBanner(null);
       void qc.invalidateQueries({ queryKey: ["admin", "order", id] });
       void qc.invalidateQueries({ queryKey: ["admin", "orders"] });
       void qc.invalidateQueries({ queryKey: ["admin", "payments"] });
-      setBanner(`Marked ${res.data.orderNumber} as paid (cash collected).`);
+      adminToast.success(`Marked ${res.data.orderNumber} as paid (cash collected).`);
     },
-    onError: (e) => setBanner(e instanceof AdminApiError ? e.message : "Could not update payment"),
+    onError: (e) => adminToast.fromError(e, "Could not update payment"),
+  });
+
+  const confirmCod = useMutation({
+    mutationFn: () =>
+      adminFetchJson<{ data: { orderNumber: string; inventoryDeducted: boolean } }>(
+        `orders/${id}/confirm`,
+        { method: "PATCH" }
+      ),
+    onSuccess: (res) => {
+      void qc.invalidateQueries({ queryKey: ["admin", "order", id] });
+      void qc.invalidateQueries({ queryKey: ["admin", "orders"] });
+      void qc.invalidateQueries({ queryKey: ["admin", "inventory"] });
+      const stockMsg = res.data.inventoryDeducted ? " Stock has been reserved." : "";
+      adminToast.success(`Order ${res.data.orderNumber} confirmed.${stockMsg}`);
+    },
+    onError: (e) => adminToast.fromError(e, "Could not confirm order"),
+  });
+
+  const cancelOrder = useMutation({
+    mutationFn: () =>
+      adminFetchJson<{ data: { orderNumber: string; inventoryRestored: boolean } }>(
+        `orders/${id}/cancel`,
+        { method: "PATCH" }
+      ),
+    onSuccess: (res) => {
+      void qc.invalidateQueries({ queryKey: ["admin", "order", id] });
+      void qc.invalidateQueries({ queryKey: ["admin", "orders"] });
+      void qc.invalidateQueries({ queryKey: ["admin", "inventory"] });
+      const stockMsg = res.data.inventoryRestored ? " Stock has been restored." : "";
+      adminToast.success(`Order ${res.data.orderNumber} cancelled.${stockMsg}`);
+    },
+    onError: (e) => adminToast.fromError(e, "Could not cancel order"),
+  });
+
+  const refundOrder = useMutation({
+    mutationFn: () =>
+      adminFetchJson<{ data: { orderNumber: string; inventoryRestored: boolean } }>(
+        `orders/${id}/refund`,
+        { method: "PATCH" }
+      ),
+    onSuccess: (res) => {
+      void qc.invalidateQueries({ queryKey: ["admin", "order", id] });
+      void qc.invalidateQueries({ queryKey: ["admin", "orders"] });
+      void qc.invalidateQueries({ queryKey: ["admin", "payments"] });
+      void qc.invalidateQueries({ queryKey: ["admin", "inventory"] });
+      const stockMsg = res.data.inventoryRestored ? " Stock has been restored." : "";
+      adminToast.success(`Order ${res.data.orderNumber} refunded.${stockMsg}`);
+    },
+    onError: (e) => adminToast.fromError(e, "Could not refund order"),
   });
 
   if (!Number.isInteger(id) || id <= 0) {
@@ -77,6 +128,19 @@ export function OrderDetailScreen() {
   const fulfillment = order.fulfillment_status ?? "order_placed";
   const canMarkCodPaid =
     paymentMethod === "cod" && order.status === "confirmed" && payment?.status === "pending_collection";
+  const canConfirmCod =
+    paymentMethod === "cod" &&
+    order.status === "pending_payment" &&
+    fulfillment !== "cancelled";
+  const inventoryReserved = Boolean(order.inventory_deducted_at);
+  const canCancelOrder =
+    order.status !== "cancelled" &&
+    fulfillment !== "cancelled" &&
+    !(paymentMethod === "online" && order.status === "paid" && fulfillment === "delivered");
+  const canRefundOrder =
+    paymentMethod === "online" &&
+    order.status === "paid" &&
+    payment?.status === "paid";
 
   return (
     <div>
@@ -85,6 +149,16 @@ export function OrderDetailScreen() {
         description={`Order #${order.id} · ${formatDate(order.created_at)}`}
         actions={
           <div className="flex flex-wrap gap-2">
+            {canConfirmCod ? (
+              <button
+                type="button"
+                className={btnPrimary}
+                disabled={confirmCod.isPending}
+                onClick={() => confirmCod.mutate()}
+              >
+                {confirmCod.isPending ? "Confirming…" : "Confirm order (reserve stock)"}
+              </button>
+            ) : null}
             {canMarkCodPaid ? (
               <button
                 type="button"
@@ -93,6 +167,26 @@ export function OrderDetailScreen() {
                 onClick={() => markCodPaid.mutate()}
               >
                 {markCodPaid.isPending ? "Updating…" : "Mark cash collected (paid)"}
+              </button>
+            ) : null}
+            {canRefundOrder ? (
+              <button
+                type="button"
+                className={btnDanger}
+                disabled={refundOrder.isPending}
+                onClick={() => refundOrder.mutate()}
+              >
+                {refundOrder.isPending ? "Refunding…" : "Refund & restore stock"}
+              </button>
+            ) : null}
+            {canCancelOrder ? (
+              <button
+                type="button"
+                className={btnDanger}
+                disabled={cancelOrder.isPending}
+                onClick={() => cancelOrder.mutate()}
+              >
+                {cancelOrder.isPending ? "Cancelling…" : "Cancel order"}
               </button>
             ) : null}
             <Link
@@ -104,18 +198,6 @@ export function OrderDetailScreen() {
           </div>
         }
       />
-
-      {banner ? (
-        <div
-          className={`mb-4 rounded-lg border px-3 py-2 text-sm ${
-            banner.includes("Marked")
-              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-              : "border-red-200 bg-red-50 text-red-900"
-          }`}
-        >
-          {banner}
-        </div>
-      ) : null}
 
       <div className="mb-6 grid gap-4 lg:grid-cols-3">
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:col-span-2">
@@ -149,6 +231,16 @@ export function OrderDetailScreen() {
                   <option value="cancelled">Cancelled</option>
                 </select>
                 <span className="text-xs text-slate-500">Updates live on customer track page</span>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Inventory</dt>
+              <dd className="mt-0.5 font-medium">
+                {inventoryReserved ? (
+                  <span className="text-emerald-800">Stock deducted</span>
+                ) : (
+                  <span className="text-amber-800">Not yet deducted</span>
+                )}
               </dd>
             </div>
             <div>
@@ -190,6 +282,21 @@ export function OrderDetailScreen() {
           )}
         </section>
       </div>
+
+      {paymentMethod === "online" && order.status === "paid" ? (
+        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+          Prepaid online order — stock is reserved immediately when payment succeeds. Use{" "}
+          <strong>Refund &amp; restore stock</strong> if the order is cancelled or returned after
+          delivery.
+        </div>
+      ) : null}
+
+      {paymentMethod === "cod" && order.status === "pending_payment" ? (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Awaiting confirmation — confirm this COD order to reserve inventory, or move fulfillment to{" "}
+          <strong>Getting packed</strong> to deduct stock automatically.
+        </div>
+      ) : null}
 
       {paymentMethod === "cod" && order.status === "confirmed" ? (
         <div className="mb-6 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">

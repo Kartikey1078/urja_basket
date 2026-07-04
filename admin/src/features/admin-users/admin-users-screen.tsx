@@ -5,7 +5,8 @@ import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminTableLoader } from "@/components/loader";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast, formatAdminError } from "@/lib/admin-toast";
 import { cn } from "@/lib/cn";
 import type { AdminUser, AdminUserRole } from "@/lib/types";
 
@@ -24,12 +25,6 @@ const ROLES: { value: AdminUserRole; label: string; hint: string }[] = [
   { value: "staff", label: "Staff", hint: "Day-to-day operations" },
 ];
 
-function formatErr(e: unknown): string {
-  if (e instanceof AdminApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return "Request failed";
-}
-
 function RoleBadge({ role }: { role: AdminUserRole }) {
   const styles: Record<AdminUserRole, string> = {
     owner: "bg-violet-100 text-violet-900",
@@ -45,7 +40,6 @@ function RoleBadge({ role }: { role: AdminUserRole }) {
 
 export function AdminUsersScreen() {
   const qc = useQueryClient();
-  const [banner, setBanner] = useState<string | null>(null);
 
   const list = useQuery({
     queryKey: ["admin", "admin-users"],
@@ -56,10 +50,10 @@ export function AdminUsersScreen() {
     mutationFn: (body: { email: string; name: string; password: string; role: AdminUserRole }) =>
       adminFetchJson<{ data: AdminUser }>("admin-users", { method: "POST", json: body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.created("Admin user");
       void qc.invalidateQueries({ queryKey: ["admin", "admin-users"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const update = useMutation({
@@ -74,19 +68,19 @@ export function AdminUsersScreen() {
       };
     }) => adminFetchJson(`admin-users/${args.id}`, { method: "PATCH", json: args.body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.updated("Admin user");
       void qc.invalidateQueries({ queryKey: ["admin", "admin-users"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const remove = useMutation({
     mutationFn: (id: number) => adminFetchJson(`admin-users/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.deleted("Admin user");
       void qc.invalidateQueries({ queryKey: ["admin", "admin-users"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   return (
@@ -95,12 +89,6 @@ export function AdminUsersScreen() {
         title="Admin users"
         description="Staff accounts for this console. Each user signs in with email and password."
       />
-
-      {banner ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
-          {banner}
-        </div>
-      ) : null}
 
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-sm font-semibold text-slate-900">Invite staff member</h2>
@@ -176,7 +164,7 @@ export function AdminUsersScreen() {
             {list.error ? (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-red-700">
-                  {formatErr(list.error)}
+                  {formatAdminError(list.error)}
                 </td>
               </tr>
             ) : null}

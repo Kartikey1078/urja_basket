@@ -77,10 +77,14 @@ export async function fetchProducts(options?: {
   return safeProductsFetch(url);
 }
 
-export async function fetchNutritionTags(categorySlug?: string): Promise<NutritionTagOption[]> {
+export async function fetchNutritionTags(options?: {
+  categorySlug?: string;
+  bestSellerOnly?: boolean;
+}): Promise<NutritionTagOption[]> {
   const base = getApiBaseUrl();
   const params = new URLSearchParams();
-  if (categorySlug) params.set("categorySlug", categorySlug);
+  if (options?.categorySlug) params.set("categorySlug", options.categorySlug);
+  if (options?.bestSellerOnly) params.set("bestSeller", "1");
   const qs = params.toString();
   const url = `${base}/api/v1/products/nutrition-tags${qs ? `?${qs}` : ""}`;
   try {

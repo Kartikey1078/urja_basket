@@ -43,7 +43,10 @@ export function parseUpdateQuantityBody(body: unknown): { quantity: number } {
   return { quantity: parsePositiveInt(record.quantity, "quantity") };
 }
 
-export function parseSyncBody(body: unknown): { items: GuestSyncItem[] } {
+export function parseSyncBody(body: unknown): {
+  items: GuestSyncItem[];
+  mergeStrategy: "add" | "replace";
+} {
   if (!body || typeof body !== "object") {
     throw new HttpError(400, "Invalid request body");
   }
@@ -51,6 +54,8 @@ export function parseSyncBody(body: unknown): { items: GuestSyncItem[] } {
   if (!Array.isArray(record.items)) {
     throw new HttpError(400, "items array is required");
   }
+
+  const mergeStrategy = record.mergeStrategy === "replace" ? "replace" : "add";
 
   const items: GuestSyncItem[] = [];
   for (const raw of record.items) {
@@ -68,5 +73,5 @@ export function parseSyncBody(body: unknown): { items: GuestSyncItem[] } {
     items.push({ productSlug: productSlug.trim(), quantity });
   }
 
-  return { items };
+  return { items, mergeStrategy };
 }

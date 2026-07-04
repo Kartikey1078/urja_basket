@@ -1,7 +1,7 @@
 import type { RowDataPacket } from "mysql2";
 
 import { pool } from "../../../database/pool";
-import type { AddressSnapshot, OrderItemRow, OrderStatus, PaymentStatus } from "../../orders/order.types";
+import type { AddressSnapshot, FulfillmentStatus, OrderItemRow, OrderStatus, PaymentStatus } from "../../orders/order.types";
 import { findOrderById, listOrderItems } from "../../orders/repositories/order.repository";
 import { findUserById } from "../../users/repositories/user.repository";
 
@@ -26,6 +26,7 @@ export type AdminOrderListRow = {
   order_number: string;
   user_id: number | null;
   status: OrderStatus;
+  fulfillment_status: FulfillmentStatus;
   delivery_slot: string | null;
   grand_total: string;
   amount_paise: number;
@@ -126,7 +127,7 @@ export async function listOrdersAdmin(options?: AdminOrderListFilters): Promise<
 
   const [rows] = await pool.query<OrderListPacket[]>(
     `SELECT
-      o.id, o.order_number, o.user_id, o.status, o.payment_method, o.delivery_slot,
+      o.id, o.order_number, o.user_id, o.status, o.fulfillment_status, o.payment_method, o.delivery_slot,
       o.grand_total, o.amount_paise, o.customer_name, o.customer_phone,
       o.razorpay_order_id, o.paid_at, o.created_at,
       u.name AS user_name, u.email AS user_email, u.clerk_id AS user_clerk_id,
@@ -308,7 +309,7 @@ export async function getCustomerAdminDetail(userId: number) {
 async function listOrdersAdminForUser(userId: number): Promise<AdminOrderListRow[]> {
   const [rows] = await pool.query<OrderListPacket[]>(
     `SELECT
-      o.id, o.order_number, o.user_id, o.status, o.payment_method, o.delivery_slot,
+      o.id, o.order_number, o.user_id, o.status, o.fulfillment_status, o.payment_method, o.delivery_slot,
       o.grand_total, o.amount_paise, o.customer_name, o.customer_phone,
       o.razorpay_order_id, o.paid_at, o.created_at,
       u.name AS user_name, u.email AS user_email, u.clerk_id AS user_clerk_id,

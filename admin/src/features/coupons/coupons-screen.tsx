@@ -6,7 +6,8 @@ import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminTableLoader } from "@/components/loader";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast } from "@/lib/admin-toast";
 import type { PaginatedMeta } from "@/lib/types";
 
 type CouponRow = {
@@ -55,7 +56,6 @@ const COUPON_TYPES = [
 export function CouponsScreen() {
   const qc = useQueryClient();
   const [showForm, setShowForm] = useState(false);
-  const [banner, setBanner] = useState<string | null>(null);
   const [form, setForm] = useState({
     code: "",
     title: "",
@@ -107,11 +107,11 @@ export function CouponsScreen() {
         },
       }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.created("Coupon");
       setShowForm(false);
       void qc.invalidateQueries({ queryKey: ["admin", "coupons"] });
     },
-    onError: (e) => setBanner(e instanceof AdminApiError ? e.message : "Create failed"),
+    onError: (e) => adminToast.fromError(e, "Create failed"),
   });
 
   const toggleActive = useMutation({
@@ -120,7 +120,11 @@ export function CouponsScreen() {
         method: "PATCH",
         json: { isActive: !row.isActive },
       }),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ["admin", "coupons"] }),
+    onSuccess: (_data, row) => {
+      adminToast.success(row.isActive ? "Coupon deactivated." : "Coupon activated.");
+      void qc.invalidateQueries({ queryKey: ["admin", "coupons"] });
+    },
+    onError: (e) => adminToast.fromError(e),
   });
 
   const stats = analytics.data;
@@ -137,10 +141,6 @@ export function CouponsScreen() {
           </button>
         }
       />
-
-      {banner ? (
-        <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{banner}</p>
-      ) : null}
 
       {stats ? (
         <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

@@ -134,7 +134,8 @@ export async function removeCartItem(
 
 export async function syncGuestCart(
   clerkId: string,
-  guestItems: GuestSyncItem[]
+  guestItems: GuestSyncItem[],
+  mergeStrategy: "add" | "replace" = "add"
 ): Promise<CartResponse> {
   const { cartId } = await getCartContext(clerkId);
 
@@ -147,7 +148,10 @@ export async function syncGuestCart(
 
     const existing = await cartRepo.findCartItemByProductId(cartId, product.id);
     if (existing) {
-      const merged = clampQuantity(existing.quantity + qty);
+      const merged =
+        mergeStrategy === "replace"
+          ? qty
+          : clampQuantity(existing.quantity + qty);
       await cartRepo.updateCartItemQuantity(existing.id, cartId, merged);
     } else {
       try {
@@ -160,7 +164,10 @@ export async function syncGuestCart(
         if (duplicate) {
           const raced = await cartRepo.findCartItemByProductId(cartId, product.id);
           if (raced) {
-            const merged = clampQuantity(raced.quantity + qty);
+            const merged =
+              mergeStrategy === "replace"
+                ? qty
+                : clampQuantity(raced.quantity + qty);
             await cartRepo.updateCartItemQuantity(raced.id, cartId, merged);
           }
         }

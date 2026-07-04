@@ -1,7 +1,6 @@
 "use client";
 
 import { MapPin, Navigation } from "lucide-react";
-import { motion } from "framer-motion";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -67,32 +66,29 @@ export function LocationButton({ onLocated, className }: LocationButtonProps) {
   };
 
   return (
-    <motion.button
+    <button
       type="button"
       onClick={handleClick}
       disabled={loading}
-      whileTap={{ scale: 0.98 }}
       className={cn(
-        "flex w-full items-center gap-3 rounded-2xl border border-urja-forest/15 bg-gradient-to-r from-urja-forest/[0.06] to-white p-4 text-left shadow-sm transition disabled:opacity-70",
+        "flex min-h-12 w-full items-center gap-3 rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-left transition hover:bg-neutral-50 disabled:opacity-70 sm:min-h-11",
         className
       )}
     >
-      <span className="bg-urja-forest text-urja-cream flex size-11 shrink-0 items-center justify-center rounded-xl shadow-md">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-neutral-100 text-neutral-600">
         {loading ? (
           <UrjaLoader size="sm" srLabel="Detecting location" />
         ) : (
-          <Navigation className="size-5" strokeWidth={2.25} />
+          <Navigation className="size-4" />
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="text-urja-forest flex items-center gap-1.5 text-sm font-bold">
-          <MapPin className="size-4" />
+        <span className="flex items-center gap-1.5 text-sm font-medium text-neutral-800">
+          <MapPin className="size-3.5 text-neutral-400" />
           Use current location
         </span>
-        <span className="text-muted-foreground mt-0.5 block text-xs">
-          Get address automatically
-        </span>
+        <span className="mt-0.5 block text-xs text-neutral-500">Auto-fill city & pincode</span>
       </span>
-    </motion.button>
+    </button>
   );
 }

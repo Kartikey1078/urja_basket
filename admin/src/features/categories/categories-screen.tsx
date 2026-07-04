@@ -5,7 +5,8 @@ import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminTableLoader } from "@/components/loader";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast } from "@/lib/admin-toast";
 import { cn } from "@/lib/cn";
 import type { Category } from "@/lib/types";
 
@@ -18,15 +19,8 @@ const btnGhost =
 const btnDanger =
   "inline-flex min-h-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-800 hover:bg-red-100";
 
-function formatErr(e: unknown): string {
-  if (e instanceof AdminApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return "Request failed";
-}
-
 export function CategoriesScreen() {
   const qc = useQueryClient();
-  const [banner, setBanner] = useState<string | null>(null);
 
   const list = useQuery({
     queryKey: ["admin", "categories"],
@@ -37,39 +31,34 @@ export function CategoriesScreen() {
     mutationFn: (body: { name: string; slug: string; image: string | null }) =>
       adminFetchJson<{ data: { id: number } }>("categories", { method: "POST", json: body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.created("Category");
       void qc.invalidateQueries({ queryKey: ["admin", "categories"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const update = useMutation({
     mutationFn: (args: { id: number; body: { name?: string; slug?: string; image?: string | null } }) =>
       adminFetchJson(`categories/${args.id}`, { method: "PATCH", json: args.body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.updated("Category");
       void qc.invalidateQueries({ queryKey: ["admin", "categories"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const remove = useMutation({
     mutationFn: (id: number) => adminFetchJson(`categories/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.deleted("Category");
       void qc.invalidateQueries({ queryKey: ["admin", "categories"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   return (
     <div>
       <PageHeader title="Categories" description="Create, update, and delete catalog categories." />
-      {banner ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
-          {banner}
-        </div>
-      ) : null}
 
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-sm font-semibold text-slate-900">New category</h2>

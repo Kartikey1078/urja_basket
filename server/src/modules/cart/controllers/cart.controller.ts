@@ -49,7 +49,11 @@ export async function removeItem(req: Request, res: Response) {
 }
 
 export async function syncGuestCart(req: Request, res: Response) {
-  const { items } = parseSyncBody(req.body);
-  const data = await cartService.syncGuestCart(clerkIdFromRequest(req), items);
+  const { items, mergeStrategy } = parseSyncBody(req.body);
+  const data = await cartService.syncGuestCart(
+    clerkIdFromRequest(req),
+    items,
+    mergeStrategy
+  );
   res.json({ data });
 }

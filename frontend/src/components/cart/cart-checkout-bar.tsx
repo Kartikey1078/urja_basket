@@ -1,14 +1,12 @@
 "use client";
 
 import { ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
 
 import { formatInr } from "@/lib/cart/pricing";
 
 type CartCheckoutBarProps = {
   toPay: number;
   label?: string;
-  highlight?: boolean;
   disabled?: boolean;
   onViewDetails?: () => void;
   onProceed?: () => void;
@@ -17,44 +15,37 @@ type CartCheckoutBarProps = {
 export function CartCheckoutBar({
   toPay,
   label = "Proceed to Checkout",
-  highlight,
   disabled,
   onViewDetails,
   onProceed,
 }: CartCheckoutBarProps) {
   return (
-    <footer className="border-border/60 fixed right-0 bottom-0 left-0 z-40 border-t bg-white/95 backdrop-blur-md">
-      <div className="mx-auto max-w-lg px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:max-w-2xl">
-        <p className="text-muted-foreground mb-2 text-center text-[10px]">
-          Safe &amp; secure payments
-        </p>
-        <div className="flex items-center gap-3">
+    <footer className="fixed inset-x-0 bottom-0 z-40 rounded-t-2xl bg-white shadow-[0_-8px_32px_rgba(15,23,42,0.08)] ring-1 ring-stone-200/80 sm:rounded-none sm:shadow-[0_-4px_24px_rgba(15,23,42,0.06)]">
+      <div className="mx-auto max-w-6xl px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch sm:gap-4">
           <button
             type="button"
             onClick={onViewDetails}
-            className="min-w-0 shrink-0 text-left"
+            className="flex min-h-11 w-full items-center justify-between rounded-xl bg-stone-50 px-4 py-2 text-left sm:w-auto sm:min-w-[8.5rem] sm:flex-col sm:items-start sm:justify-center sm:bg-transparent sm:px-1"
           >
-            <span className="text-urja-forest block text-xl font-bold leading-none">
-              {formatInr(toPay)}
+            <span className="text-[11px] font-medium uppercase tracking-wide text-stone-500">
+              Total
             </span>
-            <span className="text-urja-forest/80 mt-0.5 text-xs font-medium underline-offset-2 hover:underline">
-              View bill
+            <span className="text-xl font-semibold tabular-nums text-stone-900">{formatInr(toPay)}</span>
+            <span className="text-xs text-urja-forest underline-offset-2 hover:underline">
+              View summary
             </span>
           </button>
-          <motion.button
+
+          <button
             type="button"
             disabled={disabled}
             onClick={onProceed}
-            whileTap={{ scale: 0.98 }}
-            className={
-              highlight
-                ? "bg-urja-gold text-urja-forest hover:opacity-95 flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold shadow-lg transition disabled:opacity-50 sm:text-base"
-                : "bg-urja-forest text-urja-cream hover:opacity-92 flex flex-1 items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold shadow-lg transition disabled:opacity-50 sm:text-base"
-            }
+            className="inline-flex min-h-12 w-full flex-1 items-center justify-center gap-2 rounded-xl bg-urja-forest px-5 text-sm font-medium text-white transition hover:bg-urja-forest/90 disabled:opacity-50 sm:min-h-11 sm:text-base"
           >
-            {label}
-            <ArrowRight className="size-5" strokeWidth={2.5} />
-          </motion.button>
+            <span className="truncate">{label}</span>
+            <ArrowRight className="size-4 shrink-0" />
+          </button>
         </div>
       </div>
     </footer>

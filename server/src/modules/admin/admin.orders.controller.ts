@@ -37,6 +37,7 @@ const PAYMENT_STATUSES: PaymentStatus[] = [
   "paid",
   "failed",
   "pending_collection",
+  "refunded",
 ];
 
 function parseOrderStatus(q: unknown): OrderStatus | undefined {
@@ -157,6 +158,24 @@ export async function adminGetCustomer(req: Request, res: Response) {
 export async function adminMarkCodPaid(req: Request, res: Response) {
   const id = parseId(paramStr(req.params.id), "order id");
   const data = await orderService.markCodOrderPaidByAdmin(id);
+  res.json({ data });
+}
+
+export async function adminConfirmCodOrder(req: Request, res: Response) {
+  const id = parseId(paramStr(req.params.id), "order id");
+  const data = await orderService.confirmCodOrderByAdmin(id);
+  res.json({ data });
+}
+
+export async function adminCancelOrder(req: Request, res: Response) {
+  const id = parseId(paramStr(req.params.id), "order id");
+  const data = await orderService.cancelOrderByAdmin(id);
+  res.json({ data });
+}
+
+export async function adminRefundOrder(req: Request, res: Response) {
+  const id = parseId(paramStr(req.params.id), "order id");
+  const data = await orderService.refundOnlineOrderByAdmin(id);
   res.json({ data });
 }
 

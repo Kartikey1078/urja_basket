@@ -2,11 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminPageLoader, AdminTableLoader } from "@/components/loader";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast } from "@/lib/admin-toast";
 import type { Review } from "@/lib/types";
 
 const inputClass =
@@ -15,12 +16,6 @@ const btnPrimary =
   "inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-700 px-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50";
 const btnDanger =
   "inline-flex min-h-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-800 hover:bg-red-100";
-
-function formatErr(e: unknown): string {
-  if (e instanceof AdminApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return "Request failed";
-}
 
 export function ReviewsScreen() {
   return (
@@ -35,7 +30,6 @@ function ReviewsInner() {
   const productId = searchParams.get("productId")?.trim() ?? "";
   const qs = productId !== "" ? `?productId=${encodeURIComponent(productId)}` : "";
   const qc = useQueryClient();
-  const [banner, setBanner] = useState<string | null>(null);
 
   const list = useQuery({
     queryKey: ["admin", "reviews", productId],
@@ -46,19 +40,19 @@ function ReviewsInner() {
     mutationFn: (args: { id: number; body: { rating?: number; comment?: string | null } }) =>
       adminFetchJson(`reviews/${args.id}`, { method: "PATCH", json: args.body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.updated("Review");
       void qc.invalidateQueries({ queryKey: ["admin", "reviews", productId] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const remove = useMutation({
     mutationFn: (id: number) => adminFetchJson(`reviews/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.deleted("Review");
       void qc.invalidateQueries({ queryKey: ["admin", "reviews", productId] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   return (
@@ -67,11 +61,6 @@ function ReviewsInner() {
         title="Reviews"
         description="Filter by product id (optional). Updates sync product aggregates on the server."
       />
-      {banner ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
-          {banner}
-        </div>
-      ) : null}
 
       <form
         className="mb-6 flex max-w-md flex-col gap-3 sm:flex-row sm:items-end"

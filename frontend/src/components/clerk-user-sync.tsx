@@ -5,8 +5,11 @@ import { useEffect, useRef } from "react";
 
 import {
   clearCartMergeSession,
+  clearGuestSession,
+  hasActiveGuestSession,
   hasMergedGuestCartThisSession,
   markGuestCartMerged,
+  startGuestSession,
 } from "@/lib/cart/session";
 import { syncCurrentUser } from "@/lib/sync-user";
 import { useCartStore } from "@/stores/cart-store";
@@ -23,6 +26,8 @@ export function ClerkUserSync() {
     if (!isLoaded || !isSignedIn || !userId) {
       if (!isSignedIn && lastSyncedUserId.current) {
         clearCartMergeSession(lastSyncedUserId.current);
+        useCartStore.getState().resetForGuestSession();
+        startGuestSession();
         lastSyncedUserId.current = null;
       }
       return;
@@ -35,6 +40,7 @@ export function ClerkUserSync() {
     let cancelled = false;
 
     void (async () => {
+      useCartStore.setState({ syncing: true, error: null });
       try {
         const token = await getToken();
         if (!token || cancelled) return;
@@ -44,14 +50,33 @@ export function ClerkUserSync() {
 
         if (user) {
           const allowGuestMerge = !hasMergedGuestCartThisSession(userId);
+          const mergeStrategy = hasActiveGuestSession() ? "replace" : "add";
           await useCartStore
             .getState()
-            .loadAuthenticatedCart(token, { allowGuestMerge });
+            .loadAuthenticatedCart(token, { allowGuestMerge, mergeStrategy });
           markGuestCartMerged(userId);
+          clearGuestSession();
+        } else {
+          await useCartStore.getState().fetchCart(token);
         }
         lastSyncedUserId.current = userId;
       } catch {
-        /* API unavailable — guest cart still works */
+        /* API unavailable — try loading server cart if signed in */
+        try {
+          const token = await getToken();
+          if (token && !cancelled) {
+            await useCartStore.getState().fetchCart(token);
+          }
+        } catch {
+          /* guest cart still works */
+        }
+      } finally {
+        if (!cancelled) {
+          const { syncing } = useCartStore.getState();
+          if (syncing) {
+            useCartStore.setState({ syncing: false });
+          }
+        }
       }
     })();
 

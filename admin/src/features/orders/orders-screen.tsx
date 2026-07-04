@@ -7,7 +7,7 @@ import { Suspense } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminPageLoader, AdminTableLoader } from "@/components/loader";
-import { formatDate, formatMoney, OrderStatusBadge } from "@/components/status-badge";
+import { formatDate, formatMoney, FulfillmentStatusBadge, getOrderFulfillmentStatus, OrderStatusBadge, pendingDeliveryRowClass } from "@/components/status-badge";
 import { adminFetchJson } from "@/lib/api-client";
 import type { AdminOrderListRow, OrderStatus, PaymentMethod } from "@/lib/types";
 
@@ -168,7 +168,7 @@ function OrdersInner() {
       ) : null}
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="min-w-[960px] w-full text-left text-sm">
+        <table className="min-w-[1060px] w-full text-left text-sm">
           <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase text-slate-600">
             <tr>
               <th className="px-3 py-3 sm:px-4">Order</th>
@@ -176,6 +176,7 @@ function OrdersInner() {
               <th className="px-3 py-3 sm:px-4">User</th>
               <th className="px-3 py-3 sm:px-4">Total</th>
               <th className="px-3 py-3 sm:px-4">Status</th>
+              <th className="px-3 py-3 sm:px-4">Delivery</th>
               <th className="px-3 py-3 sm:px-4">Pay</th>
               <th className="px-3 py-3 sm:px-4">Payment</th>
               <th className="px-3 py-3 sm:px-4">Created</th>
@@ -183,16 +184,16 @@ function OrdersInner() {
           </thead>
           <tbody className="divide-y divide-slate-100">
             {list.isLoading ? (
-              <AdminTableLoader colSpan={8} />
+              <AdminTableLoader colSpan={9} />
             ) : list.data?.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-slate-500">
+                <td colSpan={9} className="px-4 py-8 text-slate-500">
                   {hasActiveFilters ? "No orders match these filters." : "No orders yet."}
                 </td>
               </tr>
             ) : (
               list.data?.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50/80">
+                <tr key={row.id} className={pendingDeliveryRowClass(row)}>
                   <td className="px-3 py-3 sm:px-4">
                     <Link href={`/orders/${row.id}`} className="font-medium text-emerald-800 hover:underline">
                       {row.order_number}
@@ -217,6 +218,9 @@ function OrdersInner() {
                   </td>
                   <td className="px-3 py-3 sm:px-4">
                     <OrderStatusBadge status={row.status} />
+                  </td>
+                  <td className="px-3 py-3 sm:px-4">
+                    <FulfillmentStatusBadge status={getOrderFulfillmentStatus(row)} />
                   </td>
                   <td className="px-3 py-3 sm:px-4 text-xs capitalize text-slate-600">
                     {row.payment_method === "cod" ? "COD" : "Online"}

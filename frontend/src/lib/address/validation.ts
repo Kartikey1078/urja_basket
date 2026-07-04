@@ -57,3 +57,13 @@ export const addressFormSchema = z.object({
 });
 
 export type AddressFormSchema = z.infer<typeof addressFormSchema>;
+
+/** Minimal fields for cart checkout — city/state default on submit if omitted */
+export const quickCheckoutAddressSchema = addressFormSchema
+  .omit({ alternatePhone: true, floor: true, building: true, landmark: true })
+  .extend({
+    city: z.string().max(120).optional(),
+    state: z.string().max(120).optional(),
+  });
+
+export type QuickCheckoutAddressSchema = z.infer<typeof quickCheckoutAddressSchema>;

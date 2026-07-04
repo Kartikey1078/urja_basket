@@ -156,11 +156,15 @@ export async function removeServerCartItem(
 
 export async function syncGuestCartToServer(
   token: string,
-  items: { productSlug: string; quantity: number }[]
+  items: { productSlug: string; quantity: number }[],
+  options?: { mergeStrategy?: "add" | "replace" }
 ): Promise<{ items: CartItem[]; bill: BillSummary }> {
   const data = await cartFetch<ServerCartPayload>("/api/v1/cart/sync", token, {
     method: "POST",
-    body: JSON.stringify({ items }),
+    body: JSON.stringify({
+      items,
+      mergeStrategy: options?.mergeStrategy ?? "add",
+    }),
   });
   return {
     items: data.items.map(serverLineToCartItem),

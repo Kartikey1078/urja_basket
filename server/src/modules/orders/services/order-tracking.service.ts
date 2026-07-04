@@ -7,6 +7,7 @@ import type {
   TrackingStepState,
 } from "../order.types";
 import * as orderRepo from "../repositories/order.repository";
+import * as orderInventory from "../../inventory/services/order-inventory.service";
 
 const STEP_ORDER: FulfillmentStatus[] = [
   "order_placed",
@@ -64,7 +65,9 @@ export function estimateDeliveryAt(deliverySlot: string | null, from = new Date(
 
 function isTrackableOrder(order: OrderRow): boolean {
   if (order.status === "failed" || order.status === "cancelled") return false;
-  if (order.status === "pending_payment") return false;
+  if (order.status === "pending_payment") {
+    return order.payment_method === "cod";
+  }
   return true;
 }
 
@@ -207,8 +210,19 @@ export async function updateOrderFulfillmentAdmin(
 ): Promise<void> {
   const order = await orderRepo.findOrderById(orderId);
   if (!order) throw new HttpError(404, "Order not found");
-  await orderRepo.updateFulfillmentStatus(orderId, status);
-  if (status === "delivered" && order.status === "confirmed" && order.payment_method === "cod") {
-    /* COD payment still collected separately via mark-cod-paid */
+
+  if (status === "cancelled") {
+    await orderInventory.maybeRestoreInventoryForOrder(order, status);
+    await orderRepo.updateFulfillmentStatus(orderId, status);
+    if (order.status !== "cancelled" && order.status !== "failed") {
+      await orderRepo.markOrderCancelled(orderId);
+    }
+    return;
   }
+
+  await orderRepo.updateFulfillmentStatus(orderId, status);
+  const updated = await orderRepo.findOrderById(orderId);
+  if (!updated) return;
+
+  await orderInventory.maybeDeductInventoryForOrder(updated, status);
 }

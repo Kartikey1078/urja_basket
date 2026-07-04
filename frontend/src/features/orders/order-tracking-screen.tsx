@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 import { OrderTrackingTimeline } from "@/components/orders/order-tracking-timeline";
 import { UrjaLoader } from "@/components/ui/loader";
+import { clearActiveOrder } from "@/lib/orders/active-order";
 import { fetchOrderTracking } from "@/lib/orders/api";
 import { getLastOrder } from "@/lib/orders/last-order";
 
@@ -57,6 +58,13 @@ function OrderTrackingInner() {
     structuralSharing: false,
     refetchInterval: (query) => (query.state.data?.isActive ? 5000 : false),
   });
+
+  useEffect(() => {
+    const status = tracking.data?.fulfillmentStatus;
+    if (status === "delivered" || status === "cancelled") {
+      clearActiveOrder();
+    }
+  }, [tracking.data?.fulfillmentStatus]);
 
   const handleRefresh = useCallback(async () => {
     setManualRefreshing(true);

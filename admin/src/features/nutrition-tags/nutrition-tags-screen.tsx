@@ -2,11 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminTableLoader } from "@/components/loader";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast } from "@/lib/admin-toast";
 import type { NutritionTagCatalog } from "@/lib/types";
 
 const inputClass =
@@ -18,15 +18,8 @@ const btnGhost =
 const btnDanger =
   "inline-flex min-h-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-800 hover:bg-red-100";
 
-function formatErr(e: unknown): string {
-  if (e instanceof AdminApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return "Request failed";
-}
-
 export function NutritionTagsScreen() {
   const qc = useQueryClient();
-  const [banner, setBanner] = useState<string | null>(null);
 
   const list = useQuery({
     queryKey: ["admin", "nutrition-tags"],
@@ -42,10 +35,10 @@ export function NutritionTagsScreen() {
       sort_order: number;
     }) => adminFetchJson<{ data: { id: number } }>("nutrition-tags", { method: "POST", json: body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.created("Nutrition tag");
       void qc.invalidateQueries({ queryKey: ["admin", "nutrition-tags"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const update = useMutation({
@@ -59,19 +52,19 @@ export function NutritionTagsScreen() {
       }>;
     }) => adminFetchJson(`nutrition-tags/${args.id}`, { method: "PATCH", json: args.body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.updated("Nutrition tag");
       void qc.invalidateQueries({ queryKey: ["admin", "nutrition-tags"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const remove = useMutation({
     mutationFn: (id: number) => adminFetchJson(`nutrition-tags/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.deleted("Nutrition tag");
       void qc.invalidateQueries({ queryKey: ["admin", "nutrition-tags"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   return (
@@ -80,12 +73,6 @@ export function NutritionTagsScreen() {
         title="Nutrition tags"
         description="Manage nutrition filter labels and images shown on the storefront."
       />
-      {banner ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
-          {banner}
-        </div>
-      ) : null}
-
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-sm font-semibold text-slate-900">New nutrition tag</h2>
         <p className="mt-1 text-xs text-slate-500">

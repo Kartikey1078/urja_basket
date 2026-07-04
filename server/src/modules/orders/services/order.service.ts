@@ -14,6 +14,7 @@ import {
 } from "../../coupons/services/coupon-validation.service";
 import { getPricingConfig, getSiteSettings } from "../../settings/settings.service";
 import { findUserByClerkId } from "../../users/repositories/user.repository";
+import * as orderInventory from "../../inventory/services/order-inventory.service";
 import type {
   AddressSnapshot,
   CheckoutSnapshot,
@@ -253,6 +254,8 @@ async function resolveCheckoutContext(
     }
   }
 
+  await orderInventory.assertCheckoutStockAvailable(snapshot);
+
   return {
     clerkId,
     userId,
@@ -293,7 +296,7 @@ async function createOrderRecord(
     addressSnapshot: ctx.address,
     razorpayOrderId: null,
     razorpayReceipt: ctx.receipt,
-    status: input.paymentMethod === "cod" ? "confirmed" : "pending_payment",
+    status: "pending_payment",
     paymentMethod: input.paymentMethod === "cod" ? "cod" : "online",
     fulfillmentStatus: "order_placed",
     estimatedDeliveryAt,
@@ -393,10 +396,10 @@ export async function createCheckoutWithCod(
     paymentMethod: "cod",
     dbOrderId,
     orderNumber: ctx.orderNumber,
-    status: "confirmed",
+    status: "pending_payment",
     grandTotal: ctx.snapshot.totals.grandTotal,
     amountPaise: ctx.amountPaise,
-    message: "Pay with cash when your order arrives.",
+    message: "Order received. We will confirm it shortly. Pay with cash on delivery.",
   };
 }
 
@@ -473,6 +476,10 @@ export async function markCodOrderPaidByAdmin(orderId: number): Promise<{
   await orderRepo.markOrderPaid(order.id);
   await couponRepo.confirmRedemption(order.id);
   await orderRepo.updateFulfillmentStatus(order.id, "delivered");
+  const refreshed = await orderRepo.findOrderById(order.id);
+  if (refreshed) {
+    await orderInventory.maybeDeductInventoryForOrder(refreshed, "delivered");
+  }
   await orderRepo.markCodPaymentCollected({
     orderId: order.id,
     collectedRef,
@@ -482,6 +489,115 @@ export async function markCodOrderPaidByAdmin(orderId: number): Promise<{
     dbOrderId: order.id,
     orderNumber: order.order_number,
     status: "paid",
+  };
+}
+
+export async function confirmCodOrderByAdmin(orderId: number): Promise<{
+  dbOrderId: number;
+  orderNumber: string;
+  status: OrderStatus;
+  inventoryDeducted: boolean;
+}> {
+  const order = await orderRepo.findOrderById(orderId);
+  if (!order) {
+    throw new HttpError(404, "Order not found");
+  }
+  if (order.payment_method !== "cod") {
+    throw new HttpError(400, "Only cash on delivery orders can be confirmed");
+  }
+  if (order.status === "confirmed" || order.status === "paid") {
+    await orderInventory.maybeDeductInventoryForOrder(order);
+    const finalOrder = await orderRepo.findOrderById(order.id);
+    return {
+      dbOrderId: order.id,
+      orderNumber: order.order_number,
+      status: order.status,
+      inventoryDeducted: Boolean(finalOrder?.inventory_deducted_at),
+    };
+  }
+  if (order.status !== "pending_payment") {
+    throw new HttpError(400, `Cannot confirm order from status: ${order.status}`);
+  }
+
+  await orderRepo.updateOrderStatus(order.id, "confirmed");
+  const updated = await orderRepo.findOrderById(order.id);
+  if (!updated) {
+    throw new HttpError(404, "Order not found");
+  }
+  await orderInventory.maybeDeductInventoryForOrder(updated);
+
+  const finalOrder = await orderRepo.findOrderById(order.id);
+  return {
+    dbOrderId: order.id,
+    orderNumber: order.order_number,
+    status: "confirmed",
+    inventoryDeducted: Boolean(finalOrder?.inventory_deducted_at),
+  };
+}
+
+export async function cancelOrderByAdmin(orderId: number): Promise<{
+  dbOrderId: number;
+  orderNumber: string;
+  status: OrderStatus;
+  inventoryRestored: boolean;
+}> {
+  const order = await orderRepo.findOrderById(orderId);
+  if (!order) {
+    throw new HttpError(404, "Order not found");
+  }
+  if (order.status === "cancelled") {
+    return {
+      dbOrderId: order.id,
+      orderNumber: order.order_number,
+      status: "cancelled",
+      inventoryRestored: false,
+    };
+  }
+  if (order.fulfillment_status === "delivered" && order.payment_method === "online") {
+    throw new HttpError(400, "Delivered prepaid orders must be refunded instead of cancelled");
+  }
+
+  const hadDeduction = Boolean(order.inventory_deducted_at);
+  await orderInventory.maybeRestoreInventoryForOrder(order, "cancelled");
+  await orderRepo.updateFulfillmentStatus(orderId, "cancelled");
+  await orderRepo.markOrderCancelled(orderId);
+
+  return {
+    dbOrderId: order.id,
+    orderNumber: order.order_number,
+    status: "cancelled",
+    inventoryRestored: hadDeduction,
+  };
+}
+
+export async function refundOnlineOrderByAdmin(orderId: number): Promise<{
+  dbOrderId: number;
+  orderNumber: string;
+  status: OrderStatus;
+  inventoryRestored: boolean;
+}> {
+  const order = await orderRepo.findOrderById(orderId);
+  if (!order) {
+    throw new HttpError(404, "Order not found");
+  }
+  if (order.payment_method !== "online") {
+    throw new HttpError(400, "Only online prepaid orders can be refunded");
+  }
+  if (order.status !== "paid" && order.status !== "cancelled") {
+    throw new HttpError(400, `Cannot refund order from status: ${order.status}`);
+  }
+
+  const hadDeduction = Boolean(order.inventory_deducted_at);
+  await orderInventory.maybeRestoreInventoryForOrder(order, "cancelled");
+  await orderRepo.markPaymentRefunded(orderId);
+  await orderRepo.updateFulfillmentStatus(orderId, "cancelled");
+  await orderRepo.markOrderCancelled(orderId);
+
+  return {
+    dbOrderId: order.id,
+    orderNumber: order.order_number,
+    status: "cancelled",
+    inventoryRestored: hadDeduction,
   };
 }
 
@@ -502,6 +618,7 @@ export async function completeRazorpayPayment(input: {
   }
 
   if (order.status === "paid") {
+    await orderInventory.maybeDeductInventoryAfterOnlinePayment(order.id);
     return {
       verified: true,
       dbOrderId: order.id,
@@ -519,6 +636,7 @@ export async function completeRazorpayPayment(input: {
     razorpaySignature: input.razorpaySignature,
   });
   await couponRepo.confirmRedemption(order.id);
+  await orderInventory.maybeDeductInventoryAfterOnlinePayment(order.id);
 
   await clearCartForUser(order.user_id, input.clerkId);
 

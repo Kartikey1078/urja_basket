@@ -104,13 +104,19 @@ export async function deleteNutritionTag(id: number): Promise<void> {
   await pool.execute(`DELETE FROM nutrition_tag_catalog WHERE id = :id`, { id });
 }
 
-async function distinctTagNamesFromProducts(categorySlug?: string): Promise<string[]> {
+async function distinctTagNamesFromProducts(options?: {
+  categorySlug?: string;
+  onlyBestSeller?: boolean;
+}): Promise<string[]> {
   const conditions: string[] = ["p.nutrition_tags IS NOT NULL"];
-  const params: Record<string, string> = {};
+  const params: Record<string, string | number> = {};
 
-  if (categorySlug) {
+  if (options?.categorySlug) {
     conditions.push("c.slug = :categorySlug");
-    params.categorySlug = categorySlug;
+    params.categorySlug = options.categorySlug;
+  }
+  if (options?.onlyBestSeller) {
+    conditions.push("p.is_best_seller = 1");
   }
 
   const [rows] = await pool.query<(RowDataPacket & { nutrition_tags: unknown })[]>(
@@ -134,11 +140,12 @@ async function distinctTagNamesFromProducts(categorySlug?: string): Promise<stri
   return tags.sort((a, b) => a.localeCompare(b));
 }
 
-export async function listNutritionFilterOptions(
-  categorySlug?: string
-): Promise<NutritionTagOption[]> {
+export async function listNutritionFilterOptions(options?: {
+  categorySlug?: string;
+  onlyBestSeller?: boolean;
+}): Promise<NutritionTagOption[]> {
   const [tagNames, catalog] = await Promise.all([
-    distinctTagNamesFromProducts(categorySlug),
+    distinctTagNamesFromProducts(options),
     listNutritionTagCatalog(),
   ]);
 

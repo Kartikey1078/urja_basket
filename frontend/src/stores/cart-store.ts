@@ -18,6 +18,8 @@ import type {
   CartProductInput,
 } from "@/lib/cart/types";
 
+let loginMergeInFlight = false;
+
 type CartState = {
   items: CartItem[];
   bill: BillSummary | null;
@@ -29,6 +31,9 @@ type CartState = {
   error: string | null;
 
   setGuestItems: (items: CartItem[]) => void;
+  resetForGuestSession: () => void;
+  /** Wipe cart UI + localStorage after a successful order (COD or verified online). */
+  clearAfterOrder: () => void;
   applyServerCart: (
     items: CartItem[],
     bill: BillSummary,
@@ -45,7 +50,10 @@ type CartState = {
   clearCart: (token?: string | null) => Promise<void>;
   fetchCart: (token: string) => Promise<void>;
   syncCartAfterLogin: (token: string) => Promise<void>;
-  loadAuthenticatedCart: (token: string, options?: { allowGuestMerge?: boolean }) => Promise<void>;
+  loadAuthenticatedCart: (
+    token: string,
+    options?: { allowGuestMerge?: boolean; mergeStrategy?: "add" | "replace" }
+  ) => Promise<void>;
 };
 
 export const useCartStore = create<CartState>()(
@@ -62,6 +70,34 @@ export const useCartStore = create<CartState>()(
 
       setGuestItems: (items) => {
         set({ items, mode: "guest", bill: null, appliedCoupon: null, error: null });
+      },
+
+      resetForGuestSession: () => {
+        set({
+          items: [],
+          mode: "guest",
+          bill: null,
+          appliedCoupon: null,
+          guestCouponCode: null,
+          loading: false,
+          syncing: false,
+          error: null,
+        });
+      },
+
+      clearAfterOrder: () => {
+        const signedIn = get().mode === "authenticated";
+        set({
+          items: [],
+          bill: null,
+          appliedCoupon: null,
+          guestCouponCode: null,
+          loading: false,
+          syncing: false,
+          error: null,
+          mode: signedIn ? "authenticated" : "guest",
+        });
+        useCartStore.persist.clearStorage();
       },
 
       setGuestCouponCode: (guestCouponCode) => set({ guestCouponCode }),
@@ -85,27 +121,57 @@ export const useCartStore = create<CartState>()(
       },
 
       increaseQuantity: async (product, token) => {
-        const current = get().getItemQuantity(product.slug);
-        if (current === 0) {
-          await get().addItem(product, 1, token);
+        if (token === undefined) return;
+        if (!token) {
+          await get().addItem(product, 1, null);
           return;
         }
-        const item = get().items.find((i) => i.slug === product.slug);
-        if (!item) return;
-        await get().updateQuantity(item.id, item.quantity + 1, token);
+        // Always POST by slug — server merges quantity; avoids slug-vs-lineItemId mismatch.
+        const prev = get().items;
+        set({
+          loading: true,
+          error: null,
+          items: mergeGuestAdd(prev, product, 1),
+        });
+        try {
+          const result = await addServerCartItem(token, {
+            productSlug: product.slug,
+            quantity: 1,
+          });
+          get().applyServerCart(result.items, result.bill);
+        } catch (err) {
+          set({ items: prev, loading: false, error: toErrorMessage(err) });
+          throw err;
+        }
       },
 
       decreaseQuantity: async (product, token) => {
         const item = get().items.find((i) => i.slug === product.slug);
         if (!item) return;
-        if (item.quantity <= 1) {
-          await get().removeItem(item.id, token);
+
+        if (token === undefined) return;
+
+        if (!token) {
+          if (item.quantity <= 1) {
+            await get().removeItem(item.id, null);
+            return;
+          }
+          await get().updateQuantity(item.id, item.quantity - 1, null);
           return;
         }
-        await get().updateQuantity(item.id, item.quantity - 1, token);
+
+        const lineItemId = await resolveLineItemId(get().items, product.slug, token);
+        if (lineItemId == null) return;
+
+        if (item.quantity <= 1) {
+          await get().removeItem(String(lineItemId), token);
+          return;
+        }
+        await get().updateQuantity(String(lineItemId), item.quantity - 1, token);
       },
 
       addItem: async (product, quantity = 1, token) => {
+        if (token === undefined) return;
         if (token) {
           const prev = get().items;
           set({
@@ -134,19 +200,34 @@ export const useCartStore = create<CartState>()(
       },
 
       updateQuantity: async (id, quantity, token) => {
+        if (token === undefined) return;
         if (quantity < 1) {
           await get().removeItem(id, token);
           return;
         }
 
         if (token) {
-          const lineItemId = Number(id);
-          if (!Number.isFinite(lineItemId)) return;
           const prev = get().items;
+          const matched = findItemByKey(prev, id);
+          let lineItemId = matched ? lineItemIdFromItem(matched) : parseLineItemId(id);
+
+          if (lineItemId == null && matched) {
+            lineItemId = await resolveLineItemId(prev, matched.slug, token);
+          }
+
+          if (lineItemId == null) {
+            set({ error: "Could not update cart item. Refresh and try again." });
+            return;
+          }
+
           set({
             loading: true,
             error: null,
-            items: prev.map((i) => (i.id === id ? { ...i, quantity } : i)),
+            items: prev.map((i) =>
+              i.id === id || i.slug === id || i.lineItemId === lineItemId
+                ? { ...i, id: String(lineItemId), lineItemId, quantity }
+                : i
+            ),
           });
           try {
             const result = await updateServerCartItem(token, lineItemId, quantity);
@@ -166,14 +247,31 @@ export const useCartStore = create<CartState>()(
       },
 
       removeItem: async (id, token) => {
+        if (token === undefined) return;
         if (token) {
-          const lineItemId = Number(id);
-          if (!Number.isFinite(lineItemId)) return;
           const prev = get().items;
+          const matched = findItemByKey(prev, id);
+          let lineItemId = matched ? lineItemIdFromItem(matched) : parseLineItemId(id);
+
+          if (lineItemId == null && matched) {
+            lineItemId = await resolveLineItemId(prev, matched.slug, token);
+          }
+
+          if (lineItemId == null) {
+            set({ error: "Could not remove cart item. Refresh and try again." });
+            return;
+          }
+
           set({
             loading: true,
             error: null,
-            items: prev.filter((i) => i.id !== id),
+            items: prev.filter(
+              (i) =>
+                i.lineItemId !== lineItemId &&
+                i.id !== String(lineItemId) &&
+                i.id !== id &&
+                i.slug !== id
+            ),
           });
           try {
             const result = await removeServerCartItem(token, lineItemId);
@@ -193,6 +291,7 @@ export const useCartStore = create<CartState>()(
       },
 
       clearCart: async (token) => {
+        if (token === undefined) return;
         if (token) {
           const { items } = get();
           set({ loading: true, error: null });
@@ -218,63 +317,44 @@ export const useCartStore = create<CartState>()(
           const result = await fetchServerCart(token);
           get().applyServerCart(result.items, result.bill, result.coupon);
         } catch (err) {
-          set({ loading: false, error: toErrorMessage(err) });
+          set({ loading: false, syncing: false, error: toErrorMessage(err) });
           throw err;
         }
       },
 
       loadAuthenticatedCart: async (token, options) => {
+        if (loginMergeInFlight) return;
+        loginMergeInFlight = true;
+
         const allowGuestMerge = options?.allowGuestMerge ?? false;
-        const guestItems = get().items;
+        const mergeStrategy = options?.mergeStrategy ?? "add";
+        const guestItems = get().items.map((item) => ({ ...item }));
         const hasGuestSnapshot =
           allowGuestMerge && get().mode === "guest" && guestItems.length > 0;
 
-        if (!hasGuestSnapshot) {
-          await get().fetchCart(token);
-          useCartStore.persist.clearStorage();
-          return;
-        }
-
-        set({ syncing: true, error: null, mode: "authenticated" });
+        set({ syncing: true, error: null });
         try {
-          const serverPeek = await fetchServerCart(token);
-          if (serverPeek.items.length === 0) {
+          if (hasGuestSnapshot) {
             const payload = guestItems.map((item) => ({
               productSlug: item.slug,
               quantity: item.quantity,
             }));
-            const result = await syncGuestCartToServer(token, payload);
-            get().applyServerCart(result.items, result.bill);
-          } else {
-            get().applyServerCart(serverPeek.items, serverPeek.bill);
-          }
-          useCartStore.persist.clearStorage();
-        } catch (err) {
-          set({ syncing: false, error: toErrorMessage(err) });
-          throw err;
-        }
-      },
-
-      syncCartAfterLogin: async (token) => {
-        const guestItems = get().items.map((item) => ({
-          productSlug: item.slug,
-          quantity: item.quantity,
-        }));
-
-        set({ syncing: true, error: null, mode: "authenticated" });
-        try {
-          if (guestItems.length > 0) {
-            const result = await syncGuestCartToServer(token, guestItems);
+            const result = await syncGuestCartToServer(token, payload, { mergeStrategy });
             get().applyServerCart(result.items, result.bill);
           } else {
             await get().fetchCart(token);
           }
-
           useCartStore.persist.clearStorage();
         } catch (err) {
           set({ syncing: false, error: toErrorMessage(err) });
           throw err;
+        } finally {
+          loginMergeInFlight = false;
         }
+      },
+
+      syncCartAfterLogin: async (token) => {
+        await get().loadAuthenticatedCart(token, { allowGuestMerge: true });
       },
     }),
     {
@@ -300,6 +380,36 @@ function mergeGuestAdd(
     );
   }
   return [...items, productToCartItem(product, quantity)];
+}
+
+function parseLineItemId(id: string): number | null {
+  const n = Number(id);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function lineItemIdFromItem(item: CartItem): number | null {
+  if (item.lineItemId != null && item.lineItemId > 0) return item.lineItemId;
+  return parseLineItemId(item.id);
+}
+
+function findItemByKey(items: CartItem[], idOrSlug: string): CartItem | undefined {
+  return items.find((i) => i.id === idOrSlug || i.slug === idOrSlug);
+}
+
+/** Resolve DB line item id — required for PATCH/DELETE. Refreshes from server if local id is still a slug. */
+async function resolveLineItemId(
+  items: CartItem[],
+  productSlug: string,
+  token: string
+): Promise<number | null> {
+  const local = items.find((i) => i.slug === productSlug);
+  const fromLocal = local ? lineItemIdFromItem(local) : null;
+  if (fromLocal != null) return fromLocal;
+
+  const fresh = await fetchServerCart(token);
+  useCartStore.getState().applyServerCart(fresh.items, fresh.bill, fresh.coupon);
+  const synced = fresh.items.find((i) => i.slug === productSlug);
+  return synced ? lineItemIdFromItem(synced) : null;
 }
 
 function toErrorMessage(err: unknown) {

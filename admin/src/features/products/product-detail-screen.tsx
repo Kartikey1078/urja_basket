@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 import { NutritionTagsEditor } from "@/components/nutrition-tags-editor";
 import { PageHeader } from "@/components/page-header";
 import { AdminPageLoader } from "@/components/loader";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast } from "@/lib/admin-toast";
 import type { Category, ProductDetail, ProductVariant } from "@/lib/types";
 
 const inputClass =
@@ -20,12 +21,6 @@ const btnGhost =
 const btnDanger =
   "inline-flex min-h-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 text-sm font-semibold text-red-800 hover:bg-red-100";
 
-function formatErr(e: unknown): string {
-  if (e instanceof AdminApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return "Request failed";
-}
-
 function bit(v: number): boolean {
   return Number(v) === 1;
 }
@@ -35,7 +30,6 @@ export function ProductDetailScreen() {
   const router = useRouter();
   const id = Number(params.id);
   const qc = useQueryClient();
-  const [banner, setBanner] = useState<string | null>(null);
   const [nutritionTags, setNutritionTags] = useState<string[]>([]);
 
   const product = useQuery({
@@ -58,30 +52,31 @@ export function ProductDetailScreen() {
   const updateProduct = useMutation({
     mutationFn: (body: Record<string, unknown>) => adminFetchJson(`products/${id}`, { method: "PATCH", json: body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.saved("Product");
       void qc.invalidateQueries({ queryKey: ["admin", "product", id] });
       void qc.invalidateQueries({ queryKey: ["admin", "products"] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const deleteProduct = useMutation({
     mutationFn: () => adminFetchJson(`products/${id}`, { method: "DELETE" }),
     onSuccess: () => {
+      adminToast.deleted("Product");
       void qc.invalidateQueries({ queryKey: ["admin", "products"] });
       router.push("/products");
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const createVariant = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
       adminFetchJson<{ data: { id: number } }>(`products/${id}/variants`, { method: "POST", json: body }),
     onSuccess: () => {
-      setBanner(null);
+      adminToast.created("Variant");
       void qc.invalidateQueries({ queryKey: ["admin", "variants", id] });
     },
-    onError: (e) => setBanner(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   useEffect(() => {
@@ -128,12 +123,6 @@ export function ProductDetailScreen() {
           ← All products
         </Link>
       </div>
-
-      {banner ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
-          {banner}
-        </div>
-      ) : null}
 
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-sm font-semibold text-slate-900">Product details</h2>
@@ -316,7 +305,7 @@ export function ProductDetailScreen() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {variants.data?.map((v) => (
-                <VariantRow key={v.id} v={v} productId={id} onError={(m) => setBanner(m)} onClear={() => setBanner(null)} />
+                <VariantRow key={v.id} v={v} productId={id} />
               ))}
             </tbody>
           </table>
@@ -329,13 +318,9 @@ export function ProductDetailScreen() {
 function VariantRow({
   v,
   productId,
-  onError,
-  onClear,
 }: {
   v: ProductVariant;
   productId: number;
-  onError: (m: string) => void;
-  onClear: () => void;
 }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -343,19 +328,19 @@ function VariantRow({
   const update = useMutation({
     mutationFn: (body: Record<string, unknown>) => adminFetchJson(`variants/${v.id}`, { method: "PATCH", json: body }),
     onSuccess: () => {
-      onClear();
+      adminToast.updated("Variant");
       void qc.invalidateQueries({ queryKey: ["admin", "variants", productId] });
     },
-    onError: (e) => onError(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   const remove = useMutation({
     mutationFn: () => adminFetchJson(`variants/${v.id}`, { method: "DELETE" }),
     onSuccess: () => {
-      onClear();
+      adminToast.deleted("Variant");
       void qc.invalidateQueries({ queryKey: ["admin", "variants", productId] });
     },
-    onError: (e) => onError(formatErr(e)),
+    onError: (e) => adminToast.fromError(e),
   });
 
   return (

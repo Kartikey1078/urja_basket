@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Tag } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 type CartHeaderProps = {
@@ -9,27 +9,21 @@ type CartHeaderProps = {
 
 export function CartHeader({ itemCount }: CartHeaderProps) {
   return (
-    <header className="border-border/60 sticky top-0 z-30 border-b bg-white/95 backdrop-blur-md">
-      <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-4 py-3.5 lg:max-w-2xl">
-        <div className="flex min-w-0 items-center gap-2">
-          <Link
-            href="/"
-            className="text-urja-forest inline-flex size-9 shrink-0 items-center justify-center rounded-full hover:bg-black/5"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="size-5" strokeWidth={2} />
-          </Link>
-          <h1 className="text-urja-forest truncate text-lg font-bold tracking-tight">
-            My Cart ({itemCount} {itemCount === 1 ? "Item" : "Items"})
-          </h1>
-        </div>
-        <button
-          type="button"
-          className="border-urja-forest/20 text-urja-forest inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-white px-3 py-1.5 text-xs font-semibold shadow-sm transition hover:bg-urja-cream"
+    <header className="sticky top-0 z-30 border-b border-stone-200/80 bg-white/90 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3.5 sm:px-6 lg:px-8">
+        <Link
+          href="/"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-700 transition hover:bg-stone-200/80"
+          aria-label="Go back"
         >
-          <Tag className="size-3.5" strokeWidth={2} />
-          Offers
-        </button>
+          <ArrowLeft className="size-4" />
+        </Link>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-lg font-semibold tracking-tight text-stone-900">Your cart</h1>
+          <p className="text-xs text-stone-500 sm:text-sm">
+            {itemCount} {itemCount === 1 ? "item" : "items"} · Review & checkout
+          </p>
+        </div>
       </div>
     </header>
   );

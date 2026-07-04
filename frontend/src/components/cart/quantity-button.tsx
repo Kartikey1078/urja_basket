@@ -59,19 +59,20 @@ export const QuantityButton = memo(function QuantityButton({
 }: QuantityButtonProps) {
   const router = useRouter();
   const quantity = useCartItemQuantity(product.slug);
-  const { addItem, increaseQuantity, decreaseQuantity, hydrated } = useCart();
+  const { addItem, increaseQuantity, decreaseQuantity, hydrated, authReady } = useCart();
   const pending = useRef(false);
   const wasZero = useRef(false);
+  const disabled = !authReady;
 
   const run = useCallback(async (action: () => Promise<void>) => {
-    if (pending.current) return;
+    if (pending.current || disabled) return;
     pending.current = true;
     try {
       await action();
     } finally {
       pending.current = false;
     }
-  }, []);
+  }, [disabled]);
 
   const handleAdd = () => {
     wasZero.current = quantity === 0;

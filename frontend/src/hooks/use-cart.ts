@@ -5,7 +5,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { computeBillSummary, cartItemCount } from "@/lib/cart/pricing";
 import type { BillSummary, CartProductInput } from "@/lib/cart/types";
+import { syncCurrentUser } from "@/lib/sync-user";
 import { useCartStore } from "@/stores/cart-store";
+
+type CartAuth =
+  | { kind: "guest" }
+  | { kind: "authenticated"; token: string }
+  | { kind: "pending" };
 
 const QTY_DEBOUNCE_MS = 400;
 const EMPTY_BILL: BillSummary = computeBillSummary([]);
@@ -44,6 +50,13 @@ export function useCart() {
 
   const hydrated = useCartPersistHydrated();
   const qtyTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const userSyncedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      userSyncedRef.current = false;
+    }
+  }, [isSignedIn]);
 
   const bill = useMemo(() => {
     if (serverBill?.authoritative) return serverBill;
@@ -52,10 +65,34 @@ export function useCart() {
 
   const count = useMemo(() => cartItemCount(items), [items]);
 
-  const resolveToken = useCallback(async () => {
-    if (!isSignedIn) return null;
-    return getToken();
-  }, [isSignedIn, getToken]);
+  /**
+   * Never treat a signed-in user as guest when Clerk token is momentarily unavailable —
+   * that caused local qty bumps to be overwritten by the next server cart fetch.
+   */
+  const resolveCartAuth = useCallback(async (): Promise<CartAuth> => {
+    if (!isLoaded) return { kind: "pending" };
+    if (!isSignedIn) return { kind: "guest" };
+
+    let token = await getToken();
+    if (!token) {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      token = await getToken();
+    }
+    if (!token) return { kind: "pending" };
+    return { kind: "authenticated", token };
+  }, [isLoaded, isSignedIn, getToken]);
+
+  const ensureUserSynced = useCallback(async (token: string) => {
+    if (userSyncedRef.current) return;
+    const user = await syncCurrentUser(token);
+    if (user) userSyncedRef.current = true;
+  }, []);
+
+  const tokenForStore = useCallback((auth: CartAuth): string | null | undefined => {
+    if (auth.kind === "guest") return null;
+    if (auth.kind === "pending") return undefined;
+    return auth.token;
+  }, []);
 
   /* Authenticated cart load runs in ClerkUserSync only (avoids duplicate fetch + guest merge on refresh). */
 
@@ -69,71 +106,106 @@ export function useCart() {
 
   const addItem = useCallback(
     async (product: CartProductInput, quantity?: number) => {
-      const token = await resolveToken();
+      const auth = await resolveCartAuth();
+      if (auth.kind === "pending") return;
+      if (auth.kind === "authenticated") await ensureUserSynced(auth.token);
+      const token = tokenForStore(auth);
+      if (token === undefined) return;
       await addItemStore(product, quantity, token);
     },
-    [addItemStore, resolveToken]
+    [addItemStore, ensureUserSynced, resolveCartAuth, tokenForStore]
   );
 
   const increaseQuantity = useCallback(
     async (product: CartProductInput) => {
-      const token = await resolveToken();
+      const auth = await resolveCartAuth();
+      if (auth.kind === "pending") return;
+      if (auth.kind === "authenticated") await ensureUserSynced(auth.token);
+      const token = tokenForStore(auth);
+      if (token === undefined) return;
       await increaseQuantityStore(product, token);
     },
-    [increaseQuantityStore, resolveToken]
+    [ensureUserSynced, increaseQuantityStore, resolveCartAuth, tokenForStore]
   );
 
   const decreaseQuantity = useCallback(
     async (product: CartProductInput) => {
-      const token = await resolveToken();
+      const auth = await resolveCartAuth();
+      if (auth.kind === "pending") return;
+      if (auth.kind === "authenticated") await ensureUserSynced(auth.token);
+      const token = tokenForStore(auth);
+      if (token === undefined) return;
       await decreaseQuantityStore(product, token);
     },
-    [decreaseQuantityStore, resolveToken]
+    [decreaseQuantityStore, ensureUserSynced, resolveCartAuth, tokenForStore]
   );
 
   const updateQuantity = useCallback(
     (id: string, quantity: number) => {
+      if (syncing || !isLoaded) return;
+
       const prevTimer = qtyTimers.current.get(id);
       if (prevTimer) clearTimeout(prevTimer);
 
       useCartStore.setState((state) => ({
-        items: state.items.map((i) => (i.id === id ? { ...i, quantity } : i)),
+        items: state.items.map((i) =>
+          i.id === id || i.slug === id ? { ...i, quantity } : i
+        ),
         bill: state.bill?.authoritative ? null : state.bill,
       }));
 
       const timer = setTimeout(() => {
         qtyTimers.current.delete(id);
         void (async () => {
-          const token = await resolveToken();
-          await updateQuantityStore(id, quantity, token);
+          const auth = await resolveCartAuth();
+          if (auth.kind === "pending") return;
+          if (auth.kind === "authenticated") await ensureUserSynced(auth.token);
+          const token = tokenForStore(auth);
+          if (token === undefined) return;
+          const item = useCartStore.getState().items.find((i) => i.id === id || i.slug === id);
+          const targetId =
+            item?.lineItemId != null
+              ? String(item.lineItemId)
+              : Number.isFinite(Number(id)) && Number(id) > 0
+                ? id
+                : (item?.slug ?? id);
+          await updateQuantityStore(targetId, quantity, token);
         })();
       }, QTY_DEBOUNCE_MS);
 
       qtyTimers.current.set(id, timer);
     },
-    [updateQuantityStore, resolveToken]
+    [ensureUserSynced, isLoaded, resolveCartAuth, syncing, tokenForStore, updateQuantityStore]
   );
 
   const removeItem = useCallback(
     async (id: string) => {
       const prevTimer = qtyTimers.current.get(id);
       if (prevTimer) clearTimeout(prevTimer);
-      const token = await resolveToken();
+      const auth = await resolveCartAuth();
+      if (auth.kind === "pending") return;
+      if (auth.kind === "authenticated") await ensureUserSynced(auth.token);
+      const token = tokenForStore(auth);
+      if (token === undefined) return;
       await removeItemStore(id, token);
     },
-    [removeItemStore, resolveToken]
+    [ensureUserSynced, removeItemStore, resolveCartAuth, tokenForStore]
   );
 
   const clear = useCallback(async () => {
-    const token = await resolveToken();
+    const auth = await resolveCartAuth();
+    if (auth.kind === "pending") return;
+    if (auth.kind === "authenticated") await ensureUserSynced(auth.token);
+    const token = tokenForStore(auth);
+    if (token === undefined) return;
     await clearCartStore(token);
-  }, [clearCartStore, resolveToken]);
+  }, [clearCartStore, ensureUserSynced, resolveCartAuth, tokenForStore]);
 
   const fetchCart = useCallback(async () => {
-    const token = await resolveToken();
-    if (!token) return;
-    await fetchCartStore(token);
-  }, [fetchCartStore, resolveToken]);
+    const auth = await resolveCartAuth();
+    if (auth.kind !== "authenticated") return;
+    await fetchCartStore(auth.token);
+  }, [fetchCartStore, resolveCartAuth]);
 
   return {
     items: hydrated ? items : [],
@@ -144,7 +216,8 @@ export function useCart() {
     syncing,
     error,
     mode,
-    isAuthenticated: isSignedIn,
+    isAuthenticated: isLoaded && isSignedIn,
+    authReady: isLoaded && !syncing,
     getItemQuantity,
     addItem,
     increaseQuantity,

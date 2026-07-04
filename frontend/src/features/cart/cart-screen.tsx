@@ -13,6 +13,7 @@ import { CartCouponSection } from "@/components/cart/cart-coupon-section";
 import { CartDeliveryBanner } from "@/components/cart/cart-delivery-banner";
 import { CartHeader } from "@/components/cart/cart-header";
 import { CartLineItem } from "@/components/cart/cart-line-item";
+import { CartSection } from "@/components/cart/cart-shell";
 import { CartSkeleton } from "@/components/cart/cart-skeleton";
 import { UrjaOverlayLoader } from "@/components/ui/loader";
 import { useCart } from "@/hooks/use-cart";
@@ -109,17 +110,20 @@ function CartScreenContent() {
       : "Proceed to Checkout";
 
   return (
-    <div className="bg-urja-cream min-h-dvh pb-40">
+    <div className="min-h-dvh bg-stone-50 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:pb-32">
       <CartHeader itemCount={count} />
 
-      <div className="mx-auto max-w-lg space-y-4 px-4 py-4 lg:max-w-2xl">
+      <main className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
         {syncing ? (
-          <p className="rounded-xl bg-urja-forest/10 text-urja-forest px-3 py-2 text-center text-sm font-medium">
-            Syncing your cart to your account…
+          <p className="mb-4 rounded-xl bg-white px-4 py-3 text-center text-sm text-stone-600 shadow-sm ring-1 ring-stone-200/80">
+            Syncing your cart…
           </p>
         ) : null}
         {error ? (
-          <p className="rounded-xl bg-destructive/10 text-destructive px-3 py-2 text-sm" role="alert">
+          <p
+            className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            role="alert"
+          >
             {error}
           </p>
         ) : null}
@@ -127,63 +131,86 @@ function CartScreenContent() {
         {showSkeleton ? (
           <CartSkeleton />
         ) : items.length === 0 ? (
-          <section className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-black/10 bg-white px-6 py-16 text-center">
-            <ShoppingBag className="text-urja-forest/40 mb-4 size-14" strokeWidth={1.25} />
-            <h2 className="text-urja-forest text-lg font-bold">Your cart is empty</h2>
-            <p className="text-muted-foreground mt-2 max-w-xs text-sm">
-              Add fresh fruits, dry fruits, and more to get started.
+          <section className="mx-auto flex max-w-md flex-col items-center rounded-2xl bg-white px-6 py-16 text-center shadow-sm ring-1 ring-stone-200/80">
+            <span className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-[#eef3ef] text-urja-forest">
+              <ShoppingBag className="size-7" strokeWidth={1.25} />
+            </span>
+            <h2 className="text-lg font-semibold text-stone-900">Your cart is empty</h2>
+            <p className="mt-2 max-w-xs text-sm text-stone-500">
+              Browse the store and add fresh picks to get started.
             </p>
             <Link
               href="/categories"
-              className="bg-urja-forest text-urja-cream mt-6 inline-flex rounded-xl px-6 py-2.5 text-sm font-semibold transition hover:opacity-90"
+              className="mt-8 inline-flex min-h-11 w-full max-w-xs items-center justify-center rounded-xl bg-urja-forest px-6 text-sm font-medium text-white transition hover:bg-urja-forest/90 sm:w-auto"
             >
               Browse categories
             </Link>
           </section>
         ) : (
-          <>
-            <div className="relative">
-              {loading && items.length > 0 ? (
-                <UrjaOverlayLoader label="Updating cart…" />
-              ) : null}
-              <ul
-                className={`space-y-3 ${loading && items.length > 0 ? "opacity-60" : ""}`}
-                aria-label="Cart items"
-              >
-                <AnimatePresence initial={false}>
-                  {items.map((item) => (
-                    <li key={item.id}>
-                      <CartLineItem
-                        item={item}
-                        onQuantityChange={(qty) => setQuantity(item.id, qty)}
-                        onRemove={() => removeItem(item.id)}
-                      />
-                    </li>
-                  ))}
-                </AnimatePresence>
-              </ul>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_400px]">
+            <div className="min-w-0 space-y-5">
+              <CartSection title={`Your items · ${count}`}>
+                <div className="relative">
+                  {loading && items.length > 0 ? (
+                    <UrjaOverlayLoader label="Updating cart…" />
+                  ) : null}
+                  <ul
+                    className={`divide-y divide-stone-100 ${loading && items.length > 0 ? "opacity-60" : ""}`}
+                    aria-label="Cart items"
+                  >
+                    <AnimatePresence initial={false} mode="popLayout">
+                      {items.map((item) => (
+                        <li key={item.id}>
+                          <CartLineItem
+                            embedded
+                            item={item}
+                            onQuantityChange={(qty) => setQuantity(item.id, qty)}
+                            onRemove={() => removeItem(item.id)}
+                          />
+                        </li>
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+                </div>
+              </CartSection>
+
+              <CartDeliveryBanner />
+
+              <div className="lg:hidden">
+                {addressHydrated ? (
+                  <CartCheckoutFlow
+                    open={checkoutOpen}
+                    slot={slot}
+                    onSlotChange={setSlot}
+                    onOpenChange={setCheckoutOpen}
+                    focusPaymentStep={focusPaymentStep}
+                  />
+                ) : null}
+              </div>
             </div>
 
-            {items.length > 0 ? <CartDeliveryBanner /> : null}
+            <aside className="min-w-0 space-y-5 lg:sticky lg:top-[4.5rem] lg:space-y-4">
+              <div className="hidden lg:block">
+                {addressHydrated ? (
+                  <CartCheckoutFlow
+                    open={checkoutOpen}
+                    slot={slot}
+                    onSlotChange={setSlot}
+                    onOpenChange={setCheckoutOpen}
+                    focusPaymentStep={focusPaymentStep}
+                  />
+                ) : null}
+              </div>
 
-            <CartCouponSection />
+              <CartCouponSection />
 
-            {addressHydrated ? (
-              <CartCheckoutFlow
-                open={checkoutOpen}
-                slot={slot}
-                onSlotChange={setSlot}
-                onOpenChange={setCheckoutOpen}
-                focusPaymentStep={focusPaymentStep}
-              />
-            ) : null}
-
-            <div ref={billRef}>
-              <CartBillSummary bill={bill} />
-            </div>
-          </>
+              <div ref={billRef}>
+                <CartBillSummary bill={bill} />
+              </div>
+            </aside>
+          </div>
         )}
-      </div>
+      </main>
 
       {hydrated && items.length > 0 ? (
         <CartCheckoutBar
@@ -195,7 +222,6 @@ function CartScreenContent() {
                 : "Opening payment…"
               : ctaLabel
           }
-          highlight={checkoutOpen && Boolean(selected)}
           disabled={processing}
           onViewDetails={scrollToBill}
           onProceed={handleProceed}

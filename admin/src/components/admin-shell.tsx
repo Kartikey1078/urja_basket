@@ -15,6 +15,8 @@ function pageTitleFromPath(pathname: string): string {
   );
   if (item) return item.label;
   if (pathname.startsWith("/orders/")) return "Order detail";
+  if (pathname.startsWith("/pos/orders/")) return "POS order";
+  if (pathname.startsWith("/pos")) return "POS";
   if (pathname.startsWith("/customers/")) return "Customer";
   if (pathname.startsWith("/products/")) return "Product";
   return "Urja Admin";

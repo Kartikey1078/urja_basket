@@ -35,7 +35,7 @@ export async function listMyOrders(req: Request, res: Response) {
       row.fulfillment_status !== "delivered" &&
       row.fulfillment_status !== "cancelled" &&
       row.status !== "failed" &&
-      row.status !== "pending_payment",
+      !(row.status === "pending_payment" && row.payment_method !== "cod"),
   }));
 
   res.json({ data });

@@ -75,8 +75,11 @@ export async function listProductCards(filters?: productRepo.ProductCardFilters)
   return rows.map(mapProduct);
 }
 
-export async function listNutritionTags(categorySlug?: string) {
-  return nutritionTagRepo.listNutritionFilterOptions(categorySlug);
+export async function listNutritionTags(options?: {
+  categorySlug?: string;
+  onlyBestSeller?: boolean;
+}) {
+  return nutritionTagRepo.listNutritionFilterOptions(options);
 }
 
 export async function getProductDetailBySlug(slug: string) {

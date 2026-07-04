@@ -44,8 +44,12 @@ export function CategoryProductListingClient({
   );
 
   const { data: nutritionOptions = [] } = useQuery({
-    queryKey: ["nutrition-tags", categorySlug],
-    queryFn: () => fetchNutritionTags(categorySlug || undefined),
+    queryKey: ["nutrition-tags", categorySlug, bestSellerOnly],
+    queryFn: () =>
+      fetchNutritionTags({
+        categorySlug: categorySlug || undefined,
+        bestSellerOnly,
+      }),
     staleTime: 60_000,
     retry: 2,
   });
@@ -133,7 +137,9 @@ export function CategoryProductListingClient({
             <p className="text-muted-foreground mt-1 max-w-sm text-sm">
               {countActiveFilters(filters) > 0
                 ? "Try removing a filter or widening your price range."
-                : "Nothing in this category right now. Check back soon."}
+                : bestSellerOnly
+                  ? "No bestsellers match right now. Check back soon or browse our categories."
+                  : "Nothing in this category right now. Check back soon."}
             </p>
             {countActiveFilters(filters) > 0 ? (
               <button

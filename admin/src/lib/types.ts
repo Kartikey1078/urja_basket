@@ -130,13 +130,14 @@ export type FulfillmentStatus =
   | "out_for_delivery"
   | "delivered"
   | "cancelled";
-export type PaymentStatus = "created" | "paid" | "failed" | "pending_collection";
+export type PaymentStatus = "created" | "paid" | "failed" | "pending_collection" | "refunded";
 
 export type AdminOrderListRow = {
   id: number;
   order_number: string;
   user_id: number | null;
   status: OrderStatus;
+  fulfillment_status: FulfillmentStatus;
   payment_method: PaymentMethod;
   delivery_slot: string | null;
   grand_total: string;
@@ -197,6 +198,7 @@ export type AdminOrderDetail = {
     razorpay_order_id: string | null;
     razorpay_receipt: string | null;
     paid_at: string | null;
+    inventory_deducted_at: string | null;
     created_at: string;
   };
   items: AdminOrderItem[];

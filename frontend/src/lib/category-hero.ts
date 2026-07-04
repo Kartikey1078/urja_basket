@@ -47,3 +47,8 @@ export function getCategoryHero(slug: string) {
     alt: "",
   };
 }
+
+/** Full-width hero for the bestsellers listing page. */
+export function getBestsellersHero() {
+  return getCategoryHero("fresh-fruits");
+}

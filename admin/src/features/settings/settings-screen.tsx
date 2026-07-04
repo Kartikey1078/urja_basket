@@ -5,19 +5,14 @@ import { useEffect, useState } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminPageLoader } from "@/components/loader";
-import { AdminApiError, adminFetchJson } from "@/lib/api-client";
+import { adminFetchJson } from "@/lib/api-client";
+import { adminToast, formatAdminError } from "@/lib/admin-toast";
 import type { SiteSettings } from "@/lib/types";
 
 const inputClass =
   "mt-1 block w-full min-h-11 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25";
 const btnPrimary =
   "inline-flex min-h-10 items-center justify-center rounded-lg bg-emerald-700 px-4 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50";
-
-function formatErr(e: unknown): string {
-  if (e instanceof AdminApiError) return e.message;
-  if (e instanceof Error) return e.message;
-  return "Request failed";
-}
 
 function toFormState(s: SiteSettings): Record<string, string | boolean> {
   return {
@@ -59,8 +54,6 @@ function patchFromForm(form: Record<string, string | boolean>): Record<string, u
 
 export function SettingsScreen() {
   const qc = useQueryClient();
-  const [banner, setBanner] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string | boolean> | null>(null);
 
   const settings = useQuery({
@@ -78,16 +71,12 @@ export function SettingsScreen() {
     mutationFn: (body: Record<string, unknown>) =>
       adminFetchJson<{ data: SiteSettings }>("settings", { method: "PATCH", json: body }),
     onSuccess: (res) => {
-      setBanner(null);
-      setSuccess("Settings saved. Cart pricing and checkout use these values.");
+      adminToast.saved("Settings");
       setForm(toFormState(res.data));
       void qc.invalidateQueries({ queryKey: ["admin", "settings"] });
       void qc.invalidateQueries({ queryKey: ["admin", "inventory"] });
     },
-    onError: (e) => {
-      setSuccess(null);
-      setBanner(formatErr(e));
-    },
+    onError: (e) => adminToast.fromError(e, "Could not save settings"),
   });
 
   if (settings.isLoading || !form) {
@@ -97,14 +86,13 @@ export function SettingsScreen() {
   if (settings.isError) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900">
-        {formatErr(settings.error)}
+        {formatAdminError(settings.error)}
       </div>
     );
   }
 
   const setField = (key: string, value: string | boolean) => {
     setForm((prev) => (prev ? { ...prev, [key]: value } : prev));
-    setSuccess(null);
   };
 
   return (
@@ -113,20 +101,6 @@ export function SettingsScreen() {
         title="Settings"
         description="Store identity, pricing, payments, and operations. Changes apply to cart totals and checkout on the storefront."
       />
-
-      {banner ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-900" role="alert">
-          {banner}
-        </div>
-      ) : null}
-      {success ? (
-        <div
-          className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
-          role="status"
-        >
-          {success}
-        </div>
-      ) : null}
 
       {settings.data?.updatedAt ? (
         <p className="mb-4 text-xs text-slate-500">
@@ -331,8 +305,7 @@ export function SettingsScreen() {
             onClick={() => {
               if (settings.data) {
                 setForm(toFormState(settings.data));
-                setBanner(null);
-                setSuccess(null);
+                adminToast.info("Changes reset to last saved values.");
               }
             }}
           >
