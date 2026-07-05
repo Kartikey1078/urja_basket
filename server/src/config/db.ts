@@ -41,7 +41,7 @@ function sslFromEnv(): PoolOptions["ssl"] | undefined {
 
 /**
  * Resolves MySQL connection settings from env.
- * Supports standard DB_* vars, Railway MYSQL* vars, and MYSQL_URL / DATABASE_URL.
+ * Supports DB_* vars, MYSQL_URL / DATABASE_URL, and legacy MYSQLHOST-style names.
  */
 export function resolveDbConfig(): DbConfig {
   const url = process.env.MYSQL_URL ?? process.env.DATABASE_URL;
@@ -81,8 +81,7 @@ export function resolveDbConfig(): DbConfig {
 
   if (!host || !user || !database) {
     throw new Error(
-      "Missing MySQL configuration. Set MYSQL_URL (or DATABASE_URL), or DB_HOST/DB_USER/DB_NAME, " +
-        "or Railway MYSQLHOST/MYSQLUSER/MYSQLDATABASE."
+      "Missing MySQL configuration. Set MYSQL_URL (or DATABASE_URL), or DB_HOST/DB_USER/DB_NAME."
     );
   }
 

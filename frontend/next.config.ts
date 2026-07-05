@@ -5,7 +5,7 @@ function resolveApiBase(): string {
   if (raw) return raw;
   if (process.env.NODE_ENV === "production") {
     throw new Error(
-      "NEXT_PUBLIC_API_URL is required for production builds (Railway storefront)."
+      "NEXT_PUBLIC_API_URL is required for production builds."
     );
   }
   return "http://localhost:4000";

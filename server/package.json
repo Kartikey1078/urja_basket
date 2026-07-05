@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "start": "node dist/server.js",
-    "railway:release": "tsx scripts/railway-release.ts",
+    "deploy:migrate": "tsx scripts/deploy-migrate.ts",
     "db:seed": "tsx scripts/seed-db.ts",
     "db:seed-only": "tsx scripts/seed-db.ts --seed-only",
     "db:migrate": "tsx scripts/apply-migrations.ts",

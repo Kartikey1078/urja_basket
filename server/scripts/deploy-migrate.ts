@@ -1,6 +1,8 @@
 /**
- * Railway release phase: run DB migrations before the app starts.
+ * Production deploy helper: run DB migrations before starting the API.
  * Fresh databases get --init (catalog + seed); existing DBs run checkout migrations only.
+ *
+ * Usage on EC2: npm run deploy:migrate
  */
 import { execSync } from "node:child_process";
 import path from "node:path";
@@ -48,16 +50,16 @@ async function main() {
   const args = fresh ? ["--init"] : [];
   const label = fresh ? "db:init (fresh database)" : "db:migrate";
 
-  console.log(`[railway:release] Running ${label}...`);
+  console.log(`[deploy:migrate] Running ${label}...`);
   execSync(`npx tsx scripts/apply-migrations.ts ${args.join(" ")}`.trim(), {
     cwd: serverRoot,
     stdio: "inherit",
     env: process.env,
   });
-  console.log("[railway:release] Database ready.");
+  console.log("[deploy:migrate] Database ready.");
 }
 
 void main().catch((err) => {
-  console.error("[railway:release] Failed:", err instanceof Error ? err.message : err);
+  console.error("[deploy:migrate] Failed:", err instanceof Error ? err.message : err);
   process.exit(1);
 });
