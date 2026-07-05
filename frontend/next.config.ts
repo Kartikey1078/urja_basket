@@ -14,6 +14,7 @@ function resolveApiBase(): string {
 const apiBase = resolveApiBase();
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
   turbopack: {
     root: __dirname,
   },
