@@ -6,9 +6,9 @@ const apiBase = resolvePublicApiBaseUrl();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  turbopack: {
-    root: __dirname,
-  },
+  // turbopack: {
+  //   root: __dirname,
+  // },
   /** Proxy Express API through Next dev server — same-origin fetches in the browser. */
   async rewrites() {
     return [
