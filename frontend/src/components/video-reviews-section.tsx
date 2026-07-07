@@ -76,12 +76,11 @@ function ReviewCard({ review }: { review: VideoReview }) {
   return (
     <article
       className={cn(
-        "border-urja-forest/15 bg-card shrink-0 snap-start snap-always overflow-hidden rounded-2xl border shadow-lg shadow-black/10 ring-1 ring-black/[0.06] transition-[box-shadow,transform] duration-200",
+        "border-urja-forest/15 bg-card shrink-0 grow-0 snap-start snap-always overflow-hidden rounded-2xl border shadow-lg shadow-black/10 ring-1 ring-black/[0.06] transition-[box-shadow,transform] duration-200",
         "hover:shadow-xl hover:shadow-black/15 hover:ring-urja-forest/20",
-        /* ~1.4 cards on mobile — width sets the square “IG post” frame (1:1 media below) */
-        "w-[clamp(11rem,calc((100vw-2.75rem)/1.42),20rem)] max-w-[20rem]",
-        "sm:w-[clamp(12.25rem,calc((100vw-3.25rem)/1.45),20.5rem)] sm:max-w-[20.5rem]",
-        "md:w-[min(20.5rem,calc((min(100vw,80rem)-5rem)/3.15))] md:max-w-[20.5rem]"
+        "w-[11.5rem] min-w-[11.5rem] max-w-[11.5rem]",
+        "sm:w-[12.5rem] sm:min-w-[12.5rem] sm:max-w-[12.5rem]",
+        "md:w-[min(20.5rem,calc((min(100vw,80rem)-5rem)/3.15))] md:max-w-[20.5rem] md:min-w-0"
       )}
     >
       <div className="bg-muted/50 relative aspect-square w-full overflow-hidden">
@@ -131,7 +130,7 @@ export function VideoReviewsSection() {
       className="border-urja-forest/12 from-urja-cream/40 via-background to-urja-cream/25 mt-8 w-full min-w-0 bg-gradient-to-b sm:mt-10 md:mt-12 lg:mt-14"
       aria-labelledby="video-reviews-heading"
     >
-      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 pt-7 pb-9 sm:px-4 sm:pt-8 sm:pb-10 lg:px-6 lg:pt-9 lg:pb-11 xl:px-10">
+      <div className="mx-auto w-full min-w-0 max-w-7xl overflow-hidden px-3 pt-7 pb-9 sm:px-4 sm:pt-8 sm:pb-10 lg:px-6 lg:pt-9 lg:pb-11 xl:px-10">
         <div className="mb-3 sm:mb-4">
           <div className="flex items-center gap-2.5">
             <span className="bg-urja-forest/10 text-urja-forest inline-flex size-10 items-center justify-center rounded-xl sm:size-11">
@@ -152,11 +151,10 @@ export function VideoReviewsSection() {
         </div>
 
         <div
-          className="no-scrollbar -mx-3 flex touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-3 pb-2 sm:-mx-4 sm:gap-4 sm:px-4 md:gap-5 lg:mx-0 lg:px-0"
+          className="no-scrollbar flex w-full min-w-0 flex-nowrap touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] sm:gap-4 md:gap-5"
           style={{
             scrollPaddingLeft: "max(0.75rem, env(safe-area-inset-left, 0px))",
             scrollPaddingRight: "max(0.75rem, env(safe-area-inset-right, 0px))",
-            WebkitOverflowScrolling: "touch",
           }}
         >
           {REVIEWS.map((review) => (

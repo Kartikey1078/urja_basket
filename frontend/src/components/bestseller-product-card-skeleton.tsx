@@ -11,7 +11,7 @@ export function BestsellerProductCardSkeleton({
   return (
     <article
       className={cn(
-        "border-border/80 bg-card flex w-[10.5rem] min-w-[10.5rem] shrink-0 flex-col overflow-hidden rounded-xl border shadow-md ring-1 ring-black/[0.04] sm:w-[12rem] sm:min-w-[12rem] md:min-w-0 md:w-auto md:shrink",
+        "border-border/80 bg-card flex w-[10.5rem] min-w-[10.5rem] shrink-0 snap-start snap-always flex-col overflow-hidden rounded-xl border shadow-md ring-1 ring-black/[0.04] sm:w-[12rem] sm:min-w-[12rem] md:min-w-0 md:w-auto md:shrink",
         className
       )}
       aria-hidden

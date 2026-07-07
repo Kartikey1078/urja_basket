@@ -50,7 +50,7 @@ async function BestsellersSectionContent() {
       className="bg-background mt-4 w-full min-w-0 sm:mt-5 md:mt-6"
       aria-labelledby="bestsellers-heading"
     >
-      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 pb-8 sm:px-4 sm:pb-10 lg:px-6 lg:pb-12 xl:px-10">
+      <div className="mx-auto w-full min-w-0 max-w-7xl overflow-hidden px-3 sm:px-4 lg:px-6 xl:px-10">
         <div className="mb-3 flex items-end justify-between gap-3 sm:mb-4">
           <h2
             id="bestsellers-heading"
@@ -75,11 +75,10 @@ async function BestsellersSectionContent() {
           </p>
         ) : (
           <div
-            className="no-scrollbar flex touch-pan-x gap-3 overflow-x-auto scroll-smooth pb-1 pr-1 sm:gap-4 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pr-0 lg:grid-cols-5 lg:gap-5"
+            className="no-scrollbar flex w-full min-w-0 flex-nowrap touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-8 [-webkit-overflow-scrolling:touch] sm:gap-4 sm:pb-10 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-5 lg:gap-5 lg:pb-12"
             style={{
-              scrollPaddingLeft: "max(0.5rem, env(safe-area-inset-left, 0px))",
+              scrollPaddingLeft: "max(0.75rem, env(safe-area-inset-left, 0px))",
               scrollPaddingRight: "max(0.75rem, env(safe-area-inset-right, 0px))",
-              WebkitOverflowScrolling: "touch",
             }}
           >
             {products.map((product) => (

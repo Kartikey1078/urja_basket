@@ -43,7 +43,7 @@ export function ConditionalSiteChrome({ children }: { children: React.ReactNode 
       <SiteHeader />
       <main
         className={cn(
-          "flex-1 max-md:pb-[calc(4.35rem+env(safe-area-inset-bottom))]",
+          "min-w-0 w-full flex-1 max-md:pb-[calc(4.35rem+env(safe-area-inset-bottom))]",
           peekVisible && "max-md:pb-[calc(8.75rem+env(safe-area-inset-bottom))]"
         )}
       >

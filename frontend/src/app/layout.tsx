@@ -38,7 +38,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${urjaSerif.variable} h-full bg-white antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-white">
+      <body className="flex min-h-full min-w-0 flex-col bg-white">
         <ClerkProvider>
           <ClerkUserSync />
           <Providers>

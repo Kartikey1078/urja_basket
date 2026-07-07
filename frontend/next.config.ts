@@ -1,17 +1,8 @@
 import type { NextConfig } from "next";
 
-function resolveApiBase(): string {
-  const raw = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (raw) return raw;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "NEXT_PUBLIC_API_URL is required for production builds."
-    );
-  }
-  return "http://localhost:4000";
-}
+import { resolvePublicApiBaseUrl } from "./src/lib/api-base-url";
 
-const apiBase = resolveApiBase();
+const apiBase = resolvePublicApiBaseUrl();
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
