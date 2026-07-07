@@ -142,6 +142,16 @@
     scrollbar-width: none;
   }
 
+  /**
+   * Horizontal carousels: allow vertical page scroll + sideways swipe.
+   * Avoid touch-pan-x (pan-x only) — it blocks vertical scrolling on mobile.
+   */
+  .scroll-x-rail {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+  }
+
   .thin-scrollbar {
     scrollbar-width: thin;
     scrollbar-color: color-mix(in srgb, var(--color-urja-forest) 45%, transparent)

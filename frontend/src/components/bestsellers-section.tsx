@@ -75,7 +75,7 @@ async function BestsellersSectionContent() {
           </p>
         ) : (
           <div
-            className="no-scrollbar flex w-full min-w-0 flex-nowrap touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-8 [-webkit-overflow-scrolling:touch] sm:gap-4 sm:pb-10 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-5 lg:gap-5 lg:pb-12"
+            className="no-scrollbar scroll-x-rail flex w-full min-w-0 flex-nowrap snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-8 sm:gap-4 sm:pb-10 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-5 lg:gap-5 lg:pb-12"
             style={{
               scrollPaddingLeft: "max(0.75rem, env(safe-area-inset-left, 0px))",
               scrollPaddingRight: "max(0.75rem, env(safe-area-inset-right, 0px))",

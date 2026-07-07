@@ -151,7 +151,7 @@ export function VideoReviewsSection() {
         </div>
 
         <div
-          className="no-scrollbar flex w-full min-w-0 flex-nowrap touch-pan-x snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain scroll-smooth pb-2 [-webkit-overflow-scrolling:touch] sm:gap-4 md:gap-5"
+          className="no-scrollbar scroll-x-rail flex w-full min-w-0 flex-nowrap snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-2 sm:gap-4 md:gap-5"
           style={{
             scrollPaddingLeft: "max(0.75rem, env(safe-area-inset-left, 0px))",
             scrollPaddingRight: "max(0.75rem, env(safe-area-inset-right, 0px))",

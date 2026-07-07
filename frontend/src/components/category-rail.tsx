@@ -15,7 +15,7 @@ export function CategoryRail() {
     >
       <div
         className={cn(
-          "no-scrollbar mx-auto flex w-full min-w-0 max-w-7xl flex-nowrap touch-pan-x snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain scroll-smooth py-5 pl-4 pr-4 [-webkit-overflow-scrolling:touch]",
+          "no-scrollbar scroll-x-rail mx-auto flex w-full min-w-0 max-w-7xl flex-nowrap snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth py-5 pl-4 pr-4",
           "sm:gap-2.5 sm:py-6 sm:pl-5 sm:pr-5",
           "md:snap-none md:justify-center md:gap-6 md:overflow-x-visible md:py-7 md:pl-6 md:pr-6 lg:gap-7"
         )}
@@ -29,7 +29,7 @@ export function CategoryRail() {
             key={href}
             href={href}
             className={cn(
-              "text-foreground group flex w-[5.25rem] min-w-[5.25rem] max-w-[5.25rem] shrink-0 grow-0 snap-start snap-always flex-col items-center gap-2 rounded-xl py-1.5 text-center outline-none ring-urja-forest/30 transition hover:opacity-90 focus-visible:ring-2",
+              "text-foreground group flex w-[5.25rem] min-w-[5.25rem] max-w-[5.25rem] shrink-0 grow-0 snap-start snap-always flex-col items-center gap-2 rounded-xl py-1.5 text-center outline-none ring-urja-forest/30 transition hover:opacity-90 focus-visible:ring-2 touch-manipulation",
               "sm:w-32 sm:min-w-[8rem] sm:max-w-[8rem] md:w-36 md:max-w-none md:min-w-0 md:gap-3"
             )}
           >
