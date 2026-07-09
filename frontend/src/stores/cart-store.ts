@@ -362,8 +362,17 @@ export const useCartStore = create<CartState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) =>
         state.mode === "guest"
-          ? { items: state.items, mode: state.mode }
+          ? { items: state.items.filter((i) => i.quantity > 0), mode: state.mode }
           : { items: [], mode: "authenticated" },
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<CartState> | undefined;
+        const items = (persisted?.items ?? []).filter((i) => i.quantity > 0);
+        return {
+          ...currentState,
+          ...persisted,
+          items,
+        };
+      },
     }
   )
 );

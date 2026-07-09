@@ -87,7 +87,9 @@ export function CartLineItem({
             >
               <button
                 type="button"
-                onClick={() => onQuantityChange(item.quantity - 1)}
+                onClick={() =>
+                  item.quantity <= 1 ? onRemove() : onQuantityChange(item.quantity - 1)
+                }
                 className="inline-flex size-10 flex-1 items-center justify-center rounded-lg bg-white text-stone-700 shadow-sm transition hover:text-stone-900 sm:flex-none sm:shadow-none"
                 aria-label="Decrease quantity"
               >

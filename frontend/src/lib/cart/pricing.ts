@@ -19,10 +19,11 @@ export function discountPercent(price: number, mrp: number) {
 }
 
 export function computeBillSummary(items: CartItem[]): BillSummary {
-  const itemTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const validItems = items.filter((item) => item.quantity > 0);
+  const itemTotal = validItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFeeWaived = itemTotal >= FREE_DELIVERY_MIN;
   const deliveryFee = deliveryFeeWaived ? 0 : DELIVERY_FEE;
-  const discount = items.length > 0 ? CART_PROMO_DISCOUNT : 0;
+  const discount = validItems.length > 0 ? CART_PROMO_DISCOUNT : 0;
   const toPay = Math.max(
     0,
     itemTotal + deliveryFee + PACKAGING_CHARGES - discount
@@ -32,7 +33,7 @@ export function computeBillSummary(items: CartItem[]): BillSummary {
     itemTotal,
     deliveryFee: deliveryFeeWaived ? DELIVERY_FEE : deliveryFee,
     deliveryFeeWaived,
-    packagingCharges: items.length > 0 ? PACKAGING_CHARGES : 0,
+    packagingCharges: validItems.length > 0 ? PACKAGING_CHARGES : 0,
     discount,
     tax: 0,
     toPay,
@@ -40,7 +41,7 @@ export function computeBillSummary(items: CartItem[]): BillSummary {
 }
 
 export function cartItemCount(items: CartItem[]) {
-  return items.reduce((sum, item) => sum + item.quantity, 0);
+  return items.reduce((sum, item) => sum + (item.quantity > 0 ? item.quantity : 0), 0);
 }
 
 export function productToCartItem(

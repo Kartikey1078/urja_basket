@@ -147,6 +147,30 @@ export function useCart() {
       const prevTimer = qtyTimers.current.get(id);
       if (prevTimer) clearTimeout(prevTimer);
 
+      const runPersist = (action: (token: string | null) => Promise<void>) => {
+        const timer = setTimeout(() => {
+          qtyTimers.current.delete(id);
+          void (async () => {
+            const auth = await resolveCartAuth();
+            if (auth.kind === "pending") return;
+            if (auth.kind === "authenticated") await ensureUserSynced(auth.token);
+            const token = tokenForStore(auth);
+            if (token === undefined) return;
+            await action(token);
+          })();
+        }, QTY_DEBOUNCE_MS);
+        qtyTimers.current.set(id, timer);
+      };
+
+      if (quantity < 1) {
+        useCartStore.setState((state) => ({
+          items: state.items.filter((i) => i.id !== id && i.slug !== id),
+          bill: state.bill?.authoritative ? null : state.bill,
+        }));
+        runPersist((token) => removeItemStore(id, token));
+        return;
+      }
+
       useCartStore.setState((state) => ({
         items: state.items.map((i) =>
           i.id === id || i.slug === id ? { ...i, quantity } : i
@@ -154,28 +178,26 @@ export function useCart() {
         bill: state.bill?.authoritative ? null : state.bill,
       }));
 
-      const timer = setTimeout(() => {
-        qtyTimers.current.delete(id);
-        void (async () => {
-          const auth = await resolveCartAuth();
-          if (auth.kind === "pending") return;
-          if (auth.kind === "authenticated") await ensureUserSynced(auth.token);
-          const token = tokenForStore(auth);
-          if (token === undefined) return;
-          const item = useCartStore.getState().items.find((i) => i.id === id || i.slug === id);
-          const targetId =
-            item?.lineItemId != null
-              ? String(item.lineItemId)
-              : Number.isFinite(Number(id)) && Number(id) > 0
-                ? id
-                : (item?.slug ?? id);
-          await updateQuantityStore(targetId, quantity, token);
-        })();
-      }, QTY_DEBOUNCE_MS);
-
-      qtyTimers.current.set(id, timer);
+      runPersist(async (token) => {
+        const item = useCartStore.getState().items.find((i) => i.id === id || i.slug === id);
+        const targetId =
+          item?.lineItemId != null
+            ? String(item.lineItemId)
+            : Number.isFinite(Number(id)) && Number(id) > 0
+              ? id
+              : (item?.slug ?? id);
+        await updateQuantityStore(targetId, quantity, token);
+      });
     },
-    [ensureUserSynced, isLoaded, resolveCartAuth, syncing, tokenForStore, updateQuantityStore]
+    [
+      ensureUserSynced,
+      isLoaded,
+      removeItemStore,
+      resolveCartAuth,
+      syncing,
+      tokenForStore,
+      updateQuantityStore,
+    ]
   );
 
   const removeItem = useCallback(
