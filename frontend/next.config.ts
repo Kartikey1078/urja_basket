@@ -48,6 +48,11 @@ const nextConfig: NextConfig = {
         hostname: "**.edgeone.app",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.phototourl.com",
+        pathname: "/**",
+      },
     ],
   },
 };
