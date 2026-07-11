@@ -15,30 +15,10 @@ export const SHOP_CATEGORIES = [
     href: "/categories/dry-fruits",
   },
   {
-    slug: "dried-fruits",
-    label: "Dried Fruits",
-    image:
-      "https://images.unsplash.com/photo-1595475207226-064d29d163fb?auto=format&w=400&h=400&fit=crop&q=80",
-    href: "/categories/dried-fruits",
-  },
-  {
     slug: "nuts-seeds",
     label: "Nuts & Seeds",
     image: "/home/seedsandnuts.png",
     href: "/categories/nuts-seeds",
-  },
-  {
-    slug: "gift-hampers",
-    label: "Gift Hampers",
-    image: "/home/gifthampers.png",
-    href: "/categories/gift-hampers",
-  },
-  {
-    slug: "trail-mix",
-    label: "Trail Mix",
-    image:
-      "https://images.unsplash.com/photo-1590080873882-0215f5a543b8?auto=format&w=400&h=400&fit=crop&q=80",
-    href: "/categories/trail-mix",
   },
 ] as const;
 

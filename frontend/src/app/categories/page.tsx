@@ -20,7 +20,7 @@ export default function CategoriesPage() {
       <p className="text-muted-foreground mt-2 max-w-2xl text-sm sm:text-base">
         Pick a category to explore products.
       </p>
-      <ul className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
+      <ul className="mx-auto mt-8 grid max-w-3xl grid-cols-3 gap-3 sm:gap-4">
         {SHOP_CATEGORIES.map(({ href, label, image }) => (
           <li key={href}>
             <Link
