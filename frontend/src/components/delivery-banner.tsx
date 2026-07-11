@@ -16,8 +16,8 @@ export function DeliveryBanner() {
         aria-hidden
       />
       <p className="text-[10px] font-normal leading-none tracking-tight whitespace-nowrap sm:text-xs">
-        <span className="font-semibold">FREE</span>
-        <span className="font-light"> Delivery on orders above ₹499</span>
+        <span className="font-semibold">Free delivery</span>
+        <span className="font-light"> on all orders</span>
       </p>
       <span
         className="h-3 w-px shrink-0 bg-[#2d4a22]/25 sm:h-3.5"
@@ -29,7 +29,7 @@ export function DeliveryBanner() {
         aria-hidden
       />
       <p className="text-[10px] font-light leading-none tracking-tight whitespace-nowrap sm:text-xs">
-        Deliver in 10 mins
+        Deliver in 30 mins
       </p>
     </div>
   );

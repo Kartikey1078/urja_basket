@@ -35,8 +35,7 @@ function DesktopDeliveryStrip() {
           aria-hidden
         />
         <span className="text-white/95">
-          <span className="font-semibold text-white">FREE</span> Delivery on orders
-          above ₹499
+          <span className="font-semibold text-white">Free delivery</span> on all orders
         </span>
         <span
           className="hidden h-3.5 w-px shrink-0 bg-white/35 sm:block"
@@ -47,7 +46,7 @@ function DesktopDeliveryStrip() {
           strokeWidth={1.5}
           aria-hidden
         />
-        <span className="font-normal text-white/90">Deliver in 10 mins</span>
+        <span className="font-normal text-white/90">Deliver in 30 mins</span>
       </div>
     </div>
   );

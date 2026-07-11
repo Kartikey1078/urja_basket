@@ -122,13 +122,13 @@ export function SiteFooter() {
               <span className="inline-flex items-center gap-2 text-sm font-medium text-urja-cream/90">
                 <Truck className="text-urja-gold size-4 shrink-0" strokeWidth={1.75} />
                 <span>
-                  <span className="text-urja-gold font-bold">FREE</span> delivery above ₹499
+                  <span className="text-urja-gold font-bold">Free delivery</span> on all orders
                 </span>
               </span>
               <span className="hidden h-4 w-px bg-white/15 sm:block" aria-hidden />
               <span className="inline-flex items-center gap-2 text-sm font-medium text-urja-cream/90">
                 <Timer className="text-urja-gold size-4 shrink-0" strokeWidth={1.75} />
-                Delivery in ~10 minutes
+                Delivery in ~30 minutes
               </span>
             </div>
             <Link
