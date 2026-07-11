@@ -2,7 +2,6 @@
 
 import { cn } from "@/lib/utils";
 import {
-  ChevronDown,
   Menu,
   ScanLine,
   Search,
@@ -145,40 +144,9 @@ export function SiteHeader() {
               <Wordmark compact />
             </div>
 
-            <button
-              type="button"
-              className="text-urja-forest ml-auto flex min-w-0 max-w-[48%] items-start gap-1.5 rounded-md py-1 pr-1 pl-1 hover:bg-black/5"
-              aria-label="Choose delivery location"
-            >
-              <span className="text-urja-forest mt-0.5 inline-flex">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="size-4 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  aria-hidden
-                >
-                  <path d="M12 21s-6-5.2-6-10a6 6 0 1 1 12 0c0 4.8-6 10-6 10Z" />
-                  <circle cx="12" cy="11" r="2" />
-                </svg>
-              </span>
-              <span className="min-w-0">
-                <span className="text-muted-foreground block text-[10px] leading-tight">
-                  Deliver to
-                </span>
-                <span className="flex items-center gap-0.5">
-                  <span className="truncate text-xs font-semibold text-neutral-900">
-                    Panipat, 132103
-                  </span>
-                  <ChevronDown className="text-urja-forest size-3.5 shrink-0" />
-                </span>
-              </span>
-            </button>
-
             <Link
               href="/cart"
-              className="relative inline-flex size-10 items-center justify-center text-neutral-900 hover:bg-black/5"
+              className="relative ml-auto inline-flex size-10 items-center justify-center text-neutral-900 hover:bg-black/5"
               aria-label="Shopping cart"
             >
               <ShoppingCart className="size-6" strokeWidth={1.75} />
