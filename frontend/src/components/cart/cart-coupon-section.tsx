@@ -145,7 +145,7 @@ export function CartCouponSection() {
 
   const couponSubtitle = displayCoupon
     ? displayCoupon.couponDiscount > 0
-      ? `${displayCoupon.code} · You save ₹${displayCoupon.couponDiscount.toFixed(0)}${displayCoupon.freeDelivery ? " + free delivery" : ""}`
+      ? `${displayCoupon.code} · You save ₹${displayCoupon.couponDiscount.toFixed(0)}${displayCoupon.freeDelivery ? " + free delivery included" : ""}`
       : `${displayCoupon.code} applied`
     : offersLoading
       ? "Loading offers…"
@@ -274,7 +274,7 @@ export function CartCouponSection() {
                     ? `You save ₹${displayCoupon.couponDiscount.toFixed(0)}`
                     : null}
                   {displayCoupon.couponDiscount > 0 && displayCoupon.freeDelivery ? " · " : null}
-                  {displayCoupon.freeDelivery ? "Free delivery" : null}
+                  {displayCoupon.freeDelivery ? "Free delivery included" : null}
                 </p>
               ) : (
                 <p className="mt-1 text-xs text-stone-600">Applied to your order</p>

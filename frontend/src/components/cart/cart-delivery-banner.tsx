@@ -7,7 +7,7 @@ export function CartDeliveryBanner() {
         <Truck className="size-4" aria-hidden />
       </span>
       <p className="text-sm font-medium text-stone-800">
-        Free delivery on this order
+        Free delivery on all orders — no extra charges
       </p>
     </div>
   );

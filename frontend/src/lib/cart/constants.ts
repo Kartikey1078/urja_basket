@@ -2,8 +2,8 @@ import type { CartItem } from "./types";
 
 export const CART_STORAGE_KEY = "urja-cart-v1";
 
-export const FREE_DELIVERY_MIN = 499;
-export const DELIVERY_FEE = 40;
+export const FREE_DELIVERY_MIN = 0;
+export const DELIVERY_FEE = 0;
 export const PACKAGING_CHARGES = 10;
 export const CART_PROMO_DISCOUNT = 50;
 

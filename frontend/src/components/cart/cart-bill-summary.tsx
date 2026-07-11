@@ -20,11 +20,7 @@ export function CartBillSummary({ bill }: CartBillSummaryProps) {
         <div className="flex justify-between gap-4">
           <dt className="text-stone-500">Delivery</dt>
           <dd className="font-medium tabular-nums">
-            {bill.deliveryFeeWaived ? (
-              <span className="text-urja-forest">Free</span>
-            ) : (
-              <span className="text-stone-900">{formatInr(bill.deliveryFee)}</span>
-            )}
+            <span className="text-urja-forest">Free</span>
           </dd>
         </div>
         <div className="flex justify-between gap-4">
