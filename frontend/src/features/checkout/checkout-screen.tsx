@@ -18,6 +18,7 @@ import {
   type AddressFormValues,
   type DeliveryAddress,
 } from "@/lib/address/types";
+import { CHECKOUT_RETURN_PATH, loginUrl } from "@/lib/auth-redirect";
 import { formatInr } from "@/lib/cart/pricing";
 import { useCheckoutStore } from "@/stores/checkout-store";
 
@@ -46,6 +47,13 @@ export function CheckoutScreen() {
   useEffect(() => {
     useCheckoutStore.persist.rehydrate();
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      router.replace(loginUrl(CHECKOUT_RETURN_PATH));
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
     if (!cartHydrated) return;
@@ -140,13 +148,13 @@ export function CheckoutScreen() {
       <div className="mx-auto max-w-lg space-y-4 px-4 py-4 lg:max-w-2xl">
         {!isSignedIn ? (
           <section className="rounded-2xl border border-amber-200/80 bg-amber-50 p-4 text-sm">
-            <p className="text-urja-forest font-semibold">Sign in to save addresses</p>
+            <p className="text-urja-forest font-semibold">Sign in required</p>
             <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
-              You can still enter an address for this order. Saved addresses sync to your account
-              after login.
+              Sign in to save addresses and complete checkout. You&apos;ll return to your cart
+              afterward.
             </p>
             <Link
-              href="/login"
+              href={loginUrl(CHECKOUT_RETURN_PATH)}
               className="text-urja-forest mt-3 inline-block text-xs font-bold underline"
             >
               Sign in

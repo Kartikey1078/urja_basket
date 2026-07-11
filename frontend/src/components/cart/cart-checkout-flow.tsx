@@ -19,6 +19,7 @@ import {
 } from "@/lib/address/types";
 import type { DeliverySlotId } from "@/lib/cart/types";
 import { useCheckoutStore } from "@/stores/checkout-store";
+import { CHECKOUT_RETURN_PATH, loginUrl } from "@/lib/auth-redirect";
 import { cn } from "@/lib/utils";
 
 import { CartDeliverySlots } from "./cart-delivery-slots";
@@ -309,10 +310,13 @@ export function CartCheckoutFlow({
 
                           {!signedIn ? (
                             <p className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-xs text-stone-600">
-                              <Link href="/login" className="font-medium text-urja-forest underline">
+                              <Link
+                                href={loginUrl(CHECKOUT_RETURN_PATH)}
+                                className="font-medium text-urja-forest underline"
+                              >
                                 Sign in
                               </Link>{" "}
-                              to reuse saved addresses next time.
+                              to continue checkout and reuse saved addresses.
                             </p>
                           ) : null}
 

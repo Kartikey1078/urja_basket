@@ -1,8 +1,10 @@
 "use client";
 
+import { useAuth } from "@clerk/nextjs";
 import { AnimatePresence } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -19,6 +21,7 @@ import { UrjaOverlayLoader } from "@/components/ui/loader";
 import { useCart } from "@/hooks/use-cart";
 import { useDeliveryAddress } from "@/hooks/use-delivery-address";
 import { useCheckout } from "@/hooks/use-checkout";
+import { CHECKOUT_RETURN_PATH, loginUrl } from "@/lib/auth-redirect";
 import type { DeliverySlotId } from "@/lib/cart/types";
 import { AddressProvider } from "@/providers/address-provider";
 import { useCheckoutStore } from "@/stores/checkout-store";
@@ -32,6 +35,8 @@ export function CartScreen() {
 }
 
 function CartScreenContent() {
+  const router = useRouter();
+  const { isLoaded, isSignedIn } = useAuth();
   const { items, count, bill, setQuantity, removeItem, loading, syncing, error, hydrated } =
     useCart();
   const { selected, hydrated: addressHydrated } = useDeliveryAddress();
@@ -49,18 +54,32 @@ function CartScreenContent() {
   }, []);
 
   useEffect(() => {
+    if (!isLoaded) return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("checkout") === "1") {
-      setCheckoutOpen(true);
-      window.history.replaceState({}, "", "/cart");
-    }
-  }, []);
+    if (params.get("checkout") !== "1") return;
 
-  const scrollToBill = useCallback(() => {
-    billRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+    if (!isSignedIn) {
+      router.replace(loginUrl(CHECKOUT_RETURN_PATH));
+      return;
+    }
+
+    setCheckoutOpen(true);
+    window.history.replaceState({}, "", "/cart");
+  }, [isLoaded, isSignedIn, router]);
+
+  const requireSignInForCheckout = useCallback(() => {
+    toast.error("Sign in to continue checkout", {
+      description: "We'll bring you back to your cart after you sign in.",
+    });
+    router.push(loginUrl(CHECKOUT_RETURN_PATH));
+  }, [router]);
 
   const handleProceed = useCallback(async () => {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      requireSignInForCheckout();
+      return;
+    }
     if (!checkoutOpen) {
       setCheckoutOpen(true);
       return;
@@ -94,20 +113,29 @@ function CartScreenContent() {
     bill.toPay,
     checkoutOpen,
     count,
+    isLoaded,
+    isSignedIn,
     paymentMethod,
     paymentStepReached,
+    requireSignInForCheckout,
     selected,
     slot,
     completeCheckout,
   ]);
 
-  const ctaLabel = !checkoutOpen
-    ? "Proceed to Checkout"
-    : selected
-      ? paymentMethod === "cod"
-        ? "Place order"
-        : "Proceed to Payment"
-      : "Proceed to Checkout";
+  const scrollToBill = useCallback(() => {
+    billRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const ctaLabel = !isSignedIn
+    ? "Sign in to Checkout"
+    : !checkoutOpen
+      ? "Proceed to Checkout"
+      : selected
+        ? paymentMethod === "cod"
+          ? "Place order"
+          : "Proceed to Payment"
+        : "Proceed to Checkout";
 
   return (
     <div className="min-h-dvh bg-stone-50 pb-[calc(7.5rem+env(safe-area-inset-bottom))] sm:pb-32">
