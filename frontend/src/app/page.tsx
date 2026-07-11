@@ -3,7 +3,6 @@ import { CategoryRail } from "@/components/category-rail";
 import { DeliveryBanner } from "@/components/delivery-banner";
 import { FeaturesTrustBar } from "@/components/features-trust-bar";
 import { HomeHero } from "@/components/home-hero";
-import { VideoReviewsSection } from "@/components/video-reviews-section";
 
 export default function Home() {
   return (
@@ -17,7 +16,6 @@ export default function Home() {
       <CategoryRail />
       <FeaturesTrustBar />
       <BestsellersSection />
-      <VideoReviewsSection />
     </>
   );
 }
