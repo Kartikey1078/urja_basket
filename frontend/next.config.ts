@@ -53,6 +53,11 @@ const nextConfig: NextConfig = {
         hostname: "cdn.phototourl.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        pathname: "/**",
+      },
     ],
   },
 };
