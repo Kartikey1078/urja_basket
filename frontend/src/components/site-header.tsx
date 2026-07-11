@@ -3,8 +3,6 @@
 import { cn } from "@/lib/utils";
 import {
   Menu,
-  ScanLine,
-  Search,
   ShoppingCart,
   Timer,
   Truck,
@@ -21,8 +19,8 @@ const NAV_LINKS = [
   { href: "/", label: "Home" },
   { href: "/categories/fresh-fruits", label: "Fruits" },
   { href: "/categories/dry-fruits", label: "Dry Fruits" },
-  { href: "/categories/gift-hampers", label: "Gift Hampers" },
-  { href: "/combos", label: "Combos" },
+  { href: "/categories/nuts-seeds", label: "Nuts & Seeds" },
+  { href: "/orders", label: "Track Order" },
 ] as const;
 
 function DesktopDeliveryStrip() {
@@ -154,22 +152,6 @@ export function SiteHeader() {
               </span>
             </Link>
           </div>
-
-          <div className="relative mt-3">
-            <Search className="text-urja-forest pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-            <input
-              type="search"
-              placeholder="Search for fruits, dry fruits, nuts & more..."
-              className="border-input text-urja-forest placeholder:text-muted-foreground h-11 w-full rounded-2xl border bg-white pr-11 pl-10 text-sm shadow-sm outline-none ring-urja-forest/20 focus:ring-2"
-            />
-            <button
-              type="button"
-              className="text-urja-forest absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md p-1 hover:bg-urja-forest/10"
-              aria-label="Scan barcode"
-            >
-              <ScanLine className="size-5" strokeWidth={1.75} />
-            </button>
-          </div>
         </div>
 
         {/* Main bar — desktop */}
@@ -199,13 +181,6 @@ export function SiteHeader() {
           </nav>
 
           <div className="flex items-center gap-5 text-urja-forest">
-            <button
-              type="button"
-              className="rounded-md p-2 hover:bg-black/5"
-              aria-label="Search"
-            >
-              <Search className="size-5" strokeWidth={1.75} />
-            </button>
             <ClerkAuthControls />
             <Link
               href="/cart"
