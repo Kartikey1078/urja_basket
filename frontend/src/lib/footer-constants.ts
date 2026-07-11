@@ -5,26 +5,24 @@
 export const FOOTER = {
   brand: "Urja Basket",
   tagline: "Fresh fruits & premium dry fruits — handpicked, hygienically packed, delivered with care.",
-  whatsappDigits: "919876543210",
-  phoneDisplay: "+91 98765 43210",
-  email: "hello@urjabasket.com",
+  whatsappDigits: "918750024024",
+  phoneDisplay: "+91 87500 24024",
+  email: "urjabasket9@gmail.com",
   storeHours: "Mon – Sun · 8:00 AM – 10:00 PM",
   instagramUrl: "https://www.instagram.com/urjabasket",
   facebookUrl: "https://www.facebook.com/urjabasket",
   addressLines: [
-    "Urja Basket — Flagship Store",
-    "Shop 12, Local Market Complex, Block A",
-    "Sector 18, Noida — 201301",
-    "Uttar Pradesh, India",
+    "Urja Basket",
+    "D-134, South Ganesh Nagar",
+    "Delhi — 110092",
   ],
   mapsUrl:
-    "https://www.google.com/maps/search/?api=1&query=Urja+Basket+Noida+India",
+    "https://www.google.com/maps/search/?api=1&query=D+134+South+Ganesh+Nagar+Delhi+110092",
 } as const;
 
 export const FOOTER_SHOP_LINKS = [
   { href: "/categories/fresh-fruits", label: "Fresh Fruits" },
   { href: "/categories/dry-fruits", label: "Dry Fruits" },
-  { href: "/categories/gift-hampers", label: "Gift Hampers" },
   { href: "/categories/nuts-seeds", label: "Nuts & Seeds" },
   { href: "/bestsellers", label: "Bestsellers" },
   { href: "/categories", label: "All Categories" },
