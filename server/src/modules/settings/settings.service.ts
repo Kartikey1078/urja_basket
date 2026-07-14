@@ -42,8 +42,6 @@ export async function getPricingConfig(): Promise<PricingConfig> {
   return {
     freeDeliveryMin: s.freeDeliveryMin,
     deliveryFee: s.deliveryFee,
-    platformFee: s.platformFee,
-    cartPromoDiscount: s.cartPromoDiscount,
     taxRate: s.taxRate,
   };
 }
@@ -52,8 +50,6 @@ export function pricingConfigFromSettings(settings: SiteSettings): PricingConfig
   return {
     freeDeliveryMin: settings.freeDeliveryMin,
     deliveryFee: settings.deliveryFee,
-    platformFee: settings.platformFee,
-    cartPromoDiscount: settings.cartPromoDiscount,
     taxRate: settings.taxRate,
   };
 }
@@ -64,8 +60,6 @@ export function toPublicSettings(settings: SiteSettings): PublicSiteSettings {
     storeTagline: settings.storeTagline,
     freeDeliveryMin: settings.freeDeliveryMin,
     deliveryFee: settings.deliveryFee,
-    platformFee: settings.platformFee,
-    cartPromoDiscount: settings.cartPromoDiscount,
     expressDeliveryMinutes: settings.expressDeliveryMinutes,
     codEnabled: settings.codEnabled,
     onlinePaymentEnabled: settings.onlinePaymentEnabled,
@@ -123,12 +117,6 @@ export function validateSettingsPatch(body: Record<string, unknown>): SiteSettin
   }
   if (body.deliveryFee !== undefined) {
     patch.deliveryFee = clampMoney(Number(body.deliveryFee), "deliveryFee");
-  }
-  if (body.platformFee !== undefined) {
-    patch.platformFee = clampMoney(Number(body.platformFee), "platformFee");
-  }
-  if (body.cartPromoDiscount !== undefined) {
-    patch.cartPromoDiscount = clampMoney(Number(body.cartPromoDiscount), "cartPromoDiscount");
   }
   if (body.taxRate !== undefined) {
     const rate = Number(body.taxRate);

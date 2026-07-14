@@ -5,8 +5,6 @@ export type SiteSettings = {
   supportPhone: string | null;
   freeDeliveryMin: number;
   deliveryFee: number;
-  platformFee: number;
-  cartPromoDiscount: number;
   taxRate: number;
   lowStockThreshold: number;
   expressDeliveryMinutes: number;
@@ -22,8 +20,6 @@ export type PublicSiteSettings = Pick<
   | "storeTagline"
   | "freeDeliveryMin"
   | "deliveryFee"
-  | "platformFee"
-  | "cartPromoDiscount"
   | "expressDeliveryMinutes"
   | "codEnabled"
   | "onlinePaymentEnabled"
@@ -32,7 +28,7 @@ export type PublicSiteSettings = Pick<
 
 export type PricingConfig = Pick<
   SiteSettings,
-  "freeDeliveryMin" | "deliveryFee" | "platformFee" | "cartPromoDiscount" | "taxRate"
+  "freeDeliveryMin" | "deliveryFee" | "taxRate"
 >;
 
 export type SiteSettingsPatch = Partial<SiteSettings>;

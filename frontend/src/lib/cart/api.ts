@@ -6,8 +6,6 @@ export type ServerCartTotals = {
   subtotal: number;
   deliveryFee: number;
   deliveryFeeWaived: boolean;
-  platformFee: number;
-  sitePromoDiscount: number;
   couponDiscount: number;
   discount: number;
   tax: number;
@@ -86,10 +84,7 @@ export function serverTotalsToBill(totals: ServerCartTotals): BillSummary {
     itemTotal: totals.subtotal,
     deliveryFee: totals.deliveryFee,
     deliveryFeeWaived: totals.deliveryFeeWaived,
-    packagingCharges: totals.platformFee,
-    sitePromoDiscount: totals.sitePromoDiscount ?? 0,
     couponDiscount: totals.couponDiscount ?? 0,
-    discount: totals.discount,
     tax: totals.tax,
     toPay: totals.grandTotal,
     authoritative: true,

@@ -20,36 +20,18 @@ export function CartBillSummary({ bill }: CartBillSummaryProps) {
         <div className="flex justify-between gap-4">
           <dt className="text-stone-500">Delivery</dt>
           <dd className="font-medium tabular-nums">
-            <span className="text-urja-forest">Free</span>
+            {bill.deliveryFeeWaived || bill.deliveryFee === 0 ? (
+              <span className="text-urja-forest">Free</span>
+            ) : (
+              formatInr(bill.deliveryFee)
+            )}
           </dd>
         </div>
-        <div className="flex justify-between gap-4">
-          <dt className="text-stone-500">Packaging</dt>
-          <dd className="font-medium tabular-nums text-stone-900">
-            {formatInr(bill.packagingCharges)}
-          </dd>
-        </div>
-        {(bill.sitePromoDiscount ?? 0) > 0 ? (
-          <div className="flex justify-between gap-4">
-            <dt className="text-stone-500">Promo</dt>
-            <dd className="font-medium tabular-nums text-emerald-700">
-              −{formatInr(bill.sitePromoDiscount!)}
-            </dd>
-          </div>
-        ) : null}
         {(bill.couponDiscount ?? 0) > 0 ? (
           <div className="flex justify-between gap-4">
             <dt className="text-stone-500">Coupon</dt>
             <dd className="font-medium tabular-nums text-emerald-700">
               −{formatInr(bill.couponDiscount!)}
-            </dd>
-          </div>
-        ) : null}
-        {bill.discount > 0 && !(bill.sitePromoDiscount || bill.couponDiscount) ? (
-          <div className="flex justify-between gap-4">
-            <dt className="text-stone-500">Discount</dt>
-            <dd className="font-medium tabular-nums text-emerald-700">
-              −{formatInr(bill.discount)}
             </dd>
           </div>
         ) : null}

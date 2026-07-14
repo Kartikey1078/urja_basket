@@ -7,8 +7,6 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
   supportPhone: null,
   freeDeliveryMin: 0,
   deliveryFee: 0,
-  platformFee: 10,
-  cartPromoDiscount: 50,
   taxRate: 0,
   lowStockThreshold: 10,
   expressDeliveryMinutes: 10,
@@ -21,7 +19,5 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   freeDeliveryMin: DEFAULT_SITE_SETTINGS.freeDeliveryMin,
   deliveryFee: DEFAULT_SITE_SETTINGS.deliveryFee,
-  platformFee: DEFAULT_SITE_SETTINGS.platformFee,
-  cartPromoDiscount: DEFAULT_SITE_SETTINGS.cartPromoDiscount,
   taxRate: DEFAULT_SITE_SETTINGS.taxRate,
 };

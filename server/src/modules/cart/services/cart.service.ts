@@ -211,8 +211,6 @@ export function mapTotalsToLegacyBill(totals: CartTotals) {
     itemTotal: totals.subtotal,
     deliveryFee: totals.deliveryFee,
     deliveryFeeWaived: totals.deliveryFeeWaived,
-    packagingCharges: totals.platformFee,
-    sitePromoDiscount: totals.sitePromoDiscount,
     couponDiscount: totals.couponDiscount,
     discount: totals.discount,
     tax: totals.tax,

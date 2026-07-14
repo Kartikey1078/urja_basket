@@ -9,8 +9,6 @@ export type CartTotals = {
   subtotal: number;
   deliveryFee: number;
   deliveryFeeWaived: boolean;
-  platformFee: number;
-  sitePromoDiscount: number;
   couponDiscount: number;
   discount: number;
   tax: number;

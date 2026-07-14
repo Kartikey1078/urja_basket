@@ -15,7 +15,6 @@ export function computeCartTotals(
   coupon?: CouponPricingInput | null
 ): CartTotals {
   const subtotal = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
-  const sitePromoDiscount = lines.length > 0 ? config.cartPromoDiscount : 0;
   const couponDiscount = coupon?.couponDiscount ?? 0;
   const freeDeliveryFromCoupon = Boolean(coupon?.freeDelivery);
   const deliveryFeeWaived =
@@ -23,16 +22,12 @@ export function computeCartTotals(
       ? false
       : subtotal >= config.freeDeliveryMin || freeDeliveryFromCoupon;
   const deliveryFee = lines.length === 0 ? 0 : deliveryFeeWaived ? 0 : config.deliveryFee;
-  const platformFee = lines.length > 0 ? config.platformFee : 0;
 
-  const maxDiscount = Math.max(0, subtotal + platformFee - 0.01);
-  const rawDiscount = sitePromoDiscount + couponDiscount;
-  const discount = Math.min(rawDiscount, maxDiscount);
+  const preDiscountTotal = subtotal + (deliveryFeeWaived ? 0 : deliveryFee);
+  const maxDiscount = Math.max(0, preDiscountTotal - 0.01);
+  const discount = Math.min(couponDiscount, maxDiscount);
 
-  const taxable = Math.max(
-    0,
-    subtotal + (deliveryFeeWaived ? 0 : deliveryFee) + platformFee - discount
-  );
+  const taxable = Math.max(0, preDiscountTotal - discount);
   const tax = Math.round(taxable * config.taxRate * 100) / 100;
   const grandTotal = Math.max(0, roundMoney(taxable + tax));
 
@@ -40,8 +35,6 @@ export function computeCartTotals(
     subtotal: roundMoney(subtotal),
     deliveryFee: deliveryFeeWaived ? config.deliveryFee : deliveryFee,
     deliveryFeeWaived,
-    platformFee,
-    sitePromoDiscount: roundMoney(sitePromoDiscount),
     couponDiscount: roundMoney(couponDiscount),
     discount: roundMoney(discount),
     tax,

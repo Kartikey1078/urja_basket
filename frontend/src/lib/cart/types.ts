@@ -30,10 +30,7 @@ export type BillSummary = {
   itemTotal: number;
   deliveryFee: number;
   deliveryFeeWaived: boolean;
-  packagingCharges: number;
-  sitePromoDiscount?: number;
   couponDiscount?: number;
-  discount: number;
   tax?: number;
   toPay: number;
   /** True when totals come from backend */

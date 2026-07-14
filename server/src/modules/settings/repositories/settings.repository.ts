@@ -11,8 +11,6 @@ type SettingsRow = RowDataPacket & {
   support_phone: string | null;
   free_delivery_min: string;
   delivery_fee: string;
-  platform_fee: string;
-  cart_promo_discount: string;
   tax_rate: string;
   low_stock_threshold: number;
   express_delivery_minutes: number;
@@ -30,8 +28,6 @@ function rowToSettings(row: SettingsRow): SiteSettings {
     supportPhone: row.support_phone,
     freeDeliveryMin: Number(row.free_delivery_min),
     deliveryFee: Number(row.delivery_fee),
-    platformFee: Number(row.platform_fee),
-    cartPromoDiscount: Number(row.cart_promo_discount),
     taxRate: Number(row.tax_rate),
     lowStockThreshold: row.low_stock_threshold,
     expressDeliveryMinutes: row.express_delivery_minutes,
@@ -45,9 +41,9 @@ function rowToSettings(row: SettingsRow): SiteSettings {
 export async function findSiteSettings(): Promise<SiteSettings | null> {
   const [rows] = await pool.query<SettingsRow[]>(
     `SELECT store_name, store_tagline, support_email, support_phone,
-            free_delivery_min, delivery_fee, platform_fee, cart_promo_discount,
-            tax_rate, low_stock_threshold, express_delivery_minutes,
-            cod_enabled, online_payment_enabled, maintenance_mode, updated_at
+            free_delivery_min, delivery_fee, tax_rate, low_stock_threshold,
+            express_delivery_minutes, cod_enabled, online_payment_enabled,
+            maintenance_mode, updated_at
      FROM site_settings
      WHERE id = 1
      LIMIT 1`
@@ -89,14 +85,6 @@ export async function updateSiteSettings(patch: SiteSettingsPatch): Promise<Site
   if (patch.deliveryFee !== undefined) {
     sets.push("delivery_fee = ?");
     params.push(patch.deliveryFee);
-  }
-  if (patch.platformFee !== undefined) {
-    sets.push("platform_fee = ?");
-    params.push(patch.platformFee);
-  }
-  if (patch.cartPromoDiscount !== undefined) {
-    sets.push("cart_promo_discount = ?");
-    params.push(patch.cartPromoDiscount);
   }
   if (patch.taxRate !== undefined) {
     sets.push("tax_rate = ?");

@@ -22,8 +22,6 @@ function toFormState(s: SiteSettings): Record<string, string | boolean> {
     supportPhone: s.supportPhone ?? "",
     freeDeliveryMin: String(s.freeDeliveryMin),
     deliveryFee: String(s.deliveryFee),
-    platformFee: String(s.platformFee),
-    cartPromoDiscount: String(s.cartPromoDiscount),
     taxRate: String(s.taxRate),
     lowStockThreshold: String(s.lowStockThreshold),
     expressDeliveryMinutes: String(s.expressDeliveryMinutes),
@@ -41,8 +39,6 @@ function patchFromForm(form: Record<string, string | boolean>): Record<string, u
     supportPhone: String(form.supportPhone).trim() || null,
     freeDeliveryMin: Number(form.freeDeliveryMin),
     deliveryFee: Number(form.deliveryFee),
-    platformFee: Number(form.platformFee),
-    cartPromoDiscount: Number(form.cartPromoDiscount),
     taxRate: Number(form.taxRate),
     lowStockThreshold: Number(form.lowStockThreshold),
     expressDeliveryMinutes: Number(form.expressDeliveryMinutes),
@@ -185,30 +181,6 @@ export function SettingsScreen() {
                 step="0.01"
                 value={String(form.deliveryFee)}
                 onChange={(e) => setField("deliveryFee", e.target.value)}
-                required
-              />
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Platform / packaging fee (₹)
-              <input
-                className={inputClass}
-                type="number"
-                min={0}
-                step="0.01"
-                value={String(form.platformFee)}
-                onChange={(e) => setField("platformFee", e.target.value)}
-                required
-              />
-            </label>
-            <label className="block text-sm font-medium text-slate-700">
-              Cart promo discount (₹)
-              <input
-                className={inputClass}
-                type="number"
-                min={0}
-                step="0.01"
-                value={String(form.cartPromoDiscount)}
-                onChange={(e) => setField("cartPromoDiscount", e.target.value)}
                 required
               />
             </label>

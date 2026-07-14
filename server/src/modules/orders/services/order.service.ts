@@ -285,7 +285,7 @@ async function createOrderRecord(
       subtotal: snapshot.totals.subtotal,
       deliveryFee: snapshot.totals.deliveryFee,
       deliveryFeeWaived: snapshot.totals.deliveryFeeWaived,
-      platformFee: snapshot.totals.platformFee,
+      platformFee: 0,
       discount: snapshot.totals.discount,
       tax: snapshot.totals.tax,
       grandTotal: snapshot.totals.grandTotal,

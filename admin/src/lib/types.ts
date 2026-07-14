@@ -18,8 +18,6 @@ export type SiteSettings = {
   supportPhone: string | null;
   freeDeliveryMin: number;
   deliveryFee: number;
-  platformFee: number;
-  cartPromoDiscount: number;
   taxRate: number;
   lowStockThreshold: number;
   expressDeliveryMinutes: number;

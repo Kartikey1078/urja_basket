@@ -1,9 +1,4 @@
-import {
-  CART_PROMO_DISCOUNT,
-  DELIVERY_FEE,
-  FREE_DELIVERY_MIN,
-  PACKAGING_CHARGES,
-} from "./constants";
+import { DELIVERY_FEE, FREE_DELIVERY_MIN } from "./constants";
 import type { BillSummary, CartItem } from "./types";
 
 export function formatInr(amount: number) {
@@ -23,18 +18,13 @@ export function computeBillSummary(items: CartItem[]): BillSummary {
   const itemTotal = validItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const deliveryFeeWaived = itemTotal >= FREE_DELIVERY_MIN;
   const deliveryFee = deliveryFeeWaived ? 0 : DELIVERY_FEE;
-  const discount = validItems.length > 0 ? CART_PROMO_DISCOUNT : 0;
-  const toPay = Math.max(
-    0,
-    itemTotal + deliveryFee + PACKAGING_CHARGES - discount
-  );
+  const toPay = Math.max(0, itemTotal + deliveryFee);
 
   return {
     itemTotal,
     deliveryFee: deliveryFeeWaived ? DELIVERY_FEE : deliveryFee,
     deliveryFeeWaived,
-    packagingCharges: validItems.length > 0 ? PACKAGING_CHARGES : 0,
-    discount,
+    couponDiscount: 0,
     tax: 0,
     toPay,
   };
