@@ -27,8 +27,8 @@ const TYPE_PILLS = [
   { id: "other" as const, label: "Other", emoji: "📍" },
 ];
 
-const DEFAULT_STATE = "Rajasthan";
-const DEFAULT_CITY = "Noida";
+const DEFAULT_STATE = "Delhi";
+const DEFAULT_CITY = "Delhi";
 
 type AddressFormProps = {
   initial?: DeliveryAddress | AddressFormValues | null;
