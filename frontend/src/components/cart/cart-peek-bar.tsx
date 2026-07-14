@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronRight, Package, ShoppingBag } from "lucide-react";
+import { ChevronRight, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -20,7 +20,7 @@ export function CartPeekBar() {
     count === 0 ||
     HIDDEN_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 
-  const badge = count > 99 ? "99+" : String(count);
+  const badge = count > 999 ? "999+" : count > 99 ? "99+" : String(count);
 
   return (
     <AnimatePresence>
@@ -38,40 +38,42 @@ export function CartPeekBar() {
           <Link
             href="/cart"
             className={cn(
-              "pointer-events-auto relative flex w-[min(100%,20.5rem)] items-center rounded-full py-2 pr-2 pl-2",
+              "pointer-events-auto relative flex w-fit max-w-[min(100%,16.5rem)] items-center gap-2 rounded-full py-1.5 pr-1.5 pl-1.5",
               "bg-urja-forest text-urja-cream",
-              "shadow-[0_12px_36px_-8px_rgba(11,43,30,0.52),0_4px_14px_-4px_rgba(0,0,0,0.16)]",
+              "shadow-[0_10px_28px_-8px_rgba(11,43,30,0.48),0_3px_10px_-3px_rgba(0,0,0,0.14)]",
               "ring-1 ring-white/10 transition active:scale-[0.98]"
             )}
             aria-label={`View cart, ${count} item${count === 1 ? "" : "s"}, ${formatInr(bill.toPay)}`}
           >
-            <span className="relative mr-2.5 flex size-11 shrink-0 items-center justify-center rounded-full bg-white/10">
-              <ShoppingBag className="size-5 text-urja-cream/95" strokeWidth={2} />
-              <span className="bg-urja-gold text-urja-forest absolute -top-0.5 -right-0.5 flex min-w-[1.25rem] items-center justify-center rounded-md px-1 py-0.5 text-[10px] font-bold leading-none ring-2 ring-urja-forest">
+            <span className="relative flex size-10 shrink-0 items-center justify-center rounded-full bg-white/10">
+              <ShoppingBag className="size-4 text-urja-cream/95" strokeWidth={2} />
+              <span className="bg-urja-gold text-urja-forest absolute -top-0.5 -right-0.5 flex min-w-[1rem] items-center justify-center rounded-md px-0.5 py-px text-[9px] font-bold leading-none ring-2 ring-urja-forest">
                 {badge}
               </span>
             </span>
 
-            <span className="min-w-0 shrink-0">
-              <span className="text-urja-cream/55 block text-[10px] font-medium leading-none">
+            <span className="shrink-0">
+              <span className="text-urja-cream/55 block text-[9px] font-medium leading-none">
                 Total
               </span>
-              <span className="mt-0.5 block text-lg leading-none font-bold tabular-nums tracking-tight">
+              <span className="mt-0.5 block min-w-[5rem] text-base leading-none font-bold tabular-nums tracking-tight">
                 {formatInr(bill.toPay)}
               </span>
             </span>
 
-            <span className="mx-2.5 h-9 w-px shrink-0 bg-white/15" aria-hidden />
+            <span className="h-7 w-px shrink-0 bg-white/15" aria-hidden />
 
-            <span className="flex min-w-0 flex-1 items-center gap-1.5">
-              <Package className="text-urja-gold size-4 shrink-0" strokeWidth={2} />
-              <span className="text-urja-cream/70 truncate text-sm font-medium">
-                {count} {count === 1 ? "item" : "items"}
+            <span className="shrink-0 text-center">
+              <span className="text-urja-cream/55 block text-[9px] font-medium leading-none">
+                {count === 1 ? "Item" : "Items"}
+              </span>
+              <span className="mt-0.5 block min-w-[2rem] text-base leading-none font-bold tabular-nums">
+                {badge}
               </span>
             </span>
 
-            <span className="bg-urja-gold ml-1.5 inline-flex size-10 shrink-0 items-center justify-center rounded-full">
-              <ChevronRight className="text-urja-forest size-5" strokeWidth={2.5} />
+            <span className="bg-urja-gold inline-flex size-8 shrink-0 items-center justify-center rounded-full">
+              <ChevronRight className="text-urja-forest size-4" strokeWidth={2.5} />
             </span>
           </Link>
         </motion.div>
