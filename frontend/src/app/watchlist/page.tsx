@@ -1,9 +1,12 @@
 import { WatchlistScreen } from "@/features/watchlist/watchlist-screen";
+import { createPageMetadata } from "@/lib/seo";
 
-export const metadata = {
-  title: "Watchlist | Urja Basket",
-  description: "Saved items and favourites.",
-};
+export const metadata = createPageMetadata({
+  title: "Watchlist",
+  description: "Your saved Urja Basket favourites on this device.",
+  path: "/watchlist",
+  noindex: true,
+});
 
 export default function WatchlistPage() {
   return (

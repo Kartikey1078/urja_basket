@@ -2,8 +2,14 @@ import Image from "next/image";
 import type { Metadata } from "next";
 
 import { CategoryProductListing } from "@/components/category-listing";
+import { JsonLd } from "@/components/seo/json-ld";
 import { fetchProducts } from "@/lib/api-products";
 import { getCategoryHero } from "@/lib/category-hero";
+import {
+  CATEGORY_SEO,
+  breadcrumbJsonLd,
+  createPageMetadata,
+} from "@/lib/seo";
 import {
   SHOP_CATEGORIES,
   getShopCategoryBySlug,
@@ -20,10 +26,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const meta = getShopCategoryBySlug(slug);
   const title = meta?.label ?? humanizeCategorySlug(slug);
-  return {
-    title: `${title} | Urja Basket`,
-    description: `Shop ${title.toLowerCase()} at Urja Basket.`,
-  };
+  const seo = CATEGORY_SEO[slug];
+
+  return createPageMetadata({
+    title,
+    description: seo?.description ?? `Shop ${title.toLowerCase()} at Urja Basket with fast delivery in Delhi.`,
+    path: `/categories/${slug}`,
+    keywords: seo?.keywords,
+    ogImage: getCategoryHero(slug).src,
+  });
 }
 
 export default async function CategoryBySlugPage({ params }: Props) {
@@ -36,6 +47,13 @@ export default async function CategoryBySlugPage({ params }: Props) {
 
   return (
     <div className="text-urja-forest">
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", path: "/" },
+          { name: "Categories", path: "/categories" },
+          { name: categoryLabel, path: `/categories/${slug}` },
+        ])}
+      />
       <h1 className="sr-only">{categoryLabel}</h1>
       <div className="relative w-full overflow-hidden bg-neutral-100">
         <Image

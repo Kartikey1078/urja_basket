@@ -3,10 +3,27 @@ import { CategoryRail } from "@/components/category-rail";
 import { DeliveryBanner } from "@/components/delivery-banner";
 import { FeaturesTrustBar } from "@/components/features-trust-bar";
 import { HomeHero } from "@/components/home-hero";
+import { JsonLd } from "@/components/seo/json-ld";
+import {
+  createPageMetadata,
+  organizationJsonLd,
+  websiteJsonLd,
+} from "@/lib/seo";
+
+export const metadata = createPageMetadata({
+  title: "Fresh Fruits & Dry Fruits Delivery in Delhi",
+  description:
+    "Urja Basket delivers fresh fruits, premium dry fruits, nuts & seeds in Delhi. Free delivery, hygienically packed, at your doorstep in ~30 minutes.",
+  path: "/",
+});
 
 export default function Home() {
   return (
     <>
+      <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
+      <h1 className="sr-only">
+        Urja Basket — Fresh fruits, dry fruits & nuts delivered in Delhi
+      </h1>
       <div className="mt-3 px-3 sm:mt-4 sm:px-4 lg:mx-auto lg:mt-4 lg:max-w-7xl lg:px-6 xl:px-10">
         <DeliveryBanner />
       </div>
