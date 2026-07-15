@@ -51,6 +51,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  if (pathname === "/api/admin/events") {
+    if (!authed) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
   if (!authed) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);

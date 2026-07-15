@@ -4,6 +4,7 @@ import { requireAdmin } from "../../middleware/requireAdmin";
 import * as admin from "./admin.controller";
 import * as adminAnalytics from "./admin.analytics.controller";
 import * as adminInventory from "./admin.inventory.controller";
+import * as adminEvents from "./admin.events.controller";
 import * as adminOrders from "./admin.orders.controller";
 import * as adminSettings from "./admin.settings.controller";
 import * as adminUsers from "./admin-users.controller";
@@ -17,6 +18,9 @@ const r = Router();
 r.post("/authenticate", asyncHandler(adminUsers.adminAuthenticate));
 
 r.use(requireAdmin);
+
+/** Live order events (SSE) for admin dashboard */
+r.get("/events", adminEvents.adminOrderEvents);
 
 /** Categories */
 r.get("/categories", asyncHandler(admin.adminListCategories));

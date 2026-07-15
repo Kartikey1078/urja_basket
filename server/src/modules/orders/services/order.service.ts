@@ -2,6 +2,7 @@ import { getAuth } from "@clerk/express";
 import type { Request } from "express";
 
 import { HttpError } from "../../../errors/httpError";
+import { notifyAdmins } from "../../../realtime/admin-notify";
 import { mapDbError } from "../../../errors/mapDbError";
 import type { CartLineDto, CartResponse } from "../../cart/cart.types";
 import * as cartRepo from "../../cart/repositories/cart.repository";
@@ -392,6 +393,12 @@ export async function createCheckoutWithCod(
 
   await clearCartForUser(ctx.userId, ctx.clerkId);
 
+  notifyAdmins({
+    type: "order.created",
+    orderId: dbOrderId,
+    orderNumber: ctx.orderNumber,
+  });
+
   return {
     paymentMethod: "cod",
     dbOrderId,
@@ -639,6 +646,13 @@ export async function completeRazorpayPayment(input: {
   await orderInventory.maybeDeductInventoryAfterOnlinePayment(order.id);
 
   await clearCartForUser(order.user_id, input.clerkId);
+
+  notifyAdmins({
+    type: "order.updated",
+    orderId: order.id,
+    orderNumber: order.order_number,
+    status: "paid",
+  });
 
   return {
     verified: true,

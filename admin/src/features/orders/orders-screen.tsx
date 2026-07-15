@@ -7,6 +7,7 @@ import { Suspense } from "react";
 
 import { PageHeader } from "@/components/page-header";
 import { AdminPageLoader, AdminTableLoader } from "@/components/loader";
+import { useAdminOrderEvents } from "@/hooks/use-admin-order-events";
 import { formatDate, formatMoney, FulfillmentStatusBadge, getOrderFulfillmentStatus, OrderStatusBadge, pendingDeliveryRowClass } from "@/components/status-badge";
 import { adminFetchJson } from "@/lib/api-client";
 import type { AdminOrderListRow, OrderStatus, PaymentMethod } from "@/lib/types";
@@ -65,6 +66,8 @@ export function OrdersScreen() {
 }
 
 function OrdersInner() {
+  useAdminOrderEvents();
+
   const searchParams = useSearchParams();
   const status = (searchParams.get("status") ?? "") as OrderStatus | "";
   const order = searchParams.get("order") ?? "";
