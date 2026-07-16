@@ -22,6 +22,19 @@ function formatEta(minutes: number | null) {
   return `${minutes} min`;
 }
 
+function partnerTelHref(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return `tel:+91${digits}`;
+  if (digits.length === 12 && digits.startsWith("91")) return `tel:+${digits}`;
+  return `tel:${digits}`;
+}
+
+function formatPartnerPhone(phone: string) {
+  const digits = phone.replace(/\D/g, "").slice(-10);
+  if (digits.length !== 10) return phone;
+  return `${digits.slice(0, 5)} ${digits.slice(5)}`;
+}
+
 function OrderTrackingInner() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -187,11 +200,12 @@ function OrderTrackingInner() {
             <p className="text-muted-foreground text-xs font-semibold uppercase">Delivery partner</p>
             <p className="text-urja-forest mt-1 text-base font-bold">{t.partner.name}</p>
             <a
-              href={`tel:${t.partner.phone.replace(/\D/g, "")}`}
-              className="text-urja-forest mt-2 inline-flex items-center gap-2 text-sm font-semibold"
+              href={partnerTelHref(t.partner.phone)}
+              className="bg-urja-forest/8 text-urja-forest mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold active:scale-[0.98]"
+              aria-label={`Call ${t.partner.name} at ${formatPartnerPhone(t.partner.phone)}`}
             >
               <Phone className="size-4" />
-              Call partner
+              {formatPartnerPhone(t.partner.phone)}
             </a>
           </section>
         ) : null}

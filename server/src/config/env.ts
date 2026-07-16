@@ -52,4 +52,10 @@ export const env = {
     keyId: process.env.RAZORPAY_KEY_ID ?? "",
     keySecret: process.env.RAZORPAY_KEY_SECRET ?? "",
   },
+  telegram: {
+    botToken: process.env.TELEGRAM_BOT_TOKEN ?? "",
+    adminChatId: process.env.TELEGRAM_ADMIN_CHAT_ID ?? "",
+    adminPublicUrl: process.env.ADMIN_PUBLIC_URL ?? "",
+    enabled: process.env.TELEGRAM_ALERTS_ENABLED === "true",
+  },
 };

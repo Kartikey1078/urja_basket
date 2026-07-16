@@ -134,11 +134,9 @@ function mockPartner(order: OrderRow): OrderTrackingDto["partner"] {
   ) {
     return null;
   }
-  const seed = order.id % 3;
-  const names = ["Rahul Kumar", "Amit Sharma", "Vikram Singh"];
   return {
-    name: names[seed] ?? names[0],
-    phone: "98XXX-XX" + String(100 + (order.id % 900)).slice(-3),
+    name: "Umesh Kumar Pandey",
+    phone: "8750024024",
   };
 }
 

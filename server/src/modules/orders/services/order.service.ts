@@ -3,6 +3,7 @@ import type { Request } from "express";
 
 import { HttpError } from "../../../errors/httpError";
 import { notifyAdmins } from "../../../realtime/admin-notify";
+import { notifyTelegramOrder, telegramDetailsFromAddress } from "../../notifications/order-alerts";
 import { mapDbError } from "../../../errors/mapDbError";
 import type { CartLineDto, CartResponse } from "../../cart/cart.types";
 import * as cartRepo from "../../cart/repositories/cart.repository";
@@ -398,6 +399,23 @@ export async function createCheckoutWithCod(
     orderId: dbOrderId,
     orderNumber: ctx.orderNumber,
   });
+  notifyTelegramOrder(
+    { type: "order.created", orderId: dbOrderId, orderNumber: ctx.orderNumber },
+    {
+      ...telegramDetailsFromAddress(ctx.address),
+      orderedAt: new Date(),
+      items: ctx.snapshot.items.map((item) => ({
+        name: item.name,
+        weight: item.subtitle,
+        quantity: item.quantity,
+        unitPrice: item.price,
+        lineTotal: item.lineTotal,
+      })),
+      subtotal: ctx.snapshot.totals.subtotal,
+      grandTotal: ctx.snapshot.totals.grandTotal,
+      paymentMethod: "cod",
+    }
+  );
 
   return {
     paymentMethod: "cod",
@@ -647,12 +665,36 @@ export async function completeRazorpayPayment(input: {
 
   await clearCartForUser(order.user_id, input.clerkId);
 
+  const orderItems = await orderRepo.listOrderItems(order.id);
+
   notifyAdmins({
     type: "order.updated",
     orderId: order.id,
     orderNumber: order.order_number,
     status: "paid",
   });
+  notifyTelegramOrder(
+    {
+      type: "order.updated",
+      orderId: order.id,
+      orderNumber: order.order_number,
+      status: "paid",
+    },
+    {
+      ...telegramDetailsFromAddress(order.address_snapshot),
+      orderedAt: order.created_at,
+      items: orderItems.map((item) => ({
+        name: item.product_name,
+        weight: item.product_subtitle,
+        quantity: item.quantity,
+        unitPrice: Number(item.unit_price),
+        lineTotal: Number(item.line_total),
+      })),
+      subtotal: Number(order.subtotal),
+      grandTotal: Number(order.grand_total),
+      paymentMethod: "online",
+    }
+  );
 
   return {
     verified: true,
