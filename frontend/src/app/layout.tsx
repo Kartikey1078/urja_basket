@@ -41,6 +41,11 @@ export const metadata: Metadata = {
   creator: SITE_NAME,
   publisher: SITE_NAME,
   formatDetection: { telephone: true, email: true },
+  appleWebApp: {
+    capable: true,
+    title: SITE_NAME,
+    statusBarStyle: "default",
+  },
   openGraph: {
     type: "website",
     locale: "en_IN",
