@@ -41,10 +41,6 @@ export const metadata: Metadata = {
   creator: SITE_NAME,
   publisher: SITE_NAME,
   formatDetection: { telephone: true, email: true },
-  icons: {
-    icon: "/brand/urja-basket-logo.png",
-    apple: "/brand/urja-basket-logo.png",
-  },
   openGraph: {
     type: "website",
     locale: "en_IN",

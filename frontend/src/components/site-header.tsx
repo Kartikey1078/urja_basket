@@ -12,6 +12,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { ClerkAuthControls } from "@/components/clerk-auth-controls";
 import { useCart } from "@/hooks/use-cart";
 
@@ -47,57 +48,6 @@ function DesktopDeliveryStrip() {
         <span className="font-normal text-white/90">Deliver in 30 mins</span>
       </div>
     </div>
-  );
-}
-
-function LeafMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 48 56"
-      fill="none"
-      className={cn("h-9 w-8 shrink-0 lg:h-10 lg:w-9", className)}
-      aria-hidden
-    >
-      <path
-        fill="#757f62"
-        d="M6 38c2-10 6-20 12-26-1 8-2 18-4 24-3 3-7 4-8 2z"
-      />
-      <path
-        fill="#757f62"
-        d="M24 6c1 0 2 2 3 6 2 10 3 22 3 32 0 6-1 10-3 12-2-2-3-6-3-12 0-10 1-22 3-32 1-4 2-6 3-6z"
-      />
-      <path
-        fill="#757f62"
-        d="M42 38c-2-10-6-20-12-26 1 8 2 18 4 24 3 3 7 4 8 2z"
-      />
-    </svg>
-  );
-}
-
-function Wordmark({ compact }: { compact?: boolean }) {
-  return (
-    <Link href="/" className="flex items-center gap-2 select-none">
-      <LeafMark />
-      <div className="leading-none">
-        <span
-          className={cn(
-            "block font-semibold tracking-tight text-urja-forest",
-            compact ? "text-xl" : "text-2xl lg:text-[1.65rem]"
-          )}
-          style={{ fontFamily: "var(--font-urja-serif), ui-serif, Georgia, serif" }}
-        >
-          URJA
-        </span>
-        <span
-          className={cn(
-            "mt-0.5 block font-medium tracking-[0.32em] text-urja-olive lg:text-urja-forest",
-            compact ? "text-[9px]" : "text-[10px] lg:text-xs"
-          )}
-        >
-          BASKET
-        </span>
-      </div>
-    </Link>
   );
 }
 
@@ -137,8 +87,8 @@ export function SiteHeader() {
               {menuOpen ? <X className="size-6" /> : <Menu className="size-6" />}
             </button>
 
-            <div className="shrink-0">
-              <Wordmark compact />
+            <div className="ml-3 shrink-0 sm:ml-4">
+              <BrandLogo size="md" layout="horizontal" priority />
             </div>
 
             <Link
@@ -156,7 +106,7 @@ export function SiteHeader() {
 
         {/* Main bar — desktop */}
         <div className="mx-auto hidden max-w-7xl items-center justify-between gap-8 px-6 py-3.5 lg:flex lg:px-10">
-          <Wordmark />
+          <BrandLogo size="lg" layout="horizontal" priority className="shrink-0" />
 
           <nav className="flex flex-1 items-center justify-center gap-7 text-sm font-medium text-urja-forest">
             {NAV_LINKS.map(({ href, label }) => {

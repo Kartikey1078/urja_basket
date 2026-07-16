@@ -13,9 +13,9 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#0f3324",
     icons: [
       {
-        src: "/brand/urja-basket-logo.png",
-        sizes: "500x500",
-        type: "image/png",
+        src: "/brand/urja-basket-logo.svg",
+        sizes: "any",
+        type: "image/svg+xml",
       },
     ],
   };

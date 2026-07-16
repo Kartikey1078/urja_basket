@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Menu, Package, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useEffect } from "react";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { mainNav } from "@/config/navigation";
 import { cn } from "@/lib/cn";
 import { useAdminUiStore } from "@/stores/admin-ui";
@@ -87,16 +88,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-100 px-3 py-3 sm:px-4 sm:py-4">
-          <Link
+          <BrandLogo
             href="/dashboard"
-            className="flex min-w-0 flex-1 items-center gap-2 font-semibold tracking-tight text-emerald-900"
+            size="md"
+            layout="horizontal"
+            className="min-w-0 flex-1 items-center gap-2"
             onClick={() => setSidebarOpen(false)}
-          >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-700 text-white">
-              <Package className="size-5" aria-hidden />
-            </span>
-            <span className="truncate text-sm sm:text-base">Urja Admin</span>
-          </Link>
+          />
           <button
             type="button"
             className="shrink-0 rounded-lg p-2 text-slate-500 hover:bg-slate-100 lg:hidden"

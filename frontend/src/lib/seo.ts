@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { BRAND_LOGO_SRC } from "@/components/brand-logo";
 import { FOOTER } from "@/lib/footer-constants";
 import { SHOP_CATEGORIES } from "@/lib/shop-categories";
 
@@ -149,7 +150,7 @@ export function organizationJsonLd() {
     "@id": `${url}/#organization`,
     name: SITE_NAME,
     url,
-    logo: absoluteUrl("/brand/urja-basket-logo.png"),
+    logo: absoluteUrl(BRAND_LOGO_SRC),
     image: absoluteUrl("/home/UrjaBasket.png"),
     description: DEFAULT_DESCRIPTION,
     telephone: `+${FOOTER.whatsappDigits}`,

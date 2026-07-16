@@ -1,13 +1,10 @@
 import {
-  Award,
   Clock,
   Landmark,
-  Leaf,
   Mail,
   MapPin,
   Phone,
   ScanQrCode,
-  ShieldCheck,
   Timer,
   Truck,
 } from "lucide-react";
@@ -19,46 +16,17 @@ import {
   SiWhatsapp,
 } from "react-icons/si";
 
+import { BrandLogo } from "@/components/brand-logo";
 import {
   FOOTER,
   FOOTER_HELP_LINKS,
   FOOTER_SHOP_LINKS,
-  FOOTER_TRUST_POINTS,
 } from "@/lib/footer-constants";
-import { cn } from "@/lib/utils";
-
-const TRUST_ICONS = [Leaf, ShieldCheck, Truck, Award] as const;
 
 const waBase = `https://wa.me/${FOOTER.whatsappDigits}`;
 const waPrefill = encodeURIComponent(
   `Hi ${FOOTER.brand}, I have a question about my order.`
 );
-
-function FooterLeafMark({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 48 56"
-      fill="none"
-      className={cn("size-9 shrink-0 text-urja-gold", className)}
-      aria-hidden
-    >
-      <path
-        fill="currentColor"
-        fillOpacity={0.85}
-        d="M6 38c2-10 6-20 12-26-1 8-2 18-4 24-3 3-7 4-8 2z"
-      />
-      <path
-        fill="currentColor"
-        d="M24 6c1 0 2 2 3 6 2 10 3 22 3 32 0 6-1 10-3 12-2-2-3-6-3-12 0-10 1-22 3-32 1-4 2-6 3-6z"
-      />
-      <path
-        fill="currentColor"
-        fillOpacity={0.85}
-        d="M42 38c-2-10-6-20-12-26 1 8 2 18 4 24 3 3 7 4 8 2z"
-      />
-    </svg>
-  );
-}
 
 function FooterLinkColumn({
   title,
@@ -72,7 +40,7 @@ function FooterLinkColumn({
       <h3 className="text-urja-gold text-xs font-bold tracking-[0.2em] uppercase">
         {title}
       </h3>
-      <ul className="mt-4 space-y-2.5">
+      <ul className="mt-2.5 space-y-1.5 sm:mt-4 sm:space-y-2.5">
         {links.map(({ href, label }) => (
           <li key={href}>
             <Link
@@ -116,7 +84,7 @@ export function SiteFooter() {
 
       <div className="relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 xl:px-10">
         {/* Promo strip */}
-        <div className="border-b border-white/10 py-5 sm:py-6">
+        <div className="border-b border-white/10 py-4 sm:py-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
               <span className="inline-flex items-center gap-2 text-sm font-medium text-urja-cream/90">
@@ -144,30 +112,15 @@ export function SiteFooter() {
         </div>
 
         {/* Main grid */}
-        <div className="grid gap-10 py-10 sm:grid-cols-2 sm:gap-8 lg:grid-cols-12 lg:gap-10 lg:py-12">
+        <div className="grid gap-6 py-6 sm:grid-cols-2 sm:gap-8 sm:py-10 lg:grid-cols-12 lg:gap-10 lg:py-12">
           {/* Brand column */}
           <div className="lg:col-span-4">
-            <Link href="/" className="inline-flex items-center gap-3">
-              <FooterLeafMark />
-              <div className="leading-none">
-                <span
-                  className="block text-2xl font-semibold tracking-tight text-urja-cream"
-                  style={{
-                    fontFamily: "var(--font-urja-serif), ui-serif, Georgia, serif",
-                  }}
-                >
-                  URJA
-                </span>
-                <span className="mt-1 block text-[10px] font-medium tracking-[0.32em] text-urja-gold/90">
-                  BASKET
-                </span>
-              </div>
-            </Link>
-            <p className="mt-4 max-w-sm text-sm leading-relaxed text-urja-cream/75">
+            <BrandLogo size="lg" layout="horizontal" />
+            <p className="mt-3 max-w-sm text-sm leading-relaxed text-urja-cream/75 sm:mt-4">
               {FOOTER.tagline}
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-2.5">
+            <div className="mt-4 flex flex-wrap items-center gap-2.5 sm:mt-6">
               <Link
                 href={FOOTER.instagramUrl}
                 target="_blank"
@@ -189,12 +142,14 @@ export function SiteFooter() {
             </div>
           </div>
 
-          <div className="lg:col-span-2">
-            <FooterLinkColumn title="Shop" links={FOOTER_SHOP_LINKS} />
-          </div>
+          <div className="grid grid-cols-2 gap-5 sm:contents lg:contents">
+            <div className="lg:col-span-2">
+              <FooterLinkColumn title="Shop" links={FOOTER_SHOP_LINKS} />
+            </div>
 
-          <div className="lg:col-span-2">
-            <FooterLinkColumn title="Help" links={FOOTER_HELP_LINKS} />
+            <div className="lg:col-span-2">
+              <FooterLinkColumn title="Help" links={FOOTER_HELP_LINKS} />
+            </div>
           </div>
 
           {/* Contact card */}
@@ -202,8 +157,8 @@ export function SiteFooter() {
             <h3 className="text-urja-gold text-xs font-bold tracking-[0.2em] uppercase">
               Visit & Contact
             </h3>
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-inner backdrop-blur-sm sm:p-5">
-              <div className="space-y-4 text-sm">
+            <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 shadow-inner backdrop-blur-sm sm:mt-4 sm:p-5">
+              <div className="space-y-3 text-sm sm:space-y-4">
                 <div className="flex gap-3">
                   <MapPin
                     className="text-urja-gold mt-0.5 size-4 shrink-0"
@@ -254,26 +209,9 @@ export function SiteFooter() {
           </div>
         </div>
 
-        {/* Trust strip */}
-        <div className="grid grid-cols-2 gap-3 border-y border-white/10 py-6 sm:grid-cols-4 sm:gap-4">
-          {FOOTER_TRUST_POINTS.map(({ title, subtitle }, i) => {
-            const Icon = TRUST_ICONS[i];
-            return (
-              <div
-                key={title}
-                className="flex flex-col items-center gap-1.5 rounded-xl border border-white/8 bg-white/[0.03] px-3 py-4 text-center sm:gap-2"
-              >
-                <Icon className="text-urja-gold size-5 sm:size-6" strokeWidth={1.5} aria-hidden />
-                <p className="text-urja-cream text-xs font-bold sm:text-sm">{title}</p>
-                <p className="text-urja-cream/60 text-[10px] sm:text-xs">{subtitle}</p>
-              </div>
-            );
-          })}
-        </div>
-
         {/* Payments */}
         <div
-          className="flex flex-wrap items-center gap-x-4 gap-y-3 py-6"
+          className="flex flex-wrap items-center gap-x-4 gap-y-3 py-4 sm:py-6"
           role="group"
           aria-label="Accepted payment methods"
         >
@@ -300,7 +238,7 @@ export function SiteFooter() {
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 py-5 text-center sm:flex-row sm:text-left">
+        <div className="flex flex-col items-center justify-between gap-2 border-t border-white/10 py-4 text-center sm:flex-row sm:gap-3 sm:py-5 sm:text-left">
           <p className="text-[11px] text-urja-cream/55">
             © {year} {FOOTER.brand}. All rights reserved.
           </p>

@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { BrandLogo } from "@/components/brand-logo";
 import { AdminSpinner } from "@/components/loader";
 import { adminToast } from "@/lib/admin-toast";
 
@@ -49,8 +50,8 @@ export function LoginForm() {
     <div className="flex min-h-dvh flex-col justify-center px-4 py-10 sm:px-6">
       <div className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <div className="text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Urja Basket</p>
-          <h1 className="mt-2 text-2xl font-bold text-slate-900">Admin sign in</h1>
+          <BrandLogo size="xl" layout="horizontal" href="" className="mx-auto" />
+          <h1 className="mt-4 text-2xl font-bold text-slate-900">Admin sign in</h1>
           <p className="mt-2 text-sm text-slate-600">
             Sign in with your staff email, or leave email empty to use the bootstrap password.
           </p>
