@@ -17,6 +17,12 @@ const HERO_BY_SLUG: Record<
     height: 941,
     alt: "",
   },
+  "nuts-seeds": {
+    src: "/dryFruit/nuts_seeds.png",
+    width: 2098,
+    height: 749,
+    alt: "",
+  },
 };
 
 /**
