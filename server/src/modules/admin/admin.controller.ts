@@ -299,6 +299,33 @@ export async function adminListReviews(req: Request, res: Response) {
   res.json({ data });
 }
 
+export async function adminCreateReview(req: Request, res: Response) {
+  const b = req.body as Record<string, unknown>;
+  const productId = parseId(String(b.productId ?? b.product_id ?? ""), "productId");
+  const r = Number(b.rating);
+  if (!Number.isInteger(r) || r < 1 || r > 5) {
+    throw new HttpError(400, "rating must be 1–5");
+  }
+
+  const commentRaw = b.comment;
+  const comment =
+    commentRaw === undefined || commentRaw === null
+      ? null
+      : String(commentRaw).trim() || null;
+
+  const exists = await productRepo.findProductIdByNumericId(productId);
+  if (!exists) throw new HttpError(404, "Product not found");
+
+  const id = await reviewRepo.insertReview({
+    userId: 0,
+    productId,
+    rating: r,
+    comment,
+  });
+  await reviewRepo.refreshProductReviewStats(productId);
+  res.status(201).json({ data: { id } });
+}
+
 export async function adminUpdateReview(req: Request, res: Response) {
   const id = parseId(paramStr(req.params.id), "review id");
   const b = req.body as Record<string, unknown>;

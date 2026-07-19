@@ -53,6 +53,7 @@ r.delete("/variants/:id", asyncHandler(admin.adminDeleteVariant));
 
 /** Reviews */
 r.get("/reviews", asyncHandler(admin.adminListReviews));
+r.post("/reviews", asyncHandler(admin.adminCreateReview));
 r.patch("/reviews/:id", asyncHandler(admin.adminUpdateReview));
 r.delete("/reviews/:id", asyncHandler(admin.adminDeleteReview));
 
