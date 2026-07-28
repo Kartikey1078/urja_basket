@@ -4,20 +4,23 @@
 export const SHOP_CATEGORIES = [
   {
     slug: "fresh-fruits",
-    label: "Fruits",
-    image: "/home/fruits.png",
+    label: "Fresh Fruits",
+    description: "Farm-fresh seasonal fruits — sweet, juicy & delivered fast.",
+    image: "/home/fruits.jpeg",
     href: "/categories/fresh-fruits",
   },
   {
     slug: "dry-fruits",
     label: "Dry Fruits",
-    image: "/home/dryfruits.png",
+    description: "Premium almonds, dates, raisins & more — hygienically packed.",
+    image: "/home/dry-fruits.jpeg",
     href: "/categories/dry-fruits",
   },
   {
     slug: "nuts-seeds",
     label: "Nuts & Seeds",
-    image: "/home/seedsandnuts.png",
+    description: "Wholesome nuts, seeds & trail mixes for everyday snacking.",
+    image: "/home/seeds.jpeg",
     href: "/categories/nuts-seeds",
   },
 ] as const;

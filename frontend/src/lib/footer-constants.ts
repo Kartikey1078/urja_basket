@@ -16,8 +16,7 @@ export const FOOTER = {
     "D-134, South Ganesh Nagar",
     "Delhi — 110092",
   ],
-  mapsUrl:
-    "https://www.google.com/maps/search/?api=1&query=D+134+South+Ganesh+Nagar+Delhi+110092",
+  mapsUrl: "https://maps.app.goo.gl/y2EsTwrXbDkXuTXc7",
 } as const;
 
 export const FOOTER_SHOP_LINKS = [

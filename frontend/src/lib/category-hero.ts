@@ -1,60 +1,25 @@
-import { getShopCategoryBySlug } from "./shop-categories";
-
-/** Full-width hero banners for specific slugs (exact assets + dimensions). */
-const HERO_BY_SLUG: Record<
-  string,
-  { src: string; width: number; height: number; alt: string }
-> = {
-  "fresh-fruits": {
-    src: "/fruits/image.png",
-    width: 1664,
-    height: 612,
-    alt: "",
-  },
-  "dry-fruits": {
-    src: "/dryFruit/image.png",
-    width: 1672,
-    height: 941,
-    alt: "",
-  },
-  "nuts-seeds": {
-    src: "/dryFruit/nuts_seeds.png",
-    width: 2098,
-    height: 749,
-    alt: "",
-  },
+/** Full-width hero banners for category listing pages (`/categories/{slug}`). */
+export type CategoryHero = {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
 };
 
 /**
- * Hero for category listing pages.
- * 1) Explicit `HERO_BY_SLUG` when we have a wide banner asset.
- * 2) Else the same `image` as in `SHOP_CATEGORIES` (local or remote).
- * 3) Else a neutral default.
+ * Category page banners only — separate from home/category-grid thumbnails in
+ * `SHOP_CATEGORIES`. Add entries here when wide banner assets are ready.
  */
-export function getCategoryHero(slug: string) {
-  const explicit = HERO_BY_SLUG[slug];
-  if (explicit) return explicit;
+const HERO_BY_SLUG: Record<string, CategoryHero> = {};
 
-  const shop = getShopCategoryBySlug(slug);
-  if (shop?.image) {
-    const remote = shop.image.startsWith("http");
-    return {
-      src: shop.image,
-      width: remote ? 1600 : 900,
-      height: remote ? 900 : 900,
-      alt: "",
-    };
-  }
-
-  return {
-    src: "/home/fruits.png",
-    width: 1200,
-    height: 600,
-    alt: "",
-  };
+/**
+ * Hero for `/categories/{slug}` pages. Returns `null` when no banner is configured.
+ */
+export function getCategoryHero(slug: string): CategoryHero | null {
+  return HERO_BY_SLUG[slug] ?? null;
 }
 
-/** Full-width hero for the bestsellers listing page. */
-export function getBestsellersHero() {
-  return getCategoryHero("fresh-fruits");
+/** Optional hero for the bestsellers listing page. */
+export function getBestsellersHero(): CategoryHero | null {
+  return HERO_BY_SLUG["bestsellers"] ?? null;
 }

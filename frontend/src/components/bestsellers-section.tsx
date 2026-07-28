@@ -51,10 +51,10 @@ async function BestsellersSectionContent() {
       aria-labelledby="bestsellers-heading"
     >
       <div className="mx-auto w-full min-w-0 max-w-7xl overflow-hidden px-3 sm:px-4 lg:px-6 xl:px-10">
-        <div className="mb-3 flex items-end justify-between gap-3 sm:mb-4">
+        <div className="mb-3 flex items-end justify-between gap-2 sm:mb-4 sm:gap-3">
           <h2
             id="bestsellers-heading"
-            className="text-foreground text-lg font-bold tracking-tight sm:text-xl md:text-2xl"
+            className="text-foreground min-w-0 text-lg font-bold leading-tight tracking-tight sm:text-xl md:text-2xl"
           >
             Bestsellers
           </h2>

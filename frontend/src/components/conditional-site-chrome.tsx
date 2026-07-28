@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { CartPeekBar } from "@/components/cart/cart-peek-bar";
 import { ActiveOrderFab } from "@/components/orders/active-order-fab";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
+import { WhatsAppFab } from "@/components/whatsapp-fab";
 import { useCart } from "@/hooks/use-cart";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,7 @@ export function ConditionalSiteChrome({ children }: { children: React.ReactNode 
       <CartPeekBar />
       <ActiveOrderFab />
       <SiteBottomNav />
+      <WhatsAppFab />
       <PwaInstallPrompt />
     </>
   );

@@ -1,8 +1,9 @@
 import { BestsellersSection } from "@/components/bestsellers-section";
 import { CategoryRail } from "@/components/category-rail";
-import { DeliveryBanner } from "@/components/delivery-banner";
 import { FeaturesTrustBar } from "@/components/features-trust-bar";
 import { HomeHero } from "@/components/home-hero";
+import { CategoryProductsSection } from "@/components/home/category-products-section";
+import { ShopLocationSection } from "@/components/home/shop-location-section";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
   createPageMetadata,
@@ -24,15 +25,14 @@ export default function Home() {
       <h1 className="sr-only">
         Urja Basket — Fresh fruits, dry fruits & nuts delivered in Delhi
       </h1>
-      <div className="mt-3 px-3 sm:mt-4 sm:px-4 lg:mx-auto lg:mt-4 lg:max-w-7xl lg:px-6 xl:px-10">
-        <DeliveryBanner />
-      </div>
-      <div className="mt-2 sm:mt-3 lg:mt-5">
-        <HomeHero />
-      </div>
+      <HomeHero />
       <CategoryRail />
       <FeaturesTrustBar />
+      <CategoryProductsSection categorySlug="fresh-fruits" title="Fresh Fruits" />
+      <CategoryProductsSection categorySlug="dry-fruits" title="Dry Fruits" />
+      <CategoryProductsSection categorySlug="nuts-seeds" title="Nuts & Seeds" />
       <BestsellersSection />
+      <ShopLocationSection />
     </>
   );
 }

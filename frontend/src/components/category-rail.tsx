@@ -1,56 +1,67 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 
 import { SHOP_CATEGORIES } from "@/lib/shop-categories";
 import { cn } from "@/lib/utils";
 
 /**
- * Categories: centered row (3 shop categories).
+ * Categories: Blinkit-style grid — pastel tile, square image, compact label.
  */
 export function CategoryRail() {
   return (
     <section
       className="border-border/60 bg-background w-full min-w-0"
-      aria-label="Shop by category"
+      aria-labelledby="category-rail-heading"
     >
-      <div
-        className={cn(
-          "mx-auto flex w-full min-w-0 max-w-7xl flex-wrap items-start justify-center gap-2 px-4 py-5",
-          "sm:gap-2.5 sm:py-6 sm:px-5",
-          "md:gap-6 md:py-7 md:px-6 lg:gap-7"
-        )}
-      >
-        {SHOP_CATEGORIES.map(({ href, label, image }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "text-foreground group flex w-[5.25rem] min-w-[5.25rem] max-w-[5.25rem] shrink-0 grow-0 snap-start snap-always flex-col items-center gap-2 rounded-xl py-1.5 text-center outline-none ring-urja-forest/30 transition hover:opacity-90 focus-visible:ring-2 touch-manipulation",
-              "sm:w-32 sm:min-w-[8rem] sm:max-w-[8rem] md:w-36 md:max-w-none md:min-w-0 md:gap-3"
-            )}
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-4 sm:px-5 md:px-6 lg:px-6 xl:px-10">
+        <div className="flex items-end justify-between gap-3 pt-5 sm:pt-6 md:pt-7">
+          <h2
+            id="category-rail-heading"
+            className="text-base font-bold tracking-tight text-neutral-900 sm:text-lg md:text-xl"
           >
-            <span className="relative block size-16 shrink-0 sm:size-20 md:size-24 lg:size-28">
-              <span
-                className="pointer-events-none absolute -bottom-1 left-1/2 z-0 h-3 w-[76%] -translate-x-1/2 rounded-[50%] bg-urja-forest/20 blur-[7px] transition-all duration-300 group-hover:-bottom-0.5 group-hover:h-3.5 group-hover:w-[82%] group-hover:bg-urja-forest/28 group-hover:blur-[9px]"
-                aria-hidden
-              />
-              <span className="relative z-10 block size-full overflow-hidden rounded-[50%] bg-white shadow-[inset_0_0_0_2.5px_#fff,0_10px_22px_-8px_rgba(40,71,18,0.28),0_4px_10px_-4px_rgba(0,0,0,0.1)] ring-1 ring-neutral-200/90 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[inset_0_0_0_2.5px_#fff,0_16px_32px_-6px_rgba(40,71,18,0.34),0_8px_16px_-4px_rgba(0,0,0,0.12)] group-hover:ring-urja-forest/25">
-                <Image
-                  src={image}
-                  alt=""
-                  width={280}
-                  height={280}
-                  sizes="(max-width: 640px) 80px, (max-width: 1024px) 96px, 112px"
-                  className="size-full scale-[1.1] rounded-[50%] object-cover object-center transition duration-300 ease-out group-hover:scale-[1.16]"
-                  draggable={false}
-                />
-              </span>
-            </span>
-            <span className="text-xs font-medium leading-snug tracking-tight whitespace-nowrap sm:text-sm md:text-[0.9375rem]">
-              {label}
-            </span>
+            Shop by Category
+          </h2>
+          <Link
+            href="/categories"
+            className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 sm:text-sm"
+          >
+            View All
+            <ChevronRight className="size-3.5 sm:size-4" strokeWidth={2} aria-hidden />
           </Link>
-        ))}
+        </div>
+
+        <ul
+          className={cn(
+            "grid w-full min-w-0 grid-cols-3 gap-x-3 gap-y-4 py-4",
+            "sm:gap-x-4 sm:gap-y-5 sm:py-5",
+            "md:gap-x-6 md:gap-y-6"
+          )}
+        >
+          {SHOP_CATEGORIES.map(({ href, label, image }) => (
+            <li key={href} className="min-w-0">
+              <Link
+                href={href}
+                className="group flex flex-col items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-urja-forest/30 focus-visible:ring-offset-2 touch-manipulation sm:gap-2.5"
+              >
+                <span className="relative mx-auto block aspect-square w-full max-w-[5.75rem] overflow-hidden rounded-[1.25rem] bg-[#ebf5f8] sm:max-w-[6.75rem] sm:rounded-[1.35rem] md:max-w-[7.75rem] lg:max-w-[8.75rem]">
+                  <Image
+                    src={image}
+                    alt=""
+                    width={280}
+                    height={280}
+                    sizes="(max-width: 640px) 28vw, (max-width: 1024px) 120px, 140px"
+                    className="size-full object-cover object-center transition duration-200 group-active:scale-[0.98]"
+                    draggable={false}
+                  />
+                </span>
+                <span className="line-clamp-2 w-full px-0.5 text-center text-[13px] font-semibold leading-[1.25] text-neutral-800 sm:text-sm sm:leading-snug">
+                  {label}
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: seo?.description ?? `Shop ${title.toLowerCase()} at Urja Basket with fast delivery in Delhi.`,
     path: `/categories/${slug}`,
     keywords: seo?.keywords,
-    ogImage: getCategoryHero(slug).src,
+    ogImage: getCategoryHero(slug)?.src,
   });
 }
 
@@ -55,17 +55,19 @@ export default async function CategoryBySlugPage({ params }: Props) {
         ])}
       />
       <h1 className="sr-only">{categoryLabel}</h1>
-      <div className="relative w-full overflow-hidden bg-neutral-100">
-        <Image
-          src={hero.src}
-          alt={hero.alt}
-          width={hero.width}
-          height={hero.height}
-          className="h-auto w-full object-cover object-center"
-          sizes="100vw"
-          priority
-        />
-      </div>
+      {hero ? (
+        <div className="relative w-full overflow-hidden bg-neutral-100">
+          <Image
+            src={hero.src}
+            alt={hero.alt}
+            width={hero.width}
+            height={hero.height}
+            className="h-auto w-full object-cover object-center"
+            sizes="100vw"
+            priority
+          />
+        </div>
+      ) : null}
       <CategoryProductListing
         categoryLabel={categoryLabel}
         categorySlug={slug}

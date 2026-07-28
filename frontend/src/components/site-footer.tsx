@@ -13,7 +13,6 @@ import {
   SiFacebook,
   SiInstagram,
   SiVisa,
-  SiWhatsapp,
 } from "react-icons/si";
 
 import { BrandLogo } from "@/components/brand-logo";
@@ -22,11 +21,6 @@ import {
   FOOTER_HELP_LINKS,
   FOOTER_SHOP_LINKS,
 } from "@/lib/footer-constants";
-
-const waBase = `https://wa.me/${FOOTER.whatsappDigits}`;
-const waPrefill = encodeURIComponent(
-  `Hi ${FOOTER.brand}, I have a question about my order.`
-);
 
 function FooterLinkColumn({
   title,
@@ -99,15 +93,6 @@ export function SiteFooter() {
                 Delivery in ~30 minutes
               </span>
             </div>
-            <Link
-              href={`${waBase}?text=${waPrefill}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#25D366] to-[#1ebe5d] px-5 text-sm font-bold text-white shadow-lg shadow-black/20 transition hover:brightness-110 sm:w-auto"
-            >
-              <SiWhatsapp className="size-[18px]" aria-hidden />
-              Chat on WhatsApp
-            </Link>
           </div>
         </div>
 
