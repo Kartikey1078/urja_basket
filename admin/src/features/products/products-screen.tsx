@@ -483,7 +483,8 @@ function ProductsInner() {
 }
 
 function ProductRow({ product: p }: { product: ProductListRow }) {
-  const status = stockStatusFromCount(p.stock);
+  const isArchived = Number(p.is_active) === 0;
+  const status = isArchived ? "out_of_stock" : stockStatusFromCount(p.stock);
 
   return (
     <tr className="group hover:bg-slate-50/80">
@@ -513,6 +514,11 @@ function ProductRow({ product: p }: { product: ProductListRow }) {
         >
           {p.name}
         </Link>
+        {isArchived ? (
+          <span className="mt-1 inline-block rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
+            Archived
+          </span>
+        ) : null}
         <p className="mt-0.5 font-mono text-xs text-slate-500">{p.slug}</p>
         <p className="text-xs text-slate-400">ID {p.id}</p>
       </td>

@@ -108,6 +108,12 @@ export async function adminListProducts(req: Request, res: Response) {
       ? stockStatusRaw
       : undefined;
 
+  const activeStatusRaw = typeof req.query.activeStatus === "string" ? req.query.activeStatus : undefined;
+  const activeStatus =
+    activeStatusRaw === "active" || activeStatusRaw === "archived" || activeStatusRaw === "all"
+      ? activeStatusRaw
+      : undefined;
+
   const sortVal =
     sort === "name_asc" ||
     sort === "name_desc" ||
@@ -122,6 +128,7 @@ export async function adminListProducts(req: Request, res: Response) {
     q,
     categoryId: categoryId && categoryId > 0 ? categoryId : undefined,
     stockStatus,
+    activeStatus,
     sort: sortVal,
     page,
     limit,
@@ -219,8 +226,28 @@ export async function adminUpdateProduct(req: Request, res: Response) {
 
 export async function adminDeleteProduct(req: Request, res: Response) {
   const id = parseId(paramStr(req.params.id), "product id");
-  await productRepo.deleteProduct(id);
-  res.status(204).send();
+  const ok = await productRepo.archiveProduct(id);
+  if (!ok) throw new HttpError(404, "Product not found");
+  res.json({
+    data: {
+      ok: true,
+      archived: true,
+      message: "Product archived, marked out of stock, and removed from customer carts.",
+    },
+  });
+}
+
+export async function adminRestoreProduct(req: Request, res: Response) {
+  const id = parseId(paramStr(req.params.id), "product id");
+  const ok = await productRepo.restoreProduct(id);
+  if (!ok) throw new HttpError(404, "Product not found");
+  res.json({
+    data: {
+      ok: true,
+      restored: true,
+      message: "Product restored and stock levels re-applied from archive snapshot.",
+    },
+  });
 }
 
 /** --- Variants --- */

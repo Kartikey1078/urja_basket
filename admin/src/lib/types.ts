@@ -69,6 +69,7 @@ export type ProductListRow = {
   is_featured: number;
   is_best_seller: number;
   is_organic: number;
+  is_active: number;
   nutrition_tags: string[];
   created_at: string;
   updated_at: string;
@@ -88,6 +89,7 @@ export type ProductDetail = {
   is_featured: number;
   is_best_seller: number;
   is_organic: number;
+  is_active: number;
   nutrition_tags: string[];
   created_at: string;
   updated_at: string;

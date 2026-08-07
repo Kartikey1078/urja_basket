@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { NutritionTagsEditor } from "@/components/nutrition-tags-editor";
@@ -27,7 +27,6 @@ function bit(v: number): boolean {
 
 export function ProductDetailScreen() {
   const params = useParams();
-  const router = useRouter();
   const id = Number(params.id);
   const qc = useQueryClient();
   const [nutritionTags, setNutritionTags] = useState<string[]>([]);
@@ -59,12 +58,25 @@ export function ProductDetailScreen() {
     onError: (e) => adminToast.fromError(e),
   });
 
-  const deleteProduct = useMutation({
-    mutationFn: () => adminFetchJson(`products/${id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      adminToast.deleted("Product");
+  const archiveProduct = useMutation({
+    mutationFn: () => adminFetchJson<{ data: { message?: string } }>(`products/${id}`, { method: "DELETE" }),
+    onSuccess: (res) => {
+      adminToast.success(res.data.message ?? "Product archived");
+      void qc.invalidateQueries({ queryKey: ["admin", "product", id] });
       void qc.invalidateQueries({ queryKey: ["admin", "products"] });
-      router.push("/products");
+      void qc.invalidateQueries({ queryKey: ["admin", "variants", id] });
+    },
+    onError: (e) => adminToast.fromError(e),
+  });
+
+  const restoreProduct = useMutation({
+    mutationFn: () =>
+      adminFetchJson<{ data: { message?: string } }>(`products/${id}/restore`, { method: "POST" }),
+    onSuccess: (res) => {
+      adminToast.success(res.data.message ?? "Product restored");
+      void qc.invalidateQueries({ queryKey: ["admin", "product", id] });
+      void qc.invalidateQueries({ queryKey: ["admin", "products"] });
+      void qc.invalidateQueries({ queryKey: ["admin", "variants", id] });
     },
     onError: (e) => adminToast.fromError(e),
   });
@@ -111,6 +123,7 @@ export function ProductDetailScreen() {
   }
 
   const p = product.data;
+  const isArchived = !bit(p.is_active);
 
   return (
     <div>
@@ -123,6 +136,16 @@ export function ProductDetailScreen() {
           ← All products
         </Link>
       </div>
+
+      {isArchived ? (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Archived / inactive</p>
+          <p className="mt-1 text-amber-900/90">
+            This product is hidden from carts and shown as out of stock on the website. Order and
+            inventory history are preserved.
+          </p>
+        </div>
+      ) : null}
 
       <section className="mb-8 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h2 className="text-sm font-semibold text-slate-900">Product details</h2>
@@ -220,21 +243,44 @@ export function ProductDetailScreen() {
             onChange={setNutritionTags}
           />
           <div className="flex flex-col gap-2 sm:flex-row lg:col-span-2">
-            <button type="submit" className={btnPrimary} disabled={updateProduct.isPending}>
+            <button type="submit" className={btnPrimary} disabled={updateProduct.isPending || isArchived}>
               {updateProduct.isPending ? "Saving…" : "Save product"}
             </button>
-            <button
-              type="button"
-              className={btnDanger}
-              disabled={deleteProduct.isPending}
-              onClick={() => {
-                if (typeof window !== "undefined" && window.confirm("Delete this product and its variants?")) {
-                  deleteProduct.mutate();
-                }
-              }}
-            >
-              Delete product
-            </button>
+            {isArchived ? (
+              <button
+                type="button"
+                className={btnPrimary}
+                disabled={restoreProduct.isPending}
+                onClick={() => {
+                  if (
+                    typeof window !== "undefined" &&
+                    window.confirm("Restore this product and re-apply saved stock levels?")
+                  ) {
+                    restoreProduct.mutate();
+                  }
+                }}
+              >
+                {restoreProduct.isPending ? "Restoring…" : "Restore product"}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className={btnDanger}
+                disabled={archiveProduct.isPending}
+                onClick={() => {
+                  if (
+                    typeof window !== "undefined" &&
+                    window.confirm(
+                      "Archive this product? It will be marked out of stock, removed from carts, and stay visible on the website."
+                    )
+                  ) {
+                    archiveProduct.mutate();
+                  }
+                }}
+              >
+                {archiveProduct.isPending ? "Archiving…" : "Archive product"}
+              </button>
+            )}
           </div>
         </form>
       </section>

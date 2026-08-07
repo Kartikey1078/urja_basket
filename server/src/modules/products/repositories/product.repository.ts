@@ -17,6 +17,8 @@ export type ProductListRow = RowDataPacket & {
   is_featured: number;
   is_best_seller: number;
   is_organic: number;
+  is_active: number;
+  effective_stock: number;
   nutrition_tags: unknown;
   created_at: Date;
   updated_at: Date;
@@ -67,6 +69,63 @@ const MIN_PRICE_SQL = `(
   WHERE pv.product_id = p.id
 )`;
 
+/** Product-level stock, or sum of variant stock when variants exist. */
+export const EFFECTIVE_STOCK_SQL = `(
+  CASE
+    WHEN EXISTS (SELECT 1 FROM product_variants pv_es WHERE pv_es.product_id = p.id)
+    THEN (SELECT COALESCE(SUM(pv_es.stock), 0) FROM product_variants pv_es WHERE pv_es.product_id = p.id)
+    ELSE p.stock
+  END
+)`;
+
+const PRODUCT_CARD_SELECT = `
+        p.id,
+        p.name,
+        p.slug,
+        p.short_description,
+        p.full_description,
+        p.category_id,
+        p.main_image,
+        p.stock,
+        p.average_rating,
+        p.total_reviews,
+        p.is_featured,
+        p.is_best_seller,
+        p.is_organic,
+        p.is_active,
+        ${EFFECTIVE_STOCK_SQL} AS effective_stock,
+        p.nutrition_tags,
+        p.created_at,
+        p.updated_at,
+        c.name AS category_name,
+        c.slug AS category_slug,
+        (
+          SELECT MIN(pv.price)
+          FROM product_variants pv
+          WHERE pv.product_id = p.id
+        ) AS min_price,
+        (
+          SELECT pv.weight
+          FROM product_variants pv
+          WHERE pv.product_id = p.id
+          ORDER BY pv.price ASC, pv.id ASC
+          LIMIT 1
+        ) AS card_weight,
+        (
+          SELECT pv.price
+          FROM product_variants pv
+          WHERE pv.product_id = p.id
+          ORDER BY pv.price ASC, pv.id ASC
+          LIMIT 1
+        ) AS card_price,
+        (
+          SELECT pv.original_price
+          FROM product_variants pv
+          WHERE pv.product_id = p.id
+          ORDER BY pv.price ASC, pv.id ASC
+          LIMIT 1
+        ) AS card_original_price`;
+
 export async function findAllProductCards(
   filters: ProductCardFilters = {}
 ): Promise<ProductListRow[]> {
@@ -108,10 +167,13 @@ export async function findAllProductCards(
   }
   if (filters.inStock) {
     conditions.push(`(
-      p.stock > 0
-      OR EXISTS (
-        SELECT 1 FROM product_variants pv_stock
-        WHERE pv_stock.product_id = p.id AND pv_stock.stock > 0
+      p.is_active = 1
+      AND (
+        p.stock > 0
+        OR EXISTS (
+          SELECT 1 FROM product_variants pv_stock
+          WHERE pv_stock.product_id = p.id AND pv_stock.stock > 0
+        )
       )
     )`);
   }
@@ -130,51 +192,7 @@ export async function findAllProductCards(
   const orderClause = orderClauseForSort(filters.sort);
 
   const [rows] = await pool.query<ProductListRow[]>(
-    `SELECT
-        p.id,
-        p.name,
-        p.slug,
-        p.short_description,
-        p.full_description,
-        p.category_id,
-        p.main_image,
-        p.stock,
-        p.average_rating,
-        p.total_reviews,
-        p.is_featured,
-        p.is_best_seller,
-        p.is_organic,
-        p.nutrition_tags,
-        p.created_at,
-        p.updated_at,
-        c.name AS category_name,
-        c.slug AS category_slug,
-        (
-          SELECT MIN(pv.price)
-          FROM product_variants pv
-          WHERE pv.product_id = p.id
-        ) AS min_price,
-        (
-          SELECT pv.weight
-          FROM product_variants pv
-          WHERE pv.product_id = p.id
-          ORDER BY pv.price ASC, pv.id ASC
-          LIMIT 1
-        ) AS card_weight,
-        (
-          SELECT pv.price
-          FROM product_variants pv
-          WHERE pv.product_id = p.id
-          ORDER BY pv.price ASC, pv.id ASC
-          LIMIT 1
-        ) AS card_price,
-        (
-          SELECT pv.original_price
-          FROM product_variants pv
-          WHERE pv.product_id = p.id
-          ORDER BY pv.price ASC, pv.id ASC
-          LIMIT 1
-        ) AS card_original_price
+    `SELECT ${PRODUCT_CARD_SELECT}
      FROM products p
      INNER JOIN categories c ON c.id = p.category_id
      ${whereClause}
@@ -208,51 +226,7 @@ export type ReviewRow = RowDataPacket & {
 
 export async function findProductBySlug(slug: string): Promise<ProductListRow | null> {
   const [rows] = await pool.query<ProductListRow[]>(
-    `SELECT
-        p.id,
-        p.name,
-        p.slug,
-        p.short_description,
-        p.full_description,
-        p.category_id,
-        p.main_image,
-        p.stock,
-        p.average_rating,
-        p.total_reviews,
-        p.is_featured,
-        p.is_best_seller,
-        p.is_organic,
-        p.nutrition_tags,
-        p.created_at,
-        p.updated_at,
-        c.name AS category_name,
-        c.slug AS category_slug,
-        (
-          SELECT MIN(pv.price)
-          FROM product_variants pv
-          WHERE pv.product_id = p.id
-        ) AS min_price,
-        (
-          SELECT pv.weight
-          FROM product_variants pv
-          WHERE pv.product_id = p.id
-          ORDER BY pv.price ASC, pv.id ASC
-          LIMIT 1
-        ) AS card_weight,
-        (
-          SELECT pv.price
-          FROM product_variants pv
-          WHERE pv.product_id = p.id
-          ORDER BY pv.price ASC, pv.id ASC
-          LIMIT 1
-        ) AS card_price,
-        (
-          SELECT pv.original_price
-          FROM product_variants pv
-          WHERE pv.product_id = p.id
-          ORDER BY pv.price ASC, pv.id ASC
-          LIMIT 1
-        ) AS card_original_price
+    `SELECT ${PRODUCT_CARD_SELECT}
      FROM products p
      INNER JOIN categories c ON c.id = p.category_id
      WHERE p.slug = :slug
@@ -260,6 +234,28 @@ export async function findProductBySlug(slug: string): Promise<ProductListRow | 
     { slug }
   );
   return rows[0] ?? null;
+}
+
+export async function findVariantBySku(sku: string): Promise<ProductVariantRow | null> {
+  const [rows] = await pool.query<ProductVariantRow[]>(
+    `SELECT id, product_id, weight, price, original_price, discount_percentage, stock, sku, created_at, updated_at
+     FROM product_variants
+     WHERE sku = :sku
+     LIMIT 1`,
+    { sku }
+  );
+  return rows[0] ?? null;
+}
+
+export async function findDefaultInStockVariantSku(productId: number): Promise<string> {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT sku FROM product_variants
+     WHERE product_id = ? AND stock > 0
+     ORDER BY price ASC, id ASC
+     LIMIT 1`,
+    [productId]
+  );
+  return rows[0]?.sku != null ? String(rows[0].sku) : "";
 }
 
 export async function findVariantsByProductId(productId: number): Promise<ProductVariantRow[]> {
@@ -308,6 +304,8 @@ export type ProductAdminRow = RowDataPacket & {
   is_featured: number;
   is_best_seller: number;
   is_organic: number;
+  is_active: number;
+  archived_stock_snapshot: unknown;
   nutrition_tags: unknown;
   created_at: Date;
   updated_at: Date;
@@ -324,6 +322,7 @@ export type AdminProductListFilters = {
   q?: string;
   categoryId?: number;
   stockStatus?: AdminProductStockStatus;
+  activeStatus?: "active" | "archived" | "all";
   sort?: "newest" | "name_asc" | "name_desc" | "stock_asc" | "stock_desc" | "updated";
   page?: number;
   limit?: number;
@@ -332,8 +331,8 @@ export type AdminProductListFilters = {
 const ADMIN_PRODUCT_SELECT = `SELECT
         p.id, p.name, p.slug, p.short_description, p.full_description, p.category_id,
         p.main_image, p.stock, p.average_rating, p.total_reviews,
-        p.is_featured, p.is_best_seller, p.is_organic, p.nutrition_tags,
-        p.created_at, p.updated_at,
+        p.is_featured, p.is_best_seller, p.is_organic, p.is_active, p.archived_stock_snapshot,
+        p.nutrition_tags, p.created_at, p.updated_at,
         c.name AS category_name, c.slug AS category_slug`;
 
 const ADMIN_PRODUCT_FROM = `FROM products p
@@ -358,14 +357,19 @@ async function buildAdminProductListWhere(filters?: AdminProductListFilters): Pr
   if (filters?.stockStatus) {
     const { lowStockThreshold } = await getSiteSettings();
     if (filters.stockStatus === "out_of_stock") {
-      conditions.push("p.stock = 0");
+      conditions.push("(p.is_active = 0 OR p.stock = 0)");
     } else if (filters.stockStatus === "low_stock") {
-      conditions.push("p.stock > 0 AND p.stock <= ?");
+      conditions.push("p.is_active = 1 AND p.stock > 0 AND p.stock <= ?");
       params.push(lowStockThreshold);
     } else {
-      conditions.push("p.stock > ?");
+      conditions.push("p.is_active = 1 AND p.stock > ?");
       params.push(lowStockThreshold);
     }
+  }
+  if (filters?.activeStatus === "active") {
+    conditions.push("p.is_active = 1");
+  } else if (filters?.activeStatus === "archived") {
+    conditions.push("p.is_active = 0");
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -426,7 +430,7 @@ export async function findProductById(id: number): Promise<ProductAdminRow | nul
   const [rows] = await pool.query<ProductAdminRow[]>(
     `SELECT id, name, slug, short_description, full_description, category_id, main_image,
             stock, average_rating, total_reviews, is_featured, is_best_seller, is_organic,
-            nutrition_tags, created_at, updated_at
+            is_active, archived_stock_snapshot, nutrition_tags, created_at, updated_at
      FROM products WHERE id = :id LIMIT 1`,
     { id }
   );
@@ -531,8 +535,148 @@ export async function updateProduct(
   return r.affectedRows > 0;
 }
 
+export type ArchivedStockSnapshot = {
+  productStock: number;
+  variants: Array<{ id: number; stock: number }>;
+};
+
+function parseArchivedStockSnapshot(raw: unknown): ArchivedStockSnapshot | null {
+  if (raw == null) return null;
+  let parsed: unknown = raw;
+  if (typeof raw === "string") {
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const record = parsed as Record<string, unknown>;
+  const productStock = Number(record.productStock);
+  if (!Number.isFinite(productStock)) return null;
+  const variantsRaw = Array.isArray(record.variants) ? record.variants : [];
+  const variants = variantsRaw
+    .map((v) => {
+      if (typeof v !== "object" || v === null) return null;
+      const row = v as Record<string, unknown>;
+      const id = Number(row.id);
+      const stock = Number(row.stock);
+      if (!Number.isInteger(id) || id <= 0 || !Number.isFinite(stock) || stock < 0) return null;
+      return { id, stock };
+    })
+    .filter((v): v is { id: number; stock: number } => v !== null);
+  return { productStock, variants };
+}
+
+/** Soft-delete: archive product, zero stock, remove from carts. Preserves order/POS history. */
+export async function archiveProduct(id: number): Promise<boolean> {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [productRows] = await conn.query<ProductAdminRow[]>(
+      `SELECT id, stock, is_active FROM products WHERE id = ? LIMIT 1 FOR UPDATE`,
+      [id]
+    );
+    const product = productRows[0];
+    if (!product) {
+      await conn.rollback();
+      return false;
+    }
+    if (Number(product.is_active) === 0) {
+      await conn.commit();
+      return true;
+    }
+
+    const [variantRows] = await conn.query<ProductVariantRow[]>(
+      `SELECT id, stock FROM product_variants WHERE product_id = ?`,
+      [id]
+    );
+
+    const snapshot: ArchivedStockSnapshot = {
+      productStock: Number(product.stock),
+      variants: variantRows.map((v) => ({ id: v.id, stock: Number(v.stock) })),
+    };
+
+    await conn.execute(
+      `UPDATE products
+       SET is_active = 0, stock = 0, archived_stock_snapshot = ?
+       WHERE id = ?`,
+      [JSON.stringify(snapshot), id]
+    );
+
+    if (variantRows.length > 0) {
+      await conn.execute(`UPDATE product_variants SET stock = 0 WHERE product_id = ?`, [id]);
+    }
+
+    await conn.execute(`DELETE FROM cart_items WHERE product_id = ?`, [id]);
+
+    await conn.commit();
+    return true;
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
+/** Restore archived product and previous stock levels from snapshot. */
+export async function restoreProduct(id: number): Promise<boolean> {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [productRows] = await conn.query<ProductAdminRow[]>(
+      `SELECT id, is_active, archived_stock_snapshot FROM products WHERE id = ? LIMIT 1 FOR UPDATE`,
+      [id]
+    );
+    const product = productRows[0];
+    if (!product) {
+      await conn.rollback();
+      return false;
+    }
+    if (Number(product.is_active) === 1) {
+      await conn.commit();
+      return true;
+    }
+
+    const snapshot = parseArchivedStockSnapshot(product.archived_stock_snapshot);
+    const productStock = snapshot?.productStock ?? 0;
+
+    await conn.execute(
+      `UPDATE products
+       SET is_active = 1, stock = ?, archived_stock_snapshot = NULL
+       WHERE id = ?`,
+      [productStock, id]
+    );
+
+    if (snapshot?.variants.length) {
+      for (const variant of snapshot.variants) {
+        await conn.execute(`UPDATE product_variants SET stock = ? WHERE id = ? AND product_id = ?`, [
+          variant.stock,
+          variant.id,
+          id,
+        ]);
+      }
+    }
+
+    await conn.commit();
+    return true;
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
+/** @deprecated Use archiveProduct — hard delete breaks FK constraints. */
 export async function deleteProduct(id: number): Promise<void> {
-  await pool.execute(`DELETE FROM products WHERE id = :id`, { id });
+  const ok = await archiveProduct(id);
+  if (!ok) {
+    throw new Error("Product not found");
+  }
 }
 
 export async function findVariantById(id: number): Promise<ProductVariantRow | null> {
