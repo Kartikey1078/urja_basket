@@ -9,6 +9,7 @@ import * as adminOrders from "./admin.orders.controller";
 import * as adminSettings from "./admin.settings.controller";
 import * as adminUsers from "./admin-users.controller";
 import * as adminCoupons from "./admin.coupons.controller";
+import * as adminCatalog from "./catalog.controller";
 import * as adminNutritionTags from "../nutrition-tags/admin.nutrition-tags.controller";
 import * as posController from "../pos/pos.controller";
 
@@ -35,6 +36,9 @@ r.post("/nutrition-tags", asyncHandler(adminNutritionTags.adminCreateNutritionTa
 r.patch("/nutrition-tags/:id", asyncHandler(adminNutritionTags.adminUpdateNutritionTag));
 r.delete("/nutrition-tags/:id", asyncHandler(adminNutritionTags.adminDeleteNutritionTag));
 
+/** Catalog image generator */
+r.get("/catalog/:categorySlug", asyncHandler(adminCatalog.adminGetCatalog));
+
 /** Products — list/create before `/:id` */
 r.get("/products", asyncHandler(admin.adminListProducts));
 r.post("/products", asyncHandler(admin.adminCreateProduct));
@@ -45,6 +49,7 @@ r.post("/products/:productId/variants", asyncHandler(admin.adminCreateVariant));
 
 r.get("/products/:id", asyncHandler(admin.adminGetProduct));
 r.patch("/products/:id", asyncHandler(admin.adminUpdateProduct));
+r.post("/products/:id/restore", asyncHandler(admin.adminRestoreProduct));
 r.delete("/products/:id", asyncHandler(admin.adminDeleteProduct));
 
 /** Variants by id */

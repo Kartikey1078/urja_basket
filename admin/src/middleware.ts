@@ -44,7 +44,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith("/api/backend")) {
+  if (
+    pathname.startsWith("/api/backend") ||
+    pathname.startsWith("/api/catalog-image") ||
+    pathname.startsWith("/api/catalog-export")
+  ) {
     if (!authed) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
