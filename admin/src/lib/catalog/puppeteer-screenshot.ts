@@ -33,8 +33,17 @@ async function getBrowser(): Promise<Browser> {
 /** WhatsApp-friendly JPEG — sRGB, moderate quality for fast mobile thumbnail generation. */
 const WHATSAPP_JPEG_QUALITY = 90;
 
-/** Render self-contained catalog HTML in headless Chrome and return JPEG bytes. */
-export async function screenshotCatalogHtml(html: string): Promise<Buffer> {
+type SessionCookie = {
+  cookieName: string;
+  cookieValue: string;
+  domain: string;
+};
+
+/** Open the server-rendered export frame and return a JPEG screenshot. */
+export async function screenshotCatalogPage(
+  url: string,
+  session: SessionCookie
+): Promise<Buffer> {
   const browser = await getBrowser();
   const page = await browser.newPage();
 
@@ -45,12 +54,38 @@ export async function screenshotCatalogHtml(html: string): Promise<Buffer> {
       deviceScaleFactor: 1,
     });
 
-    await page.setContent(html, {
-      waitUntil: "load",
-      timeout: 30_000,
+    if (session.cookieValue) {
+      await page.setCookie({
+        name: session.cookieName,
+        value: session.cookieValue,
+        domain: session.domain,
+        path: "/",
+      });
+    }
+
+    await page.goto(url, {
+      waitUntil: "networkidle0",
+      timeout: 60_000,
     });
 
-    await page.evaluate(() => document.fonts.ready);
+    await page.waitForSelector("[data-catalog-export-root]", { timeout: 15_000 });
+
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all(
+        Array.from(document.images).map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) {
+                resolve();
+                return;
+              }
+              img.addEventListener("load", () => resolve(), { once: true });
+              img.addEventListener("error", () => resolve(), { once: true });
+            })
+        )
+      );
+    });
 
     const jpeg = await page.screenshot({
       type: "jpeg",

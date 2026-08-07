@@ -1,5 +1,3 @@
-import { prepareCatalogExportHtml } from "@/lib/catalog/prepare-catalog-export-html";
-
 function triggerDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -12,18 +10,20 @@ function triggerDownload(blob: Blob, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
-/** Export fixed 1080×1350 JPEG via Puppeteer — optimized for WhatsApp sharing/previews. */
-export async function exportCatalogNodeToJpeg(
-  node: HTMLElement,
-  filename: string
-): Promise<void> {
-  const html = await prepareCatalogExportHtml(node);
-
+/** Export fixed 1080×1500 JPEG via server-side Puppeteer (small JSON payload — Vercel-safe). */
+export async function exportCatalogPageToJpeg(options: {
+  categorySlug: string;
+  pageIndex: number;
+  filename: string;
+}): Promise<void> {
   const res = await fetch("/api/catalog-export", {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html }),
+    body: JSON.stringify({
+      categorySlug: options.categorySlug,
+      pageIndex: options.pageIndex,
+    }),
   });
 
   if (!res.ok) {
@@ -42,5 +42,5 @@ export async function exportCatalogNodeToJpeg(
     throw new Error("Empty catalog image returned");
   }
 
-  triggerDownload(blob, filename);
+  triggerDownload(blob, options.filename);
 }

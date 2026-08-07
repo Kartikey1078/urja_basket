@@ -40,6 +40,7 @@ import {
   type CatalogTheme,
 } from "@/lib/catalog/constants";
 import {
+  catalogAssetUrl,
   catalogImageProxyUrl,
   formatCatalogDate,
   formatCatalogRatePrice,
@@ -51,6 +52,8 @@ type CatalogPreviewTemplateProps = {
   theme: CatalogTheme;
   pageIndex?: number;
   totalPages?: number;
+  /** When set (server export), image/logo URLs are absolute for Puppeteer. */
+  assetOrigin?: string;
 };
 
 function LeafIcon({ color }: { color: string }) {
@@ -116,12 +119,14 @@ function ProductRow({
   isLast,
   empty,
   stripe,
+  assetOrigin,
 }: {
   product: CatalogProduct | null;
   theme: CatalogTheme;
   isLast?: boolean;
   empty?: boolean;
   stripe?: boolean;
+  assetOrigin?: string;
 }) {
   if (empty || !product) {
     return (
@@ -137,7 +142,8 @@ function ProductRow({
     );
   }
 
-  const imgSrc = catalogImageProxyUrl(product.image) || CATALOG_PLACEHOLDER_IMAGE;
+  const imgSrc =
+    catalogImageProxyUrl(product.image, assetOrigin) || CATALOG_PLACEHOLDER_IMAGE;
   const imageKey = `${product.id}-${product.image ?? "none"}`;
   const weightLabel = product.weight?.trim();
 
@@ -268,9 +274,11 @@ function ProductRow({
 function ProductColumn({
   products,
   theme,
+  assetOrigin,
 }: {
   products: Array<CatalogProduct | null>;
   theme: CatalogTheme;
+  assetOrigin?: string;
 }) {
   return (
     <ul
@@ -294,6 +302,7 @@ function ProductColumn({
           isLast={index === products.length - 1}
           empty={product === null}
           stripe={index % 2 === 1}
+          assetOrigin={assetOrigin}
         />
       ))}
     </ul>
@@ -305,6 +314,7 @@ export function CatalogPreviewTemplate({
   theme,
   pageIndex = 1,
   totalPages = 1,
+  assetOrigin,
 }: CatalogPreviewTemplateProps) {
   const dateLabel = formatCatalogDate(catalog.generatedAt);
   const showPageBadge = totalPages > 1;
@@ -402,7 +412,12 @@ export function CatalogPreviewTemplate({
             gap: 12,
           }}
         >
-          <HeaderLogoSlot src={CATALOG_LOGO_SRC} alt="Urja Basket" emoji="🌿" theme={theme} />
+          <HeaderLogoSlot
+            src={catalogAssetUrl(CATALOG_LOGO_SRC, assetOrigin)}
+            alt="Urja Basket"
+            emoji="🌿"
+            theme={theme}
+          />
 
           <div style={{ flex: 1, textAlign: "center", minWidth: 0, paddingBottom: 4 }}>
             <h1
@@ -433,7 +448,7 @@ export function CatalogPreviewTemplate({
           </div>
 
           <HeaderLogoSlot
-            src={CATALOG_LOGO_MARK_SRC}
+            src={catalogAssetUrl(CATALOG_LOGO_MARK_SRC, assetOrigin)}
             alt="Urja Basket mark"
             emoji="🧺"
             theme={theme}
@@ -536,7 +551,7 @@ export function CatalogPreviewTemplate({
           </p>
         ) : (
           <>
-            <ProductColumn products={leftCol} theme={theme} />
+            <ProductColumn products={leftCol} theme={theme} assetOrigin={assetOrigin} />
             <div
               style={{
                 width: 1,
@@ -546,7 +561,7 @@ export function CatalogPreviewTemplate({
               }}
               aria-hidden
             />
-            <ProductColumn products={rightCol} theme={theme} />
+            <ProductColumn products={rightCol} theme={theme} assetOrigin={assetOrigin} />
           </>
         )}
       </section>

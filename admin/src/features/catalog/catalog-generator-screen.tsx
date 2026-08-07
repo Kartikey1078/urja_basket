@@ -15,7 +15,7 @@ import {
   paginateCatalogProducts,
   type CatalogPayload,
 } from "@/lib/catalog/constants";
-import { exportCatalogNodeToJpeg } from "@/lib/catalog/export-catalog-image";
+import { exportCatalogPageToJpeg } from "@/lib/catalog/export-catalog-image";
 import { formatCatalogDate } from "@/lib/catalog/format";
 import { cn } from "@/lib/cn";
 
@@ -43,23 +43,23 @@ function CatalogSectionCard({
   );
 
   const handleDownload = async () => {
-    const roots = previewRef.current?.querySelectorAll<HTMLElement>("[data-catalog-root]");
-    if (!roots?.length) {
-      adminToast.fromError(new Error("Preview not ready"));
+    if (!query.data?.products.length) {
+      adminToast.fromError(new Error("No products to export"));
       return;
     }
 
     setExporting(true);
     try {
       const stamp = formatCatalogDate(query.data?.generatedAt).replace(/\s/g, "-");
-      const total = roots.length;
+      const total = pages.length;
 
       for (let i = 0; i < total; i++) {
         const pageSuffix = total > 1 ? `-page-${i + 1}` : "";
-        await exportCatalogNodeToJpeg(
-          roots[i]!,
-          `urja-${slug}-catalog-${stamp}${pageSuffix}.jpeg`
-        );
+        await exportCatalogPageToJpeg({
+          categorySlug: slug,
+          pageIndex: i,
+          filename: `urja-${slug}-catalog-${stamp}${pageSuffix}.jpeg`,
+        });
         if (i < total - 1) await sleep(400);
       }
 
