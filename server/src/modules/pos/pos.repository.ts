@@ -56,12 +56,15 @@ export async function searchPosProducts(query: string, limit = 24): Promise<PosP
       p.id, p.name, p.slug, p.main_image, p.stock,
       (SELECT COUNT(*) FROM product_variants pv WHERE pv.product_id = p.id) AS variant_count
      FROM products p
-     WHERE p.name LIKE ?
-        OR p.slug LIKE ?
-        OR EXISTS (
-          SELECT 1 FROM product_variants pv
-          WHERE pv.product_id = p.id AND (pv.sku LIKE ? OR pv.weight LIKE ?)
-        )
+     WHERE p.is_active = 1
+       AND (
+         p.name LIKE ?
+         OR p.slug LIKE ?
+         OR EXISTS (
+           SELECT 1 FROM product_variants pv
+           WHERE pv.product_id = p.id AND (pv.sku LIKE ? OR pv.weight LIKE ?)
+         )
+       )
      ORDER BY p.name ASC
      LIMIT ?`,
     [like, like, like, like, limit]

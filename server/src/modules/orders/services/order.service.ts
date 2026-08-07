@@ -8,6 +8,7 @@ import { mapDbError } from "../../../errors/mapDbError";
 import type { CartLineDto, CartResponse } from "../../cart/cart.types";
 import * as cartRepo from "../../cart/repositories/cart.repository";
 import * as cartService from "../../cart/services/cart.service";
+import * as productRepo from "../../products/repositories/product.repository";
 import { computeCartTotals } from "../../cart/services/cart-pricing.service";
 import * as couponRepo from "../../coupons/repositories/coupon.repository";
 import {
@@ -49,6 +50,7 @@ function lineFromCartRow(row: {
   is_organic: number;
   is_best_seller: number;
   quantity: number;
+  variant_sku?: string;
 }): CartLineDto {
   const price = parseMoney(row.card_price);
   const mrp = parseMoney(row.card_original_price) || price;
@@ -58,6 +60,7 @@ function lineFromCartRow(row: {
     slug: row.slug,
     name: row.name,
     subtitle: row.card_weight ?? "",
+    variantSku: row.variant_sku ?? "",
     tag: row.is_best_seller ? "Bestseller" : row.is_organic ? "Organic" : null,
     price,
     mrp,
@@ -76,7 +79,7 @@ async function buildSnapshotFromServerCart(clerkId: string): Promise<CheckoutSna
 }
 
 async function buildSnapshotFromGuestItems(
-  items: { productSlug: string; quantity: number }[],
+  items: { productSlug: string; quantity: number; variantSku?: string }[],
   options?: {
     couponCode?: string | null;
     userId?: number | null;
@@ -90,8 +93,14 @@ async function buildSnapshotFromGuestItems(
   }
   const lines: CartLineDto[] = [];
   for (const item of items) {
-    const product = await cartRepo.findProductForCartBySlug(item.productSlug);
+    const product = await cartRepo.findProductForCartBySlug(
+      item.productSlug,
+      item.variantSku ?? ""
+    );
     if (!product) continue;
+    const variantSku =
+      (item.variantSku ?? "").trim() ||
+      (await productRepo.findDefaultInStockVariantSku(product.id));
     const qty = Math.min(99, Math.max(1, Math.floor(item.quantity)));
     lines.push(
       lineFromCartRow({
@@ -106,6 +115,7 @@ async function buildSnapshotFromGuestItems(
         is_organic: product.is_organic,
         is_best_seller: product.is_best_seller,
         quantity: qty,
+        variant_sku: variantSku,
       })
     );
   }
@@ -324,6 +334,7 @@ async function insertLines(dbOrderId: number, snapshot: CheckoutSnapshot): Promi
     dbOrderId,
     snapshot.items.map((item) => ({
       productId: item.productId,
+      variantSku: item.variantSku || null,
       slug: item.slug,
       name: item.name,
       subtitle: item.subtitle || null,

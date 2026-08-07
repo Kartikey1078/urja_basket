@@ -20,7 +20,7 @@ export type CreatePaymentOrderInput = {
   amountPaise: number;
   deliverySlot?: string;
   address: CheckoutAddressPayload;
-  items?: { productSlug: string; quantity: number }[];
+  items?: { productSlug: string; quantity: number; variantSku?: string }[];
   paymentMethod?: PaymentMethod;
   couponCode?: string | null;
 };

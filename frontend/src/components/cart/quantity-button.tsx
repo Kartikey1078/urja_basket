@@ -17,6 +17,8 @@ type QuantityButtonProps = {
   product: CartProductInput;
   className?: string;
   compact?: boolean;
+  /** When false, shows a disabled Out of Stock state instead of add/stepper. */
+  inStock?: boolean;
 };
 
 function StepperIconButton({
@@ -56,9 +58,10 @@ export const QuantityButton = memo(function QuantityButton({
   product,
   className,
   compact = false,
+  inStock = true,
 }: QuantityButtonProps) {
   const router = useRouter();
-  const quantity = useCartItemQuantity(product.slug);
+  const quantity = useCartItemQuantity(product.slug, product.variantSku);
   const { addItem, increaseQuantity, decreaseQuantity, hydrated, authReady } = useCart();
   const pending = useRef(false);
   const wasZero = useRef(false);
@@ -89,7 +92,25 @@ export const QuantityButton = memo(function QuantityButton({
   const handleIncrease = () => void run(() => increaseQuantity(product));
   const handleDecrease = () => void run(() => decreaseQuantity(product));
 
-  const showStepper = hydrated && quantity > 0;
+  const showStepper = inStock && hydrated && quantity > 0;
+
+  if (!inStock) {
+    return (
+      <div className={cn("mt-auto w-full pt-0.5", className)}>
+        <button
+          type="button"
+          disabled
+          aria-label={`${product.name} is out of stock`}
+          className={cn(
+            "flex w-full cursor-not-allowed items-center justify-center rounded-xl border-2 border-dashed border-neutral-300 bg-neutral-100 font-bold tracking-wide text-neutral-500 uppercase",
+            compact ? "h-9 text-[11px] sm:h-10 sm:text-xs" : "h-11 text-xs sm:h-12 sm:text-sm"
+          )}
+        >
+          Out of Stock
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("mt-auto w-full pt-0.5", className)}>

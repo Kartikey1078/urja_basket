@@ -58,6 +58,9 @@ export function CategoryRail() {
                 <span className="line-clamp-2 w-full px-0.5 text-center text-[13px] font-semibold leading-[1.25] text-neutral-800 sm:text-sm sm:leading-snug">
                   {label}
                 </span>
+                <span className="text-urja-forest text-[11px] font-semibold sm:text-xs">
+                  Shop
+                </span>
               </Link>
             </li>
           ))}

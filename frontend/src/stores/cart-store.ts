@@ -7,8 +7,10 @@ import {
   removeServerCartItem,
   syncGuestCartToServer,
   updateServerCartItem,
+  validateGuestCartLines,
 } from "@/lib/cart/api";
 import { CART_STORAGE_KEY } from "@/lib/cart/constants";
+import { cartLineKey } from "@/lib/cart/line-key";
 import { productToCartItem } from "@/lib/cart/pricing";
 import type {
   AppliedCartCoupon,
@@ -54,6 +56,7 @@ type CartState = {
     token: string,
     options?: { allowGuestMerge?: boolean; mergeStrategy?: "add" | "replace" }
   ) => Promise<void>;
+  pruneUnavailableItems: (token: string | null) => Promise<void>;
 };
 
 export const useCartStore = create<CartState>()(
@@ -136,6 +139,7 @@ export const useCartStore = create<CartState>()(
         try {
           const result = await addServerCartItem(token, {
             productSlug: product.slug,
+            variantSku: product.variantSku,
             quantity: 1,
           });
           get().applyServerCart(result.items, result.bill);
@@ -146,7 +150,8 @@ export const useCartStore = create<CartState>()(
       },
 
       decreaseQuantity: async (product, token) => {
-        const item = get().items.find((i) => i.slug === product.slug);
+        const lineKey = cartLineKey(product.slug, product.variantSku);
+        const item = get().items.find((i) => i.id === lineKey);
         if (!item) return;
 
         if (token === undefined) return;
@@ -182,6 +187,7 @@ export const useCartStore = create<CartState>()(
           try {
             const result = await addServerCartItem(token, {
               productSlug: product.slug,
+              variantSku: product.variantSku,
               quantity,
             });
             get().applyServerCart(result.items, result.bill);
@@ -337,6 +343,7 @@ export const useCartStore = create<CartState>()(
           if (hasGuestSnapshot) {
             const payload = guestItems.map((item) => ({
               productSlug: item.slug,
+              variantSku: item.variantSku,
               quantity: item.quantity,
             }));
             const result = await syncGuestCartToServer(token, payload, { mergeStrategy });
@@ -355,6 +362,63 @@ export const useCartStore = create<CartState>()(
 
       syncCartAfterLogin: async (token) => {
         await get().loadAuthenticatedCart(token, { allowGuestMerge: true });
+      },
+
+      pruneUnavailableItems: async (token) => {
+        if (token) {
+          await get().fetchCart(token);
+          return;
+        }
+
+        const { items } = get();
+        if (items.length === 0) return;
+
+        try {
+          const validated = await validateGuestCartLines(
+            items.map((item) => ({
+              productSlug: item.slug,
+              variantSku: item.variantSku,
+              quantity: item.quantity,
+            }))
+          );
+
+          const next: CartItem[] = [];
+          for (const line of validated) {
+            const key = cartLineKey(line.productSlug, line.variantSku);
+            const existing = items.find(
+              (item) =>
+                item.slug === line.productSlug &&
+                (item.variantSku === line.variantSku ||
+                  !item.variantSku ||
+                  cartLineKey(item.slug, item.variantSku) === key)
+            );
+            if (!existing) continue;
+            next.push({
+              ...existing,
+              id: key,
+              variantSku: line.variantSku,
+              quantity: line.quantity,
+            });
+          }
+
+          if (
+            next.length !== items.length ||
+            next.some((item, idx) => {
+              const prev = items.find((p) => cartLineKey(p.slug, p.variantSku) === item.id);
+              return !prev || prev.quantity !== item.quantity;
+            })
+          ) {
+            set({
+              items: next,
+              mode: "guest",
+              bill: null,
+              appliedCoupon: null,
+              error: null,
+            });
+          }
+        } catch {
+          /* best-effort */
+        }
       },
     }),
     {
@@ -382,11 +446,10 @@ function mergeGuestAdd(
   product: CartProductInput,
   quantity: number
 ): CartItem[] {
-  const existing = items.find((i) => i.slug === product.slug);
+  const key = cartLineKey(product.slug, product.variantSku);
+  const existing = items.find((i) => i.id === key);
   if (existing) {
-    return items.map((i) =>
-      i.slug === product.slug ? { ...i, quantity: i.quantity + quantity } : i
-    );
+    return items.map((i) => (i.id === key ? { ...i, quantity: i.quantity + quantity } : i));
   }
   return [...items, productToCartItem(product, quantity)];
 }

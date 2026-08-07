@@ -15,6 +15,9 @@ import {
 import type { ProductSortValue } from "@/lib/category-sort";
 import { cn } from "@/lib/utils";
 
+/** How often category/home product grids refresh stock from the API. */
+export const PRODUCT_STOCK_REFRESH_MS = 30_000;
+
 import { CategoryBreadcrumbs } from "./category-breadcrumbs";
 import { CategoryListingToolbar } from "./category-listing-toolbar";
 import { CategoryProductGridSkeleton } from "./category-product-grid-skeleton";
@@ -74,8 +77,10 @@ export function CategoryProductListingClient({
       }),
     initialData: hasQueryOverrides ? undefined : initialProducts,
     placeholderData: (prev) => prev ?? initialProducts,
-    staleTime: hasQueryOverrides ? 0 : Infinity,
-    refetchOnMount: hasQueryOverrides,
+    staleTime: PRODUCT_STOCK_REFRESH_MS,
+    refetchInterval: PRODUCT_STOCK_REFRESH_MS,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const handleSortSelect = useCallback((next: ProductSortValue) => {

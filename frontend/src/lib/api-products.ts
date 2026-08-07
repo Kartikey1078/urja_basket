@@ -16,6 +16,8 @@ export type ApiProduct = {
   averageRating: number;
   totalReviews: number;
   isBestSeller: boolean;
+  isActive?: boolean;
+  inStock?: boolean;
   price: number;
   mrp: number;
   weight: string;
@@ -39,6 +41,7 @@ function mapApiProductToCategoryProduct(p: ApiProduct): CategoryProduct {
     rating: p.averageRating,
     reviewCount: p.totalReviews,
     isBestseller: p.isBestSeller,
+    inStock: p.inStock !== false,
     nutritionTags: p.nutritionTags?.length ? p.nutritionTags : undefined,
   };
 }

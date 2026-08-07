@@ -12,6 +12,7 @@ export function parsePositiveInt(value: unknown, field: string): number {
 export function parseAddItemBody(body: unknown): {
   productId?: number;
   productSlug?: string;
+  variantSku?: string;
   quantity: number;
 } {
   if (!body || typeof body !== "object") {
@@ -27,12 +28,16 @@ export function parseAddItemBody(body: unknown): {
     typeof record.productSlug === "string" && record.productSlug.trim()
       ? record.productSlug.trim()
       : undefined;
+  const variantSku =
+    typeof record.variantSku === "string" && record.variantSku.trim()
+      ? record.variantSku.trim()
+      : undefined;
 
   if (productId === undefined && !productSlug) {
     throw new HttpError(400, "productId or productSlug is required");
   }
 
-  return { productId, productSlug, quantity };
+  return { productId, productSlug, variantSku, quantity };
 }
 
 export function parseUpdateQuantityBody(body: unknown): { quantity: number } {
@@ -70,7 +75,13 @@ export function parseSyncBody(body: unknown): {
     if (!productSlug.trim()) continue;
     const quantity =
       row.quantity === undefined ? 1 : parsePositiveInt(row.quantity, "quantity");
-    items.push({ productSlug: productSlug.trim(), quantity });
+    const variantSku =
+      typeof row.variantSku === "string" && row.variantSku.trim()
+        ? row.variantSku.trim()
+        : typeof row.sku === "string" && row.sku.trim()
+          ? row.sku.trim()
+          : undefined;
+    items.push({ productSlug: productSlug.trim(), quantity, variantSku });
   }
 
   return { items, mergeStrategy };

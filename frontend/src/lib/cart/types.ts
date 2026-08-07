@@ -1,9 +1,10 @@
 export type CartItem = {
-  /** Guest: product slug. Authenticated: stringified line item id */
+  /** Guest: cart line key (slug or slug::sku). Authenticated: stringified line item id */
   id: string;
   lineItemId?: number;
   productId?: number;
   slug: string;
+  variantSku?: string;
   name: string;
   subtitle: string;
   tag?: string;
@@ -22,6 +23,7 @@ export type CartProductInput = {
   image: string;
   tag?: string;
   productId?: number;
+  variantSku?: string;
 };
 
 export type DeliverySlotId = "express" | "today-evening" | "tomorrow-morning";

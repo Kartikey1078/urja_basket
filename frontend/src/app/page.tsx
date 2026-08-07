@@ -10,6 +10,7 @@ import {
   organizationJsonLd,
   websiteJsonLd,
 } from "@/lib/seo";
+import { SHOP_CATEGORIES } from "@/lib/shop-categories";
 
 export const metadata = createPageMetadata({
   title: "Fresh Fruits & Dry Fruits Delivery in Delhi",
@@ -28,9 +29,9 @@ export default function Home() {
       <HomeHero />
       <CategoryRail />
       <FeaturesTrustBar />
-      <CategoryProductsSection categorySlug="fresh-fruits" title="Fresh Fruits" />
-      <CategoryProductsSection categorySlug="dry-fruits" title="Dry Fruits" />
-      <CategoryProductsSection categorySlug="nuts-seeds" title="Nuts & Seeds" />
+      {SHOP_CATEGORIES.map(({ slug, label }) => (
+        <CategoryProductsSection key={slug} categorySlug={slug} title={label} />
+      ))}
       <BestsellersSection />
       <ShopLocationSection />
     </>

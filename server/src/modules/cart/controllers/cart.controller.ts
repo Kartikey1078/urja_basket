@@ -57,3 +57,9 @@ export async function syncGuestCart(req: Request, res: Response) {
   );
   res.json({ data });
 }
+
+export async function validateGuestCart(req: Request, res: Response) {
+  const { items } = parseSyncBody(req.body);
+  const data = await cartService.validateGuestCartLines(items);
+  res.json({ data: { items: data } });
+}

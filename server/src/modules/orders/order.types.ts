@@ -112,6 +112,7 @@ export type OrderItemRow = {
   id: number;
   order_id: number;
   product_id: number | null;
+  variant_sku: string | null;
   product_slug: string;
   product_name: string;
   product_subtitle: string | null;

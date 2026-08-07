@@ -29,6 +29,9 @@ function mapProduct(row: productRepo.ProductListRow) {
     mainImage: row.main_image,
     image: row.main_image,
     stock: row.stock,
+    effectiveStock: Number(row.effective_stock ?? row.stock),
+    isActive: Boolean(row.is_active),
+    inStock: Boolean(row.is_active) && Number(row.effective_stock ?? row.stock) > 0,
     averageRating: Number(row.average_rating),
     totalReviews: row.total_reviews,
     isFeatured: Boolean(row.is_featured),
@@ -54,6 +57,7 @@ function mapVariant(v: productRepo.ProductVariantRow) {
     discountPercentage: Number(v.discount_percentage),
     stock: v.stock,
     sku: v.sku,
+    inStock: v.stock > 0,
     createdAt: v.created_at,
     updatedAt: v.updated_at,
   };
@@ -91,9 +95,10 @@ export async function getProductDetailBySlug(slug: string) {
     productRepo.findVariantsByProductId(product.id),
     productRepo.findReviewsByProductId(product.id),
   ]);
+  const inStockVariants = variants.filter((v) => v.stock > 0).map(mapVariant);
   return {
     product: mapProduct(product),
-    variants: variants.map(mapVariant),
+    variants: inStockVariants,
     reviews: reviews.map(mapReview),
   };
 }

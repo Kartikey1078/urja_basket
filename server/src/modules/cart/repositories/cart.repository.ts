@@ -10,15 +10,18 @@ export type ProductCartRow = RowDataPacket & {
   main_image: string | null;
   is_organic: number;
   is_best_seller: number;
+  is_active: number;
   card_weight: string | null;
   card_price: string | null;
   card_original_price: string | null;
+  variant_sku: string;
 };
 
 export type CartItemRow = RowDataPacket & {
   id: number;
   cart_id: number;
   product_id: number;
+  variant_sku: string;
   quantity: number;
   slug: string;
   name: string;
@@ -51,30 +54,101 @@ const CARD_WEIGHT_SQL = `(
   LIMIT 1
 )`;
 
-export async function findProductForCartBySlug(slug: string): Promise<ProductCartRow | null> {
+const LINE_WEIGHT_SQL = `COALESCE(
+  (SELECT pv.weight FROM product_variants pv
+   WHERE pv.product_id = ci.product_id AND pv.sku = ci.variant_sku AND ci.variant_sku != ''
+   LIMIT 1),
+  (SELECT pv.weight FROM product_variants pv
+   WHERE pv.product_id = ci.product_id
+   ORDER BY pv.price ASC LIMIT 1),
+  ''
+)`;
+
+const LINE_PRICE_SQL = `COALESCE(
+  (SELECT pv.price FROM product_variants pv
+   WHERE pv.product_id = ci.product_id AND pv.sku = ci.variant_sku AND ci.variant_sku != ''
+   LIMIT 1),
+  (SELECT pv.price FROM product_variants pv
+   WHERE pv.product_id = ci.product_id
+   ORDER BY pv.price ASC LIMIT 1),
+  0
+)`;
+
+const LINE_ORIGINAL_SQL = `COALESCE(
+  (SELECT COALESCE(pv.original_price, pv.price) FROM product_variants pv
+   WHERE pv.product_id = ci.product_id AND pv.sku = ci.variant_sku AND ci.variant_sku != ''
+   LIMIT 1),
+  (SELECT COALESCE(pv.original_price, pv.price) FROM product_variants pv
+   WHERE pv.product_id = ci.product_id
+   ORDER BY pv.price ASC LIMIT 1),
+  (SELECT pv.price FROM product_variants pv
+   WHERE pv.product_id = ci.product_id
+   ORDER BY pv.price ASC LIMIT 1)
+)`;
+
+const CART_LINE_SELECT = `
+  ci.id, ci.cart_id, ci.product_id, ci.variant_sku, ci.quantity,
+  p.slug, p.name, p.main_image, p.is_organic, p.is_best_seller,
+  ${LINE_WEIGHT_SQL} AS card_weight,
+  ${LINE_PRICE_SQL} AS card_price,
+  ${LINE_ORIGINAL_SQL} AS card_original_price`;
+
+export async function findProductForCartBySlug(
+  slug: string,
+  variantSku = ""
+): Promise<ProductCartRow | null> {
   const [rows] = await pool.query<ProductCartRow[]>(
-    `SELECT p.id, p.name, p.slug, p.main_image, p.is_organic, p.is_best_seller,
-            ${CARD_WEIGHT_SQL} AS card_weight,
-            ${CARD_PRICE_SQL} AS card_price,
-            ${CARD_ORIGINAL_SQL} AS card_original_price
+    `SELECT p.id, p.name, p.slug, p.main_image, p.is_organic, p.is_best_seller, p.is_active,
+            COALESCE(
+              (SELECT pv.weight FROM product_variants pv
+               WHERE pv.product_id = p.id AND pv.sku = ? AND ? != '' LIMIT 1),
+              ${CARD_WEIGHT_SQL}
+            ) AS card_weight,
+            COALESCE(
+              (SELECT pv.price FROM product_variants pv
+               WHERE pv.product_id = p.id AND pv.sku = ? AND ? != '' LIMIT 1),
+              ${CARD_PRICE_SQL}
+            ) AS card_price,
+            COALESCE(
+              (SELECT COALESCE(pv.original_price, pv.price) FROM product_variants pv
+               WHERE pv.product_id = p.id AND pv.sku = ? AND ? != '' LIMIT 1),
+              ${CARD_ORIGINAL_SQL}
+            ) AS card_original_price,
+            ? AS variant_sku
      FROM products p
-     WHERE p.slug = ?
+     WHERE p.slug = ? AND p.is_active = 1
      LIMIT 1`,
-    [slug]
+    [variantSku, variantSku, variantSku, variantSku, variantSku, variantSku, variantSku, slug]
   );
   return rows[0] ?? null;
 }
 
-export async function findProductForCartById(productId: number): Promise<ProductCartRow | null> {
+export async function findProductForCartById(
+  productId: number,
+  variantSku = ""
+): Promise<ProductCartRow | null> {
   const [rows] = await pool.query<ProductCartRow[]>(
-    `SELECT p.id, p.name, p.slug, p.main_image, p.is_organic, p.is_best_seller,
-            ${CARD_WEIGHT_SQL} AS card_weight,
-            ${CARD_PRICE_SQL} AS card_price,
-            ${CARD_ORIGINAL_SQL} AS card_original_price
+    `SELECT p.id, p.name, p.slug, p.main_image, p.is_organic, p.is_best_seller, p.is_active,
+            COALESCE(
+              (SELECT pv.weight FROM product_variants pv
+               WHERE pv.product_id = p.id AND pv.sku = ? AND ? != '' LIMIT 1),
+              ${CARD_WEIGHT_SQL}
+            ) AS card_weight,
+            COALESCE(
+              (SELECT pv.price FROM product_variants pv
+               WHERE pv.product_id = p.id AND pv.sku = ? AND ? != '' LIMIT 1),
+              ${CARD_PRICE_SQL}
+            ) AS card_price,
+            COALESCE(
+              (SELECT COALESCE(pv.original_price, pv.price) FROM product_variants pv
+               WHERE pv.product_id = p.id AND pv.sku = ? AND ? != '' LIMIT 1),
+              ${CARD_ORIGINAL_SQL}
+            ) AS card_original_price,
+            ? AS variant_sku
      FROM products p
-     WHERE p.id = ?
+     WHERE p.id = ? AND p.is_active = 1
      LIMIT 1`,
-    [productId]
+    [variantSku, variantSku, variantSku, variantSku, variantSku, variantSku, variantSku, productId]
   );
   return rows[0] ?? null;
 }
@@ -101,13 +175,52 @@ export async function getOrCreateCartId(userId: number): Promise<number> {
   return createCartForUser(userId);
 }
 
+export async function removeInactiveProductCartItems(cartId: number): Promise<void> {
+  await removeUnavailableCartItems(cartId);
+}
+
+/** Remove archived, zero-stock, or unavailable variant lines from a cart. */
+export async function removeUnavailableCartItems(cartId: number): Promise<void> {
+  await pool.query(
+    `DELETE ci FROM cart_items ci
+     INNER JOIN products p ON p.id = ci.product_id
+     LEFT JOIN product_variants pv
+       ON pv.product_id = ci.product_id
+      AND pv.sku = ci.variant_sku
+      AND ci.variant_sku <> ''
+     WHERE ci.cart_id = ?
+       AND (
+         p.is_active = 0
+         OR (
+           ci.variant_sku <> ''
+           AND (pv.id IS NULL OR pv.stock < 1)
+         )
+         OR (
+           ci.variant_sku = ''
+           AND EXISTS (
+             SELECT 1 FROM product_variants pv2 WHERE pv2.product_id = p.id
+           )
+           AND NOT EXISTS (
+             SELECT 1 FROM product_variants pv3
+             WHERE pv3.product_id = p.id AND pv3.stock > 0
+           )
+         )
+         OR (
+           ci.variant_sku = ''
+           AND NOT EXISTS (
+             SELECT 1 FROM product_variants pv4 WHERE pv4.product_id = p.id
+           )
+           AND p.stock < 1
+         )
+       )`,
+    [cartId]
+  );
+}
+
 export async function listCartItems(cartId: number): Promise<CartItemRow[]> {
+  await removeInactiveProductCartItems(cartId);
   const [rows] = await pool.query<CartItemRow[]>(
-    `SELECT ci.id, ci.cart_id, ci.product_id, ci.quantity,
-            p.slug, p.name, p.main_image, p.is_organic, p.is_best_seller,
-            ${CARD_WEIGHT_SQL} AS card_weight,
-            ${CARD_PRICE_SQL} AS card_price,
-            ${CARD_ORIGINAL_SQL} AS card_original_price
+    `SELECT ${CART_LINE_SELECT}
      FROM cart_items ci
      INNER JOIN products p ON p.id = ci.product_id
      WHERE ci.cart_id = ?
@@ -122,11 +235,7 @@ export async function findCartItemById(
   cartId: number
 ): Promise<CartItemRow | null> {
   const [rows] = await pool.query<CartItemRow[]>(
-    `SELECT ci.id, ci.cart_id, ci.product_id, ci.quantity,
-            p.slug, p.name, p.main_image, p.is_organic, p.is_best_seller,
-            ${CARD_WEIGHT_SQL} AS card_weight,
-            ${CARD_PRICE_SQL} AS card_price,
-            ${CARD_ORIGINAL_SQL} AS card_original_price
+    `SELECT ${CART_LINE_SELECT}
      FROM cart_items ci
      INNER JOIN products p ON p.id = ci.product_id
      WHERE ci.id = ? AND ci.cart_id = ?
@@ -136,26 +245,36 @@ export async function findCartItemById(
   return rows[0] ?? null;
 }
 
-export async function findCartItemByProductId(
+export async function findCartItemByLineKey(
   cartId: number,
-  productId: number
+  productId: number,
+  variantSku: string
 ): Promise<{ id: number; quantity: number } | null> {
   const [rows] = await pool.query<RowDataPacket[]>(
-    "SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id = ? LIMIT 1",
-    [cartId, productId]
+    "SELECT id, quantity FROM cart_items WHERE cart_id = ? AND product_id = ? AND variant_sku = ? LIMIT 1",
+    [cartId, productId, variantSku]
   );
   if (!rows[0]) return null;
   return { id: Number(rows[0].id), quantity: Number(rows[0].quantity) };
 }
 
+/** @deprecated Use findCartItemByLineKey */
+export async function findCartItemByProductId(
+  cartId: number,
+  productId: number
+): Promise<{ id: number; quantity: number } | null> {
+  return findCartItemByLineKey(cartId, productId, "");
+}
+
 export async function insertCartItem(
   cartId: number,
   productId: number,
-  quantity: number
+  quantity: number,
+  variantSku = ""
 ): Promise<number> {
   const [result] = await pool.query<ResultSetHeader>(
-    "INSERT INTO cart_items (cart_id, product_id, quantity) VALUES (?, ?, ?)",
-    [cartId, productId, quantity]
+    "INSERT INTO cart_items (cart_id, product_id, variant_sku, quantity) VALUES (?, ?, ?, ?)",
+    [cartId, productId, variantSku, quantity]
   );
   return result.insertId;
 }

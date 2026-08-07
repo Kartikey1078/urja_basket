@@ -17,6 +17,7 @@ type BestsellerItem = {
   image: string;
   badge: BadgeKind;
   discountLabel?: string;
+  inStock: boolean;
 };
 
 const FALLBACK_IMAGE =
@@ -38,6 +39,7 @@ function toBestsellerItem(p: ApiProduct): BestsellerItem {
     image,
     badge,
     discountLabel,
+    inStock: p.inStock !== false,
   };
 }
 

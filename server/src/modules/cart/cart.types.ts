@@ -21,6 +21,7 @@ export type CartLineDto = {
   slug: string;
   name: string;
   subtitle: string;
+  variantSku: string;
   tag: string | null;
   price: number;
   mrp: number;
@@ -39,4 +40,5 @@ export type CartResponse = {
 export type GuestSyncItem = {
   productSlug: string;
   quantity: number;
+  variantSku?: string;
 };

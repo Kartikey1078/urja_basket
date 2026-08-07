@@ -6,6 +6,9 @@ import * as cartController from "../controllers/cart.controller";
 
 const cartRouter = Router();
 
+/** Public — prune guest cart lines against live stock (no auth). */
+cartRouter.post("/validate", asyncHandler(cartController.validateGuestCart));
+
 cartRouter.use(requireApiAuth);
 
 cartRouter.get("/", asyncHandler(cartController.getCart));

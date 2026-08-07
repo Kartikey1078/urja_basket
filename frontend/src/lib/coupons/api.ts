@@ -4,7 +4,11 @@ import type { CartItem } from "@/lib/cart/types";
 import type { AppliedCouponPreview, CouponOffer } from "./types";
 
 function previewItems(items: CartItem[]) {
-  return items.map((i) => ({ productSlug: i.slug, quantity: i.quantity }));
+  return items.map((i) => ({
+    productSlug: i.slug,
+    variantSku: i.variantSku,
+    quantity: i.quantity,
+  }));
 }
 
 async function couponFetch<T>(

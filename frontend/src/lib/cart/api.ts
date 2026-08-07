@@ -18,6 +18,7 @@ export type ServerCartLine = {
   slug: string;
   name: string;
   subtitle: string;
+  variantSku: string;
   tag: string | null;
   price: number;
   mrp: number;
@@ -69,6 +70,7 @@ export function serverLineToCartItem(line: ServerCartLine): CartItem {
     lineItemId: line.lineItemId,
     productId: line.productId,
     slug: line.slug,
+    variantSku: line.variantSku || undefined,
     name: line.name,
     subtitle: line.subtitle,
     tag: line.tag ?? undefined,
@@ -106,12 +108,13 @@ export async function fetchServerCart(token: string): Promise<{
 
 export async function addServerCartItem(
   token: string,
-  input: { productSlug: string; quantity?: number }
+  input: { productSlug: string; quantity?: number; variantSku?: string }
 ): Promise<{ items: CartItem[]; bill: BillSummary }> {
   const data = await cartFetch<ServerCartPayload>("/api/v1/cart/items", token, {
     method: "POST",
     body: JSON.stringify({
       productSlug: input.productSlug,
+      variantSku: input.variantSku,
       quantity: input.quantity ?? 1,
     }),
   });
@@ -151,7 +154,7 @@ export async function removeServerCartItem(
 
 export async function syncGuestCartToServer(
   token: string,
-  items: { productSlug: string; quantity: number }[],
+  items: { productSlug: string; quantity: number; variantSku?: string }[],
   options?: { mergeStrategy?: "add" | "replace" }
 ): Promise<{ items: CartItem[]; bill: BillSummary }> {
   const data = await cartFetch<ServerCartPayload>("/api/v1/cart/sync", token, {
@@ -165,4 +168,29 @@ export async function syncGuestCartToServer(
     items: data.items.map(serverLineToCartItem),
     bill: serverTotalsToBill(data.totals),
   };
+}
+
+export type ValidatedGuestLine = {
+  productSlug: string;
+  variantSku: string;
+  quantity: number;
+};
+
+export async function validateGuestCartLines(
+  items: { productSlug: string; quantity: number; variantSku?: string }[]
+): Promise<ValidatedGuestLine[]> {
+  const res = await fetch(`${getApiBaseUrl()}/api/v1/cart/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items }),
+    cache: "no-store",
+  });
+  const body = (await res.json().catch(() => ({}))) as {
+    data?: { items?: ValidatedGuestLine[] };
+    error?: string;
+  };
+  if (!res.ok) {
+    throw new Error(body.error ?? `Cart validate failed (${res.status})`);
+  }
+  return Array.isArray(body.data?.items) ? body.data.items : [];
 }

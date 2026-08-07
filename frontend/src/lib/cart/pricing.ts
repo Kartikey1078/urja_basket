@@ -1,4 +1,5 @@
 import { DELIVERY_FEE, FREE_DELIVERY_MIN } from "./constants";
+import { cartLineKey } from "./line-key";
 import type { BillSummary, CartItem } from "./types";
 
 export function formatInr(amount: number) {
@@ -43,12 +44,15 @@ export function productToCartItem(
     mrp: number;
     image: string;
     tag?: string;
+    variantSku?: string;
   },
   quantity = 1
 ): CartItem {
+  const variantSku = product.variantSku ?? "";
   return {
-    id: product.slug,
+    id: cartLineKey(product.slug, variantSku),
     slug: product.slug,
+    variantSku,
     name: product.name,
     subtitle: product.weight,
     tag: product.tag,

@@ -103,6 +103,7 @@ export async function insertOrderItems(
   orderId: number,
   items: {
     productId: number | null;
+    variantSku?: string | null;
     slug: string;
     name: string;
     subtitle: string | null;
@@ -117,6 +118,7 @@ export async function insertOrderItems(
   const values = items.map((item) => [
     orderId,
     item.productId,
+    item.variantSku ?? null,
     item.slug,
     item.name,
     item.subtitle,
@@ -128,7 +130,7 @@ export async function insertOrderItems(
   ]);
   await pool.query(
     `INSERT INTO order_items (
-      order_id, product_id, product_slug, product_name, product_subtitle,
+      order_id, product_id, variant_sku, product_slug, product_name, product_subtitle,
       product_image, unit_price, mrp, quantity, line_total
     ) VALUES ?`,
     [values]

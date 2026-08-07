@@ -1,5 +1,6 @@
-import { Star } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { Star } from "lucide-react";
 
 import type { CategoryProduct } from "@/lib/category-product-types";
 import { cn } from "@/lib/utils";
@@ -53,29 +54,46 @@ export function CategoryProductCard({ product, className }: CategoryProductCardP
         className
       )}
     >
-      <div className="bg-muted/40 relative aspect-square w-full shrink-0">
+      <Link href={`/products/${product.slug}`} className="bg-muted/40 relative block aspect-square w-full shrink-0">
         <Image
           src={product.image}
           alt={product.name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          className="object-cover"
+          className={cn(
+            "object-cover transition-[filter] duration-300",
+            product.inStock === false && "brightness-[0.72] saturate-[0.85]"
+          )}
         />
         {product.isBestseller ? (
           <div className="pointer-events-none absolute top-2 left-2 z-10 sm:top-3 sm:left-3">
             <BestsellerBadge />
           </div>
         ) : null}
-        <WishlistHeartButton
-          product={product}
-          className="absolute top-2 right-2 z-20 size-8 sm:top-3 sm:right-3 sm:size-9"
-          iconClassName="size-4"
-        />
-      </div>
+        {product.inStock === false ? (
+          <div
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+            aria-hidden
+          >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[3px]" />
+            <span className="relative rounded-xl border border-white/15 bg-black/50 px-3 py-1.5 text-[10px] font-bold tracking-wide text-white uppercase shadow-lg backdrop-blur-md sm:text-xs">
+              Out of Stock
+            </span>
+          </div>
+        ) : (
+          <WishlistHeartButton
+            product={product}
+            className="absolute top-2 right-2 z-20 size-8 sm:top-3 sm:right-3 sm:size-9"
+            iconClassName="size-4"
+          />
+        )}
+      </Link>
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-3 sm:gap-2.5 sm:p-4">
-        <h2 className="text-foreground line-clamp-2 text-sm font-bold leading-snug sm:text-base">
-          {product.name}
-        </h2>
+        <Link href={`/products/${product.slug}`}>
+          <h2 className="text-foreground line-clamp-2 text-sm font-bold leading-snug hover:underline sm:text-base">
+            {product.name}
+          </h2>
+        </Link>
         <div className="flex flex-wrap items-center gap-1.5">
           <ProductStarRating value={product.rating} />
           <span className="text-muted-foreground text-xs sm:text-sm">
@@ -114,6 +132,7 @@ export function CategoryProductCard({ product, className }: CategoryProductCardP
           ) : null}
         </div>
         <QuantityButton
+          inStock={product.inStock !== false}
           product={{
             slug: product.slug,
             name: product.name,

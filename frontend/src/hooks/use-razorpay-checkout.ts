@@ -48,6 +48,7 @@ export function useRazorpayCheckout() {
               ? undefined
               : cartItems.map((item) => ({
                   productSlug: item.slug,
+                  variantSku: item.variantSku,
                   quantity: item.quantity,
                 })),
           },

@@ -73,7 +73,8 @@ export async function assertCheckoutStockAvailable(snapshot: CheckoutSnapshot): 
     const check = await inventoryRepo.checkLineAvailability(
       item.productId,
       item.subtitle || null,
-      item.quantity
+      item.quantity,
+      item.variantSku || null
     );
     if (!check.ok) {
       throw new HttpError(
@@ -92,7 +93,8 @@ async function deductOrderItems(conn: PoolConnection, orderId: number): Promise<
       conn,
       item.product_id,
       item.product_subtitle,
-      item.quantity
+      item.quantity,
+      item.variant_sku
     );
   }
 }
@@ -105,7 +107,8 @@ async function restoreOrderItems(conn: PoolConnection, orderId: number): Promise
       conn,
       item.product_id,
       item.product_subtitle,
-      item.quantity
+      item.quantity,
+      item.variant_sku
     );
   }
 }

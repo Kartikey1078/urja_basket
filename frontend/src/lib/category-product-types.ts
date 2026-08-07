@@ -8,5 +8,6 @@ export type CategoryProduct = {
   rating: number;
   reviewCount: number;
   isBestseller?: boolean;
+  inStock?: boolean;
   nutritionTags?: string[];
 };
