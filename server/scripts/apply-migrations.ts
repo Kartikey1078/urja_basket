@@ -30,6 +30,8 @@ const CHECKOUT_MIGRATIONS = [
   "014_order_inventory.sql",
   "015_payment_refunded.sql",
   "016_pos_tables.sql",
+  "017_product_archive.sql",
+  "018_cart_variant_sku.sql",
 ] as const;
 
 const DEMO_SEEDS = ["db/seed-cart.sql", "db/seed-address.sql"] as const;
