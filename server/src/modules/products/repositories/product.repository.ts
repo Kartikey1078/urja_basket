@@ -1,5 +1,6 @@
 import type { ResultSetHeader, RowDataPacket } from "mysql2";
 import { pool } from "../../../database/pool";
+import { normalizeBasketFruitsInput } from "../../../lib/basket-fruits";
 import { normalizeNutritionTagsInput, parseNutritionTags } from "../../../lib/nutrition-tags";
 import { getSiteSettings } from "../../settings/settings.service";
 
@@ -20,6 +21,7 @@ export type ProductListRow = RowDataPacket & {
   is_active: number;
   effective_stock: number;
   nutrition_tags: unknown;
+  basket_fruits: unknown;
   created_at: Date;
   updated_at: Date;
   category_name: string;
@@ -95,6 +97,7 @@ const PRODUCT_CARD_SELECT = `
         p.is_active,
         ${EFFECTIVE_STOCK_SQL} AS effective_stock,
         p.nutrition_tags,
+        p.basket_fruits,
         p.created_at,
         p.updated_at,
         c.name AS category_name,
@@ -307,6 +310,7 @@ export type ProductAdminRow = RowDataPacket & {
   is_active: number;
   archived_stock_snapshot: unknown;
   nutrition_tags: unknown;
+  basket_fruits: unknown;
   created_at: Date;
   updated_at: Date;
 };
@@ -332,7 +336,7 @@ const ADMIN_PRODUCT_SELECT = `SELECT
         p.id, p.name, p.slug, p.short_description, p.full_description, p.category_id,
         p.main_image, p.stock, p.average_rating, p.total_reviews,
         p.is_featured, p.is_best_seller, p.is_organic, p.is_active, p.archived_stock_snapshot,
-        p.nutrition_tags, p.created_at, p.updated_at,
+        p.nutrition_tags, p.basket_fruits, p.created_at, p.updated_at,
         c.name AS category_name, c.slug AS category_slug`;
 
 const ADMIN_PRODUCT_FROM = `FROM products p
@@ -430,8 +434,16 @@ export async function findProductById(id: number): Promise<ProductAdminRow | nul
   const [rows] = await pool.query<ProductAdminRow[]>(
     `SELECT id, name, slug, short_description, full_description, category_id, main_image,
             stock, average_rating, total_reviews, is_featured, is_best_seller, is_organic,
-            is_active, archived_stock_snapshot, nutrition_tags, created_at, updated_at
+            is_active, archived_stock_snapshot, nutrition_tags, basket_fruits, created_at, updated_at
      FROM products WHERE id = :id LIMIT 1`,
+    { id }
+  );
+  return rows[0] ?? null;
+}
+
+export async function findProductAdminById(id: number): Promise<ProductAdminListRow | null> {
+  const [rows] = await pool.query<ProductAdminListRow[]>(
+    `${ADMIN_PRODUCT_SELECT} ${ADMIN_PRODUCT_FROM} WHERE p.id = :id LIMIT 1`,
     { id }
   );
   return rows[0] ?? null;
@@ -449,16 +461,18 @@ export async function insertProduct(input: {
   is_best_seller?: boolean;
   is_organic?: boolean;
   nutrition_tags?: string[];
+  basket_fruits?: string[] | null;
 }): Promise<number> {
   const nutritionTags = normalizeNutritionTagsInput(input.nutrition_tags);
+  const basketFruits = normalizeBasketFruitsInput(input.basket_fruits);
   const [r] = await pool.execute<ResultSetHeader>(
     `INSERT INTO products (
         name, slug, short_description, full_description, category_id, main_image,
         stock, average_rating, total_reviews, is_featured, is_best_seller, is_organic,
-        nutrition_tags
+        nutrition_tags, basket_fruits
      ) VALUES (
         :name, :slug, :short_description, :full_description, :category_id, :main_image,
-        :stock, 0.00, 0, :is_featured, :is_best_seller, :is_organic, :nutrition_tags
+        :stock, 0.00, 0, :is_featured, :is_best_seller, :is_organic, :nutrition_tags, :basket_fruits
      )`,
     {
       name: input.name,
@@ -472,6 +486,7 @@ export async function insertProduct(input: {
       is_best_seller: input.is_best_seller ? 1 : 0,
       is_organic: input.is_organic ? 1 : 0,
       nutrition_tags: nutritionTags.length > 0 ? JSON.stringify(nutritionTags) : null,
+      basket_fruits: basketFruits.length > 0 ? JSON.stringify(basketFruits) : null,
     }
   );
   return r.insertId;
@@ -491,6 +506,7 @@ export async function updateProduct(
     is_best_seller: boolean;
     is_organic: boolean;
     nutrition_tags: string[] | null;
+    basket_fruits: string[] | null;
   }>
 ): Promise<boolean> {
   const fields: string[] = [];
@@ -526,6 +542,12 @@ export async function updateProduct(
     const tags = input.nutrition_tags === null ? [] : normalizeNutritionTagsInput(input.nutrition_tags);
     fields.push("nutrition_tags = :nutrition_tags");
     params.nutrition_tags = tags.length > 0 ? JSON.stringify(tags) : null;
+  }
+  if (input.basket_fruits !== undefined) {
+    const fruits =
+      input.basket_fruits === null ? [] : normalizeBasketFruitsInput(input.basket_fruits);
+    fields.push("basket_fruits = :basket_fruits");
+    params.basket_fruits = fruits.length > 0 ? JSON.stringify(fruits) : null;
   }
   if (fields.length === 0) return true;
   const [r] = await pool.execute<ResultSetHeader>(

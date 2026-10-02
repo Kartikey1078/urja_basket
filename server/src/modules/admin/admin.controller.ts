@@ -1,13 +1,40 @@
 import type { Request, Response } from "express";
 import { HttpError } from "../../errors/httpError";
+import { normalizeBasketFruitsInput, parseBasketFruits } from "../../lib/basket-fruits";
+import { isFruitBasketCategorySlug } from "../../lib/fruit-basket";
 import { normalizeNutritionTagsInput } from "../../lib/nutrition-tags";
 import * as categoryRepo from "../categories/repositories/category.repository";
 import * as productRepo from "../products/repositories/product.repository";
 import { parseNutritionTags } from "../products/repositories/product.repository";
 import * as reviewRepo from "../reviews/repositories/review.repository";
 
-function mapAdminProductRow<T extends { nutrition_tags: unknown }>(row: T) {
-  return { ...row, nutrition_tags: parseNutritionTags(row.nutrition_tags) };
+function mapAdminProductRow<
+  T extends { nutrition_tags: unknown; basket_fruits?: unknown; category_slug?: string },
+>(row: T) {
+  const fruitBasket = isFruitBasketCategorySlug(row.category_slug);
+  return {
+    ...row,
+    nutrition_tags: fruitBasket ? [] : parseNutritionTags(row.nutrition_tags),
+    basket_fruits: fruitBasket ? parseBasketFruits(row.basket_fruits) : [],
+  };
+}
+
+async function catalogFieldsForCategory(
+  categoryId: number,
+  input: { nutrition_tags?: unknown; basket_fruits?: unknown }
+): Promise<{ nutrition_tags: string[]; basket_fruits: string[] | null }> {
+  const category = await categoryRepo.findCategoryById(categoryId);
+  if (!category) throw new HttpError(400, "Invalid category_id");
+  if (isFruitBasketCategorySlug(category.slug)) {
+    return {
+      nutrition_tags: [],
+      basket_fruits: normalizeBasketFruitsInput(input.basket_fruits),
+    };
+  }
+  return {
+    nutrition_tags: normalizeNutritionTagsInput(input.nutrition_tags),
+    basket_fruits: null,
+  };
 }
 
 function isMysqlDuplicate(err: unknown): boolean {
@@ -147,7 +174,7 @@ export async function adminListProducts(req: Request, res: Response) {
 
 export async function adminGetProduct(req: Request, res: Response) {
   const id = parseId(paramStr(req.params.id), "product id");
-  const row = await productRepo.findProductById(id);
+  const row = await productRepo.findProductAdminById(id);
   if (!row) throw new HttpError(404, "Product not found");
   res.json({ data: mapAdminProductRow(row) });
 }
@@ -162,6 +189,10 @@ export async function adminCreateProduct(req: Request, res: Response) {
     throw new HttpError(400, "category_id must be a positive integer");
   }
   try {
+    const catalog = await catalogFieldsForCategory(categoryId, {
+      nutrition_tags: b.nutrition_tags,
+      basket_fruits: b.basket_fruits,
+    });
     const insertId = await productRepo.insertProduct({
       name: b.name.trim(),
       slug: b.slug.trim(),
@@ -176,7 +207,8 @@ export async function adminCreateProduct(req: Request, res: Response) {
       is_featured: Boolean(b.is_featured),
       is_best_seller: Boolean(b.is_best_seller),
       is_organic: Boolean(b.is_organic),
-      nutrition_tags: normalizeNutritionTagsInput(b.nutrition_tags),
+      nutrition_tags: catalog.nutrition_tags,
+      basket_fruits: catalog.basket_fruits,
     });
     res.status(201).json({ data: { id: insertId } });
   } catch (e) {
@@ -209,10 +241,28 @@ export async function adminUpdateProduct(req: Request, res: Response) {
   if (b.is_featured !== undefined) patch.is_featured = Boolean(b.is_featured);
   if (b.is_best_seller !== undefined) patch.is_best_seller = Boolean(b.is_best_seller);
   if (b.is_organic !== undefined) patch.is_organic = Boolean(b.is_organic);
-  if (b.nutrition_tags !== undefined) {
-    patch.nutrition_tags = Array.isArray(b.nutrition_tags)
-      ? normalizeNutritionTagsInput(b.nutrition_tags)
-      : null;
+  const existing = await productRepo.findProductAdminById(id);
+  if (!existing) throw new HttpError(404, "Product not found");
+
+  const nextCategoryId = patch.category_id ?? existing.category_id;
+  const catalogInput: { nutrition_tags?: unknown; basket_fruits?: unknown } = {};
+  if (b.nutrition_tags !== undefined) catalogInput.nutrition_tags = b.nutrition_tags;
+  if (b.basket_fruits !== undefined) catalogInput.basket_fruits = b.basket_fruits;
+  if (b.nutrition_tags !== undefined || b.basket_fruits !== undefined || patch.category_id !== undefined) {
+    const catalog = await catalogFieldsForCategory(nextCategoryId, {
+      nutrition_tags:
+        b.nutrition_tags !== undefined
+          ? b.nutrition_tags
+          : isFruitBasketCategorySlug(existing.category_slug)
+            ? []
+            : parseNutritionTags(existing.nutrition_tags),
+      basket_fruits:
+        b.basket_fruits !== undefined
+          ? b.basket_fruits
+          : parseBasketFruits(existing.basket_fruits),
+    });
+    patch.nutrition_tags = catalog.nutrition_tags;
+    patch.basket_fruits = catalog.basket_fruits;
   }
   try {
     const ok = await productRepo.updateProduct(id, patch);

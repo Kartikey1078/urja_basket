@@ -1,3 +1,5 @@
+import { parseBasketFruits } from "../../../lib/basket-fruits";
+import { isFruitBasketCategorySlug } from "../../../lib/fruit-basket";
 import { HttpError } from "../../../errors/httpError";
 import * as nutritionTagRepo from "../../nutrition-tags/nutrition-tag.repository";
 import * as productRepo from "../repositories/product.repository";
@@ -37,7 +39,12 @@ function mapProduct(row: productRepo.ProductListRow) {
     isFeatured: Boolean(row.is_featured),
     isBestSeller: Boolean(row.is_best_seller),
     isOrganic: Boolean(row.is_organic),
-    nutritionTags: parseNutritionTags(row.nutrition_tags),
+    nutritionTags: isFruitBasketCategorySlug(row.category_slug)
+      ? []
+      : parseNutritionTags(row.nutrition_tags),
+    basketFruits: isFruitBasketCategorySlug(row.category_slug)
+      ? parseBasketFruits(row.basket_fruits)
+      : undefined,
     minPrice: row.min_price === null ? null : Number(row.min_price),
     price,
     mrp,

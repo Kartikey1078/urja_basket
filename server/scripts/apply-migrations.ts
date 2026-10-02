@@ -32,6 +32,10 @@ const CHECKOUT_MIGRATIONS = [
   "016_pos_tables.sql",
   "017_product_archive.sql",
   "018_cart_variant_sku.sql",
+  "019_fruit_basket_category.sql",
+  "020_product_basket_fruits.sql",
+  "021_gift_hamper_category.sql",
+  "022_desi_delight_category.sql",
 ] as const;
 
 const DEMO_SEEDS = ["db/seed-cart.sql", "db/seed-address.sql"] as const;
