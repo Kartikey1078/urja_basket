@@ -45,7 +45,8 @@ export function ProductGridCard({
     tag: product.isBestseller ? "Bestseller" : undefined,
   };
 
-  const variantLabel = product.weight?.trim() || "—";
+  const variantLabel = product.weight?.trim();
+  const hasWeight = Boolean(variantLabel);
 
   return (
     <article
@@ -97,23 +98,28 @@ export function ProductGridCard({
 
         <div
           className={cn(
-            "relative z-20 -mt-6 flex min-h-12 items-center bg-white px-1.5 py-1",
-            "sm:-mt-7 sm:min-h-[3.25rem] sm:px-2 sm:py-1.5"
+            "relative z-20 -mt-6 flex items-center bg-white px-1.5 py-1",
+            hasWeight ? "min-h-12 sm:-mt-7 sm:min-h-[3.25rem] sm:px-2 sm:py-1.5" : "min-h-9 sm:-mt-6 sm:min-h-10"
           )}
         >
-          <span
-            className={cn(
-              "min-w-0 flex-1 truncate pr-2 text-[10px] font-semibold text-stone-600 sm:pr-3 sm:text-[11px]",
-              "max-md:pr-[3.75rem] md:pr-[5.25rem]"
-            )}
-          >
-            {variantLabel}
-          </span>
+          {hasWeight ? (
+            <span
+              className={cn(
+                "min-w-0 flex-1 truncate pr-2 text-[10px] font-semibold text-stone-600 sm:pr-3 sm:text-[11px]",
+                "max-md:pr-[3.75rem] md:pr-[5.25rem]"
+              )}
+            >
+              {variantLabel}
+            </span>
+          ) : (
+            <span className="min-w-0 flex-1 max-md:pr-[3.75rem] md:pr-[5.25rem]" aria-hidden />
+          )}
         </div>
 
         <div
           className={cn(
-            "absolute z-30 right-0 bottom-1.5 translate-x-[10%] sm:bottom-2"
+            "absolute z-30 right-0 translate-x-[10%]",
+            hasWeight ? "bottom-2 sm:bottom-2.5" : "bottom-2.5 sm:bottom-3"
           )}
         >
           <QuantityButton
@@ -133,7 +139,7 @@ export function ProductGridCard({
         </div>
       </div>
 
-      <div className="mt-1.5 flex min-w-0 flex-col gap-0.5 px-0.5 sm:mt-2">
+      <div className="mt-auto flex min-w-0 flex-col gap-0.5 px-0.5 pt-1.5 sm:pt-2">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-1 gap-y-0">
           <span className="text-[13px] font-extrabold leading-tight tracking-tight text-stone-900">
             {formatInr(product.price)}

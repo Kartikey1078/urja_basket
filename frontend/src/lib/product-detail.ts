@@ -27,6 +27,8 @@ export type ProductDetail = {
   isBestSeller: boolean;
   isOrganic: boolean;
   nutritionTags?: string[];
+  /** Present only for Fruit Basket category products. */
+  basketFruits?: string[];
   category: { name: string; slug: string };
 };
 

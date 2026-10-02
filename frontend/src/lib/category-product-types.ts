@@ -10,4 +10,6 @@ export type CategoryProduct = {
   isBestseller?: boolean;
   inStock?: boolean;
   nutritionTags?: string[];
+  basketFruits?: string[];
+  shortDescription?: string;
 };

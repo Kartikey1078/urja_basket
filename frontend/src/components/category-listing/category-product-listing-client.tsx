@@ -13,7 +13,11 @@ import {
   type ProductFilters,
 } from "@/lib/category-filters";
 import type { ProductSortValue } from "@/lib/category-sort";
-import { CATEGORY_PRODUCT_GRID_CLASS } from "@/lib/product-grid-layout";
+import { isHamperListingCategory } from "@/lib/fruit-basket";
+import {
+  CATEGORY_PRODUCT_GRID_CLASS,
+  HAMPER_LISTING_GRID_CLASS,
+} from "@/lib/product-grid-layout";
 import { cn } from "@/lib/utils";
 
 /** How often category/home product grids refresh stock from the API. */
@@ -97,6 +101,10 @@ export function CategoryProductListingClient({
   const showLoadingGrid = isRefetching || isInitialLoading;
   const showGrid = !isError && (products.length > 0 || showLoadingGrid);
   const showEmpty = !isError && !isFetching && products.length === 0;
+  const premiumHamperGrid = isHamperListingCategory(categorySlug);
+  const gridClass = premiumHamperGrid
+    ? HAMPER_LISTING_GRID_CLASS
+    : CATEGORY_PRODUCT_GRID_CLASS;
 
   return (
     <section
@@ -161,12 +169,15 @@ export function CategoryProductListingClient({
 
         {showGrid ? (
           showLoadingGrid ? (
-            <CategoryProductGridSkeleton count={8} />
+            <CategoryProductGridSkeleton
+              count={premiumHamperGrid ? 6 : 8}
+              variant={premiumHamperGrid ? "hamper" : "default"}
+            />
           ) : (
-            <ul className={CATEGORY_PRODUCT_GRID_CLASS}>
+            <ul className={gridClass}>
               {products.map((product) => (
-                <li key={product.slug} className="min-w-0 overflow-visible">
-                  <CategoryProductCard product={product} />
+                <li key={product.slug} className="flex min-h-0 min-w-0 h-full overflow-visible">
+                  <CategoryProductCard product={product} categorySlug={categorySlug} />
                 </li>
               ))}
             </ul>

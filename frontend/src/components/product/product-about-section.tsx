@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import type { ProductDetail } from "@/lib/product-detail";
+import { isFruitBasketCategory } from "@/lib/fruit-basket";
 import { cn } from "@/lib/utils";
 
 type ReviewSnippet = {
@@ -48,6 +49,10 @@ export function ProductAboutSection({
 
   const highlights = buildHighlights(product);
   const topReview = reviews.find((r) => r.comment?.trim());
+  const showNutrition =
+    !isFruitBasketCategory(product.category.slug) &&
+    product.nutritionTags &&
+    product.nutritionTags.length > 0;
 
   return (
     <section
@@ -126,13 +131,13 @@ export function ProductAboutSection({
           </div>
         ) : null}
 
-        {product.nutritionTags && product.nutritionTags.length > 0 ? (
+        {showNutrition ? (
           <div className="mt-5">
             <p className="text-urja-forest/70 text-[11px] font-bold tracking-wide uppercase">
               Nutrition highlights
             </p>
             <ul className="mt-2.5 flex flex-wrap gap-2">
-              {product.nutritionTags.map((tag) => (
+              {product.nutritionTags!.map((tag) => (
                 <li
                   key={tag}
                   className="rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-200/80"

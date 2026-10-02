@@ -23,6 +23,8 @@ export type ApiProduct = {
   weight: string;
   category: { name: string; slug: string };
   nutritionTags?: string[];
+  basketFruits?: string[];
+  shortDescription?: string | null;
 };
 
 type ProductsResponse = { data: ApiProduct[] };
@@ -43,6 +45,8 @@ function mapApiProductToCategoryProduct(p: ApiProduct): CategoryProduct {
     isBestseller: p.isBestSeller,
     inStock: p.inStock !== false,
     nutritionTags: p.nutritionTags?.length ? p.nutritionTags : undefined,
+    basketFruits: p.basketFruits?.length ? p.basketFruits : undefined,
+    shortDescription: p.shortDescription?.trim() || undefined,
   };
 }
 

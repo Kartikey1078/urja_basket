@@ -7,7 +7,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { QuantityButton } from "@/components/cart/quantity-button";
 import { BestsellerBadge } from "@/components/category-listing/bestseller-badge";
+import { FruitsIncludedCard } from "@/components/product/fruits-included-card";
 import { ProductAboutSection } from "@/components/product/product-about-section";
+import { isFruitBasketCategory } from "@/lib/fruit-basket";
 import { ProductImageGallery } from "@/components/product/product-image-gallery";
 import { useCart } from "@/hooks/use-cart";
 import { useProductGalleryScrollOverlay } from "@/hooks/use-product-gallery-scroll-overlay";
@@ -102,6 +104,8 @@ export function ProductDetailClient({ initial }: Props) {
     : null;
 
   const isOutOfStock = !product.inStock || variants.length === 0;
+  const isFruitBasket = isFruitBasketCategory(product.category.slug);
+  const basketFruits = isFruitBasket ? (product.basketFruits ?? []) : [];
 
   const handleBuyNow = async () => {
     if (!cartProduct || !authReady || buying) return;
@@ -233,6 +237,10 @@ export function ProductDetailClient({ initial }: Props) {
                 <OutOfStockBanner />
               )}
             </div>
+
+            {basketFruits.length > 0 ? (
+              <FruitsIncludedCard fruits={basketFruits} className="mt-7" />
+            ) : null}
 
             {cartProduct ? (
               <ProductActionBar
