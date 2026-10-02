@@ -5,7 +5,9 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { BasketFruitsEditor } from "@/components/basket-fruits-editor";
 import { NutritionTagsEditor } from "@/components/nutrition-tags-editor";
+import { isFruitBasketCategoryId, isFruitBasketCategorySlug } from "@/lib/fruit-basket";
 import { PageHeader } from "@/components/page-header";
 import { AdminPageLoader } from "@/components/loader";
 import { adminFetchJson } from "@/lib/api-client";
@@ -30,6 +32,8 @@ export function ProductDetailScreen() {
   const id = Number(params.id);
   const qc = useQueryClient();
   const [nutritionTags, setNutritionTags] = useState<string[]>([]);
+  const [basketFruits, setBasketFruits] = useState<string[]>([]);
+  const [categoryId, setCategoryId] = useState<number>(0);
 
   const product = useQuery({
     queryKey: ["admin", "product", id],
@@ -94,6 +98,8 @@ export function ProductDetailScreen() {
   useEffect(() => {
     if (product.data) {
       setNutritionTags(product.data.nutrition_tags ?? []);
+      setBasketFruits(product.data.basket_fruits ?? []);
+      setCategoryId(product.data.category_id);
     }
   }, [product.data]);
 
@@ -124,6 +130,9 @@ export function ProductDetailScreen() {
 
   const p = product.data;
   const isArchived = !bit(p.is_active);
+  const isFruitBasket =
+    isFruitBasketCategorySlug(p.category_slug) ||
+    isFruitBasketCategoryId(categoryId, categories.data);
 
   return (
     <div>
@@ -154,10 +163,12 @@ export function ProductDetailScreen() {
           onSubmit={(e) => {
             e.preventDefault();
             const fd = new FormData(e.currentTarget);
+            const nextCategoryId = Number(fd.get("category_id"));
+            const fruitBasketProduct = isFruitBasketCategoryId(nextCategoryId, categories.data);
             updateProduct.mutate({
               name: String(fd.get("name") ?? "").trim(),
               slug: String(fd.get("slug") ?? "").trim(),
-              category_id: Number(fd.get("category_id")),
+              category_id: nextCategoryId,
               short_description: String(fd.get("short_description") ?? "").trim() || null,
               full_description: String(fd.get("full_description") ?? "").trim() || null,
               main_image: String(fd.get("main_image") ?? "").trim() || null,
@@ -165,7 +176,10 @@ export function ProductDetailScreen() {
               is_featured: fd.get("is_featured") === "on",
               is_best_seller: fd.get("is_best_seller") === "on",
               is_organic: fd.get("is_organic") === "on",
-              nutrition_tags: nutritionTags,
+              nutrition_tags: fruitBasketProduct ? [] : nutritionTags,
+              basket_fruits: fruitBasketProduct
+                ? basketFruits.map((f) => f.trim()).filter(Boolean)
+                : [],
             });
           }}
         >
@@ -179,7 +193,13 @@ export function ProductDetailScreen() {
           </label>
           <label className="block text-sm font-medium text-slate-700">
             Category
-            <select className={inputClass} name="category_id" required defaultValue={p.category_id}>
+            <select
+              className={inputClass}
+              name="category_id"
+              required
+              value={categoryId || p.category_id}
+              onChange={(e) => setCategoryId(Number(e.target.value))}
+            >
               {categories.data?.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -237,11 +257,19 @@ export function ProductDetailScreen() {
               Organic
             </label>
           </div>
-          <NutritionTagsEditor
-            className="lg:col-span-2"
-            value={nutritionTags}
-            onChange={setNutritionTags}
-          />
+          {isFruitBasket ? (
+            <BasketFruitsEditor
+              className="lg:col-span-2"
+              value={basketFruits}
+              onChange={setBasketFruits}
+            />
+          ) : (
+            <NutritionTagsEditor
+              className="lg:col-span-2"
+              value={nutritionTags}
+              onChange={setNutritionTags}
+            />
+          )}
           <div className="flex flex-col gap-2 sm:flex-row lg:col-span-2">
             <button type="submit" className={btnPrimary} disabled={updateProduct.isPending || isArchived}>
               {updateProduct.isPending ? "Saving…" : "Save product"}

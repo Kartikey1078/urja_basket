@@ -16,7 +16,9 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useState } from "react";
 
+import { BasketFruitsEditor } from "@/components/basket-fruits-editor";
 import { NutritionTagsEditor } from "@/components/nutrition-tags-editor";
+import { isFruitBasketCategoryId } from "@/lib/fruit-basket";
 import { PageHeader } from "@/components/page-header";
 import { AdminInlineLoader, AdminPageLoader, AdminTableLoader } from "@/components/loader";
 import { StockStatusBadge } from "@/components/stock-status-badge";
@@ -86,6 +88,8 @@ function ProductsInner() {
 
   const [showCreate, setShowCreate] = useState(false);
   const [createNutritionTags, setCreateNutritionTags] = useState<string[]>([]);
+  const [createBasketFruits, setCreateBasketFruits] = useState<string[]>([]);
+  const [createCategoryId, setCreateCategoryId] = useState<number>(0);
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
 
   const q = searchParams.get("q") ?? "";
@@ -188,6 +192,7 @@ function ProductsInner() {
               e.preventDefault();
               const fd = new FormData(e.currentTarget);
               const category_id = Number(fd.get("category_id"));
+              const fruitBasketProduct = isFruitBasketCategoryId(category_id, categories.data);
               create.mutate({
                 name: String(fd.get("name") ?? "").trim(),
                 slug: String(fd.get("slug") ?? "").trim(),
@@ -198,7 +203,10 @@ function ProductsInner() {
                 is_featured: fd.get("is_featured") === "on",
                 is_best_seller: fd.get("is_best_seller") === "on",
                 is_organic: fd.get("is_organic") === "on",
-                nutrition_tags: createNutritionTags,
+                nutrition_tags: fruitBasketProduct ? [] : createNutritionTags,
+                basket_fruits: fruitBasketProduct
+                  ? createBasketFruits.map((f) => f.trim()).filter(Boolean)
+                  : [],
               });
             }}
           >
@@ -212,7 +220,13 @@ function ProductsInner() {
             </label>
             <label className="block text-sm font-medium text-slate-700">
               Category
-              <select className={inputClass} name="category_id" required defaultValue="">
+              <select
+                className={inputClass}
+                name="category_id"
+                required
+                value={createCategoryId || ""}
+                onChange={(e) => setCreateCategoryId(Number(e.target.value))}
+              >
                 <option value="" disabled>
                   Select category…
                 </option>
@@ -249,11 +263,19 @@ function ProductsInner() {
                 Organic
               </label>
             </div>
-            <NutritionTagsEditor
-              className="sm:col-span-2"
-              value={createNutritionTags}
-              onChange={setCreateNutritionTags}
-            />
+            {isFruitBasketCategoryId(createCategoryId, categories.data) ? (
+              <BasketFruitsEditor
+                className="sm:col-span-2"
+                value={createBasketFruits}
+                onChange={setCreateBasketFruits}
+              />
+            ) : (
+              <NutritionTagsEditor
+                className="sm:col-span-2"
+                value={createNutritionTags}
+                onChange={setCreateNutritionTags}
+              />
+            )}
             <div className="sm:col-span-2">
               <button type="submit" className={btnPrimary} disabled={create.isPending || categories.isPending}>
                 {create.isPending ? "Creating…" : "Create & open editor"}

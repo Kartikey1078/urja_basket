@@ -20,6 +20,7 @@ function pageTitleFromPath(pathname: string): string {
   if (pathname.startsWith("/pos")) return "POS";
   if (pathname.startsWith("/customers/")) return "Customer";
   if (pathname.startsWith("/products/")) return "Product";
+  if (pathname.startsWith("/gift-hampers")) return "Gift hampers";
   return "Urja Admin";
 }
 

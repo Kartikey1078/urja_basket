@@ -71,6 +71,7 @@ export type ProductListRow = {
   is_organic: number;
   is_active: number;
   nutrition_tags: string[];
+  basket_fruits: string[];
   created_at: string;
   updated_at: string;
 };
@@ -91,6 +92,8 @@ export type ProductDetail = {
   is_organic: number;
   is_active: number;
   nutrition_tags: string[];
+  basket_fruits: string[];
+  category_slug?: string;
   created_at: string;
   updated_at: string;
 };
