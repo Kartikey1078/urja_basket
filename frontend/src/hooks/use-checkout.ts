@@ -63,10 +63,11 @@ export function useCheckout() {
       amountInr,
       address,
       deliverySlot,
-      paymentMethod,
+      paymentMethod: _paymentMethod,
       description,
       onPlaced,
     }: CheckoutInput) => {
+      const paymentMethod = "cod" as const;
       if (amountInr <= 0) {
         toast.error("Invalid order amount");
         return;

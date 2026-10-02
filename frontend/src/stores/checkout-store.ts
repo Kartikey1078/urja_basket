@@ -27,7 +27,7 @@ export const useCheckoutStore = create<CheckoutState>()(
       selectedAddressId: null,
       selectedAddress: null,
       guestAddress: null,
-      paymentMethod: "online",
+      paymentMethod: "cod",
       paymentStepReached: false,
       setSelectedAddress: (address) =>
         set({
@@ -48,7 +48,7 @@ export const useCheckoutStore = create<CheckoutState>()(
           selectedAddressId: null,
           selectedAddress: null,
           guestAddress: null,
-          paymentMethod: "online",
+          paymentMethod: "cod",
           paymentStepReached: false,
         }),
     }),

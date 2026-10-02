@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { AnimatePresence, motion } from "framer-motion";
-import { Banknote, Check, ChevronDown, ChevronRight, CreditCard, MapPin, Plus } from "lucide-react";
+import { Banknote, Check, ChevronDown, ChevronRight, MapPin, Plus } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -40,7 +40,7 @@ type CartCheckoutFlowProps = {
 const STEPS = [
   { id: 1 as const, label: "Address" },
   { id: 2 as const, label: "Time" },
-  { id: 3 as const, label: "Pay" },
+  { id: 3 as const, label: "COD" },
 ];
 
 export function CartCheckoutFlow({
@@ -65,7 +65,6 @@ export function CartCheckoutFlow({
   const setSelectedAddress = useCheckoutStore((s) => s.setSelectedAddress);
   const setGuestAddress = useCheckoutStore((s) => s.setGuestAddress);
   const selectedAddressId = useCheckoutStore((s) => s.selectedAddressId);
-  const paymentMethod = useCheckoutStore((s) => s.paymentMethod);
   const setPaymentMethod = useCheckoutStore((s) => s.setPaymentMethod);
 
   const [step, setStep] = useState<CheckoutStep>(1);
@@ -92,6 +91,10 @@ export function CartCheckoutFlow({
   }, [open]);
 
   const setPaymentStepReached = useCheckoutStore((s) => s.setPaymentStepReached);
+
+  useEffect(() => {
+    setPaymentMethod("cod");
+  }, [setPaymentMethod]);
 
   useEffect(() => {
     if (open) {
@@ -178,7 +181,7 @@ export function CartCheckoutFlow({
     step === 2
       ? "Choose delivery time"
       : step === 3
-        ? "Select payment method"
+        ? "Cash on delivery"
         : selected?.formatted
           ? selected.formatted
           : editing
@@ -439,71 +442,25 @@ export function CartCheckoutFlow({
                     className="space-y-4"
                   >
                     <div className="text-center">
-                      <h2 className="text-base font-medium text-stone-900">Payment method</h2>
+                      <h2 className="text-base font-medium text-stone-900">Payment</h2>
                       <p className="mt-1 text-sm text-stone-600">
                         Delivering to{" "}
                         <span className="font-medium text-stone-900">{selected?.city}</span>
                       </p>
                     </div>
 
-                    <div className="grid gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("online")}
-                        className={cn(
-                          "flex min-h-14 items-center gap-3 rounded-xl border p-3.5 text-left transition sm:min-h-[3.75rem]",
-                          paymentMethod === "online"
-                            ? "border-urja-forest bg-[#eef3ef]"
-                            : "border-stone-200 bg-stone-50 hover:border-stone-300"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "flex size-10 shrink-0 items-center justify-center rounded-md",
-                            paymentMethod === "online"
-                              ? "bg-urja-forest text-white"
-                              : "bg-stone-100 text-stone-600"
-                          )}
-                        >
-                          <CreditCard className="size-5" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium text-stone-900">Pay online</span>
-                          <span className="text-xs text-stone-500">UPI, card, netbanking</span>
-                        </span>
-                        {paymentMethod === "online" ? (
-                          <Check className="size-5 shrink-0 text-urja-forest" />
-                        ) : null}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setPaymentMethod("cod")}
-                        className={cn(
-                          "flex min-h-14 items-center gap-3 rounded-xl border p-3.5 text-left transition sm:min-h-[3.75rem]",
-                          paymentMethod === "cod"
-                            ? "border-urja-forest bg-[#eef3ef]"
-                            : "border-stone-200 bg-stone-50 hover:border-stone-300"
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "flex size-10 shrink-0 items-center justify-center rounded-md",
-                            paymentMethod === "cod"
-                              ? "bg-urja-forest text-white"
-                              : "bg-stone-100 text-stone-600"
-                          )}
-                        >
-                          <Banknote className="size-5" />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium text-stone-900">Cash on delivery</span>
-                          <span className="text-xs text-stone-500">Pay when order arrives</span>
-                        </span>
-                        {paymentMethod === "cod" ? (
-                          <Check className="size-5 shrink-0 text-urja-forest" />
-                        ) : null}
-                      </button>
+                    <div
+                      className="flex min-h-14 items-center gap-3 rounded-xl border border-urja-forest bg-[#eef3ef] p-3.5 sm:min-h-[3.75rem]"
+                      role="status"
+                    >
+                      <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-urja-forest text-white">
+                        <Banknote className="size-5" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-stone-900">Cash on delivery</span>
+                        <span className="text-xs text-stone-600">Pay with cash when your order arrives</span>
+                      </span>
+                      <Check className="size-5 shrink-0 text-urja-forest" aria-hidden />
                     </div>
 
                     <p className="text-center text-xs text-stone-500">

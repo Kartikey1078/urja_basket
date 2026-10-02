@@ -40,7 +40,6 @@ function CartScreenContent() {
   const { items, count, bill, setQuantity, removeItem, loading, syncing, error, hydrated } =
     useCart();
   const { selected, hydrated: addressHydrated } = useDeliveryAddress();
-  const paymentMethod = useCheckoutStore((s) => s.paymentMethod);
   const paymentStepReached = useCheckoutStore((s) => s.paymentStepReached);
   const { completeCheckout, processing } = useCheckout();
   const showSkeleton = !hydrated || (loading && items.length === 0);
@@ -95,8 +94,8 @@ function CartScreenContent() {
     }
     if (!paymentStepReached) {
       setFocusPaymentStep((n) => n + 1);
-      toast.message("Choose how to pay", {
-        description: "Pick online or cash on delivery, then tap the button again.",
+      toast.message("Confirm cash on delivery", {
+        description: "Open checkout, go to the COD step, then tap Place order again.",
       });
       return;
     }
@@ -104,7 +103,7 @@ function CartScreenContent() {
       amountInr: bill.toPay,
       address: selected,
       deliverySlot: slot,
-      paymentMethod,
+      paymentMethod: "cod",
       description: `Urja Basket · ${count} item${count === 1 ? "" : "s"}`,
       onPlaced: () => setCheckoutOpen(false),
     });
@@ -115,7 +114,6 @@ function CartScreenContent() {
     count,
     isLoaded,
     isSignedIn,
-    paymentMethod,
     paymentStepReached,
     requireSignInForCheckout,
     selected,
@@ -132,9 +130,7 @@ function CartScreenContent() {
     : !checkoutOpen
       ? "Proceed to Checkout"
       : selected
-        ? paymentMethod === "cod"
-          ? "Place order"
-          : "Proceed to Payment"
+        ? "Place order"
         : "Proceed to Checkout";
 
   return (
@@ -244,11 +240,7 @@ function CartScreenContent() {
         <CartCheckoutBar
           toPay={bill.toPay}
           label={
-            processing
-              ? paymentMethod === "cod"
-                ? "Placing order…"
-                : "Opening payment…"
-              : ctaLabel
+            processing ? "Placing order…" : ctaLabel
           }
           disabled={processing}
           onViewDetails={scrollToBill}
