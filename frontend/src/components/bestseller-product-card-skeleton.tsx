@@ -14,7 +14,7 @@ export function BestsellerProductCardSkeleton({
       aria-hidden
     >
       <div className="relative overflow-visible rounded-xl border border-stone-200/90 bg-white pr-1">
-        <div className="relative aspect-square w-full overflow-hidden rounded-t-xl bg-[#f0eeea]">
+        <div className="relative aspect-[5/6] w-full overflow-hidden rounded-t-xl bg-[#f0eeea]">
           <Skeleton className="absolute inset-0 rounded-none" />
           <Skeleton className="absolute top-1 right-1 size-7 rounded-full" />
         </div>

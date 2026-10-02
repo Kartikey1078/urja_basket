@@ -13,6 +13,7 @@ import {
   type ProductFilters,
 } from "@/lib/category-filters";
 import type { ProductSortValue } from "@/lib/category-sort";
+import { CATEGORY_PRODUCT_GRID_CLASS } from "@/lib/product-grid-layout";
 import { cn } from "@/lib/utils";
 
 /** How often category/home product grids refresh stock from the API. */
@@ -162,9 +163,9 @@ export function CategoryProductListingClient({
           showLoadingGrid ? (
             <CategoryProductGridSkeleton count={8} />
           ) : (
-            <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
+            <ul className={CATEGORY_PRODUCT_GRID_CLASS}>
               {products.map((product) => (
-                <li key={product.slug}>
+                <li key={product.slug} className="min-w-0 overflow-visible">
                   <CategoryProductCard product={product} />
                 </li>
               ))}

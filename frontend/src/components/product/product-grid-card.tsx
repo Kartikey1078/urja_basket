@@ -61,7 +61,7 @@ export function ProductGridCard({
       <div
         className="relative overflow-visible rounded-xl border border-stone-200/90 bg-white shadow-[0_1px_2px_rgba(15,23,20,0.04)]"
       >
-        <div className="relative aspect-square w-full overflow-hidden rounded-t-xl bg-[#f0eeea]">
+        <div className="relative aspect-[5/6] w-full overflow-hidden rounded-t-xl bg-[#f0eeea]">
           <Link
             href={`/products/${product.slug}`}
             className="absolute inset-0 block"

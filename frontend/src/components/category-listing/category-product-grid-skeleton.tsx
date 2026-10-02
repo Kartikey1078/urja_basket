@@ -1,3 +1,4 @@
+import { CATEGORY_PRODUCT_GRID_CLASS } from "@/lib/product-grid-layout";
 import { cn } from "@/lib/utils";
 
 import { CategoryProductCardSkeleton } from "./category-product-card-skeleton";
@@ -14,7 +15,7 @@ export function CategoryProductGridSkeleton({
   return (
     <ul
       className={cn(
-        "grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5",
+        CATEGORY_PRODUCT_GRID_CLASS,
         className
       )}
       aria-busy="true"
