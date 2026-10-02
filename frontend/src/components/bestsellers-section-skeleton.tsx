@@ -1,4 +1,5 @@
 import { BestsellerProductCardSkeleton } from "@/components/bestseller-product-card-skeleton";
+import { PRODUCT_LISTING_GRID_CLASS } from "@/lib/product-grid-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function BestsellersSectionSkeleton() {
@@ -13,7 +14,7 @@ export function BestsellersSectionSkeleton() {
           <Skeleton className="h-7 w-36 sm:h-8" />
           <Skeleton className="h-5 w-20" />
         </div>
-        <div className="no-scrollbar flex w-full min-w-0 flex-nowrap snap-x snap-mandatory gap-3 overflow-x-auto pb-8 sm:gap-4 sm:pb-10 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0 lg:grid-cols-5 lg:gap-5 lg:pb-12">
+        <div className={PRODUCT_LISTING_GRID_CLASS}>
           {Array.from({ length: 5 }, (_, i) => (
             <BestsellerProductCardSkeleton key={i} />
           ))}

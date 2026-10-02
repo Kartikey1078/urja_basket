@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { BestsellerProductCard } from "@/components/bestseller-product-card";
 import { BestsellersSectionSkeleton } from "@/components/bestsellers-section-skeleton";
 import { fetchBestsellerProducts, type ApiProduct } from "@/lib/api-products";
+import { PRODUCT_LISTING_GRID_CLASS } from "@/lib/product-grid-layout";
 
 type BadgeKind = "bestseller" | "discount";
 
@@ -52,7 +53,7 @@ async function BestsellersSectionContent() {
       className="bg-background mt-4 w-full min-w-0 sm:mt-5 md:mt-6"
       aria-labelledby="bestsellers-heading"
     >
-      <div className="mx-auto w-full min-w-0 max-w-7xl overflow-hidden px-3 sm:px-4 lg:px-6 xl:px-10">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6 xl:px-10">
         <div className="mb-3 flex items-end justify-between gap-2 sm:mb-4 sm:gap-3">
           <h2
             id="bestsellers-heading"
@@ -76,15 +77,9 @@ async function BestsellersSectionContent() {
             in the database.
           </p>
         ) : (
-          <div
-            className="no-scrollbar scroll-x-rail flex w-full min-w-0 flex-nowrap snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-8 sm:gap-4 sm:pb-10 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-5 lg:gap-5 lg:pb-12"
-            style={{
-              scrollPaddingLeft: "max(0.75rem, env(safe-area-inset-left, 0px))",
-              scrollPaddingRight: "max(0.75rem, env(safe-area-inset-right, 0px))",
-            }}
-          >
+          <div className={PRODUCT_LISTING_GRID_CLASS}>
             {products.map((product) => (
-              <BestsellerProductCard key={product.slug} product={product} />
+              <BestsellerProductCard key={product.slug} product={product} layout="grid" />
             ))}
           </div>
         )}
@@ -93,10 +88,7 @@ async function BestsellersSectionContent() {
   );
 }
 
-/**
- * Bestsellers: larger cards on mobile scroll; grid from md up.
- * Data from GET /api/v1/products?bestSeller=1
- */
+/** Data from GET /api/v1/products?bestSeller=1 */
 export function BestsellersSection() {
   return (
     <Suspense fallback={<BestsellersSectionSkeleton />}>

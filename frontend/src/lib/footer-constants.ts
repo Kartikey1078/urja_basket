@@ -23,6 +23,9 @@ export const FOOTER_SHOP_LINKS = [
   { href: "/categories/fresh-fruits", label: "Fresh Fruits" },
   { href: "/categories/dry-fruits", label: "Dry Fruits" },
   { href: "/categories/nuts-seeds", label: "Nuts & Seeds" },
+  { href: "/categories/fruit-basket", label: "Fruit Basket" },
+  { href: "/categories/gift-hampers", label: "Gift Hamper" },
+  { href: "/categories/desi-delight", label: "Desi Delight" },
   { href: "/bestsellers", label: "Bestsellers" },
   { href: "/categories", label: "All Categories" },
 ] as const;

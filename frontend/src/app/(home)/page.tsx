@@ -3,7 +3,6 @@ import { CategoryRail } from "@/components/category-rail";
 import { FeaturesTrustBar } from "@/components/features-trust-bar";
 import { HomeHero } from "@/components/home-hero";
 import { CategoryProductsSection } from "@/components/home/category-products-section";
-import { ShopLocationSection } from "@/components/home/shop-location-section";
 import { JsonLd } from "@/components/seo/json-ld";
 import {
   createPageMetadata,
@@ -33,7 +32,6 @@ export default function Home() {
         <CategoryProductsSection key={slug} categorySlug={slug} title={label} />
       ))}
       <BestsellersSection />
-      <ShopLocationSection />
     </>
   );
 }

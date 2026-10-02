@@ -22,7 +22,9 @@ const nextConfig: NextConfig = {
       { source: "/dry-fruits", destination: "/categories/dry-fruits", permanent: true },
       { source: "/dried-fruits", destination: "/categories/dried-fruits", permanent: true },
       { source: "/nuts-seeds", destination: "/categories/nuts-seeds", permanent: true },
+      { source: "/fruit-basket", destination: "/categories/fruit-basket", permanent: true },
       { source: "/gift-hampers", destination: "/categories/gift-hampers", permanent: true },
+      { source: "/desi-delight", destination: "/categories/desi-delight", permanent: true },
       { source: "/trail-mix", destination: "/categories/trail-mix", permanent: true },
     ];
   },

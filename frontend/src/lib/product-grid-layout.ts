@@ -1,0 +1,7 @@
+/** Shared product listing grid: 3 columns on mobile, 5 on laptop/desktop. */
+export const PRODUCT_LISTING_GRID_CLASS =
+  "grid w-full min-w-0 grid-cols-3 gap-2 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:gap-4";
+
+/** Category product grids — same column breakpoints as home. */
+export const CATEGORY_PRODUCT_GRID_CLASS =
+  "grid w-full min-w-0 grid-cols-3 gap-2 sm:gap-2.5 md:grid-cols-5 md:gap-3 lg:gap-4";

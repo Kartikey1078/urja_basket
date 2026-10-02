@@ -10,22 +10,23 @@ export function BestsellerProductCardSkeleton({
 }: BestsellerProductCardSkeletonProps) {
   return (
     <article
-      className={cn(
-        "border-border/80 bg-card flex w-[10.5rem] min-w-[10.5rem] shrink-0 snap-start snap-always flex-col overflow-hidden rounded-xl border shadow-md ring-1 ring-black/[0.04] sm:w-[12rem] sm:min-w-[12rem] md:min-w-0 md:w-auto md:shrink",
-        className
-      )}
+      className={cn("flex h-full min-w-0 w-full flex-col", className)}
       aria-hidden
     >
-      <Skeleton className="aspect-square w-full shrink-0 rounded-none" />
-      <div className="flex flex-1 flex-col gap-1.5 p-2 sm:gap-2 sm:p-2.5 md:gap-2 md:p-3">
-        <Skeleton className="h-3.5 w-full sm:h-4" />
-        <Skeleton className="h-3.5 w-4/5 sm:h-4" />
-        <Skeleton className="h-3 w-14" />
-        <div className="flex gap-1.5">
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-3.5 w-10" />
+      <div className="relative overflow-visible rounded-xl border border-stone-200/90 bg-white pr-1">
+        <div className="relative aspect-square w-full overflow-hidden rounded-t-xl bg-[#f0eeea]">
+          <Skeleton className="absolute inset-0 rounded-none" />
+          <Skeleton className="absolute top-1 right-1 size-7 rounded-full" />
         </div>
-        <Skeleton className="mt-1 h-8 w-full rounded-lg sm:h-9" />
+        <div className="flex min-h-8 items-center px-1.5 py-1.5 sm:min-h-9 sm:px-2 sm:py-2">
+          <Skeleton className="h-2.5 w-10" />
+        </div>
+        <Skeleton className="absolute -right-1 bottom-[1.65rem] z-10 h-8 w-[3.5rem] translate-y-[58%] rounded-md sm:bottom-[1.85rem]" />
+      </div>
+      <div className="mt-1.5 flex flex-col gap-1 px-0.5 sm:mt-2">
+        <Skeleton className="h-3.5 w-16" />
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-4/5" />
       </div>
     </article>
   );

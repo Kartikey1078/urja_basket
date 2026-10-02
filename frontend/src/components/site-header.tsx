@@ -21,6 +21,9 @@ const NAV_LINKS = [
   { href: "/categories/fresh-fruits", label: "Fruits" },
   { href: "/categories/dry-fruits", label: "Dry Fruits" },
   { href: "/categories/nuts-seeds", label: "Nuts & Seeds" },
+  { href: "/categories/fruit-basket", label: "Fruit Basket" },
+  { href: "/categories/gift-hampers", label: "Gift Hamper" },
+  { href: "/categories/desi-delight", label: "Desi Delight" },
   { href: "/orders", label: "Track Order" },
 ] as const;
 

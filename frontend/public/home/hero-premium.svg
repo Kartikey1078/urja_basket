@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2048 419" fill="none" preserveAspectRatio="xMidYMid slice" role="img" aria-label="">
+  <defs>
+    <filter id="b1" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="78" />
+    </filter>
+    <filter id="b2" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="95" />
+    </filter>
+    <filter id="b3" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="110" />
+    </filter>
+    <linearGradient id="base" x1="0" y1="0.5" x2="1" y2="0.5">
+      <stop offset="0%" stop-color="#87E3FD" />
+      <stop offset="22%" stop-color="#98EEFF" />
+      <stop offset="48%" stop-color="#E8F7FF" />
+      <stop offset="58%" stop-color="#E8F7FF" />
+      <stop offset="78%" stop-color="#E9E7F0" />
+      <stop offset="92%" stop-color="#E7E1EA" />
+      <stop offset="100%" stop-color="#E8F7FF" />
+    </linearGradient>
+    <radialGradient id="center-ice" cx="0.52" cy="0.48" r="0.55">
+      <stop offset="0%" stop-color="#E8F7FF" stop-opacity="0.95" />
+      <stop offset="70%" stop-color="#E8F7FF" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#E8F7FF" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="2048" height="419" fill="url(#base)" />
+
+  <g filter="url(#b3)" opacity="0.88">
+    <ellipse cx="180" cy="95" rx="520" ry="380" fill="#65BDFF" />
+    <ellipse cx="320" cy="220" rx="480" ry="360" fill="#87E3FD" />
+  </g>
+
+  <g filter="url(#b2)" opacity="0.82">
+    <ellipse cx="420" cy="280" rx="560" ry="400" fill="#98EEFF" />
+    <ellipse cx="260" cy="340" rx="400" ry="300" fill="#87E3FD" />
+  </g>
+
+  <g filter="url(#b1)" opacity="0.9">
+    <ellipse cx="1020" cy="210" rx="720" ry="420" fill="#E8F7FF" />
+    <ellipse cx="880" cy="180" rx="500" ry="320" fill="#F4FBFF" />
+  </g>
+
+  <rect width="2048" height="419" fill="url(#center-ice)" />
+
+  <g filter="url(#b2)" opacity="0.75">
+    <ellipse cx="1580" cy="240" rx="520" ry="380" fill="#E9E7F0" />
+    <ellipse cx="1720" cy="200" rx="440" ry="320" fill="#E7E1EA" />
+  </g>
+
+  <g filter="url(#b3)" opacity="0.85">
+    <ellipse cx="1980" cy="320" rx="420" ry="340" fill="#BACDFD" />
+    <ellipse cx="1920" cy="120" rx="380" ry="280" fill="#BACDFD" />
+    <ellipse cx="2040" cy="400" rx="360" ry="280" fill="#A8BEF8" />
+  </g>
+
+  <linearGradient id="feather-top" x1="0.5" y1="0" x2="0.5" y2="1">
+    <stop offset="0%" stop-color="#E8F7FF" stop-opacity="0.35" />
+    <stop offset="100%" stop-color="#E8F7FF" stop-opacity="0" />
+  </linearGradient>
+  <rect width="2048" height="419" fill="url(#feather-top)" />
+</svg>

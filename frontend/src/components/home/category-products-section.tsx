@@ -10,6 +10,7 @@ import { BestsellerProductCardSkeleton } from "@/components/bestseller-product-c
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchProducts } from "@/lib/api-products";
 import type { CategoryProduct } from "@/lib/category-product-types";
+import { PRODUCT_LISTING_GRID_CLASS } from "@/lib/product-grid-layout";
 import { categoryPath } from "@/lib/shop-categories";
 
 type BadgeKind = "bestseller" | "discount";
@@ -62,19 +63,19 @@ function toCardProduct(p: CategoryProduct): BestsellerCardProduct {
   };
 }
 
-function CategoryProductsSectionSkeleton({ title }: { title: string }) {
+export function CategoryProductsSectionSkeleton({ title }: { title: string }) {
   return (
     <section
       className="bg-background mt-4 w-full min-w-0 sm:mt-5 md:mt-6"
       aria-busy="true"
       aria-label={`Loading ${title}`}
     >
-      <div className="mx-auto w-full min-w-0 max-w-7xl overflow-hidden px-3 sm:px-4 lg:px-6 xl:px-10">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6 xl:px-10">
         <div className="mb-3 flex items-end justify-between gap-3 sm:mb-4">
           <Skeleton className="h-7 w-36 sm:h-8" />
           <Skeleton className="h-5 w-16" />
         </div>
-        <div className="no-scrollbar flex w-full min-w-0 flex-nowrap snap-x snap-mandatory gap-3 overflow-x-auto pb-8 sm:gap-4 sm:pb-10 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0 lg:grid-cols-5 lg:gap-5 lg:pb-12">
+        <div className={PRODUCT_LISTING_GRID_CLASS}>
           {Array.from({ length: 5 }, (_, i) => (
             <BestsellerProductCardSkeleton key={i} />
           ))}
@@ -98,7 +99,7 @@ async function CategoryProductsSectionContent({
       className="bg-background mt-4 w-full min-w-0 sm:mt-5 md:mt-6"
       aria-labelledby={headingId}
     >
-      <div className="mx-auto w-full min-w-0 max-w-7xl overflow-hidden px-3 sm:px-4 lg:px-6 xl:px-10">
+      <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6 xl:px-10">
         <div className="mb-3 flex items-end justify-between gap-2 sm:mb-4 sm:gap-3">
           <h2
             id={headingId}
@@ -120,15 +121,9 @@ async function CategoryProductsSectionContent({
             />
           </div>
         ) : (
-          <div
-            className="no-scrollbar scroll-x-rail flex w-full min-w-0 flex-nowrap snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth pb-8 sm:gap-4 sm:pb-10 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0 md:snap-none lg:grid-cols-5 lg:gap-5 lg:pb-12"
-            style={{
-              scrollPaddingLeft: "max(0.75rem, env(safe-area-inset-left, 0px))",
-              scrollPaddingRight: "max(0.75rem, env(safe-area-inset-right, 0px))",
-            }}
-          >
+          <div className={PRODUCT_LISTING_GRID_CLASS}>
             {products.map((product) => (
-              <BestsellerProductCard key={product.slug} product={product} />
+              <BestsellerProductCard key={product.slug} product={product} layout="grid" />
             ))}
           </div>
         )}

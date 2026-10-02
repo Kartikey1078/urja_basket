@@ -129,6 +129,36 @@ export const CATEGORY_SEO: Record<
       "Urja Basket nuts",
     ],
   },
+  "fruit-basket": {
+    description:
+      "Order fresh fruit baskets online in Delhi — curated hampers for gifting, parties & special occasions from Urja Basket.",
+    keywords: [
+      "fruit basket delivery Delhi",
+      "fruit hamper online",
+      "gift fruit basket",
+      "Urja Basket fruit basket",
+    ],
+  },
+  "gift-hampers": {
+    description:
+      "Shop premium gift hampers online in Delhi — curated boxes for birthdays, festivals & corporate gifting from Urja Basket.",
+    keywords: [
+      "gift hamper delivery Delhi",
+      "fruit gift hamper",
+      "premium gift box online",
+      "Urja Basket gift hamper",
+    ],
+  },
+  "desi-delight": {
+    description:
+      "Buy desi delights online in Delhi — mukhwas, saunf, traditional mouth fresheners & festive mixes from Urja Basket.",
+    keywords: [
+      "mukhwas online Delhi",
+      "desi mouth freshener",
+      "saunf delivery",
+      "Urja Basket desi delight",
+    ],
+  },
 };
 
 export const PUBLIC_ROUTES = [
