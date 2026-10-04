@@ -62,7 +62,7 @@ export function HomePageSkeleton() {
       <CategoryRailSkeleton />
       <FeaturesTrustBarSkeleton />
       {SHOP_CATEGORIES.map(({ slug, label }) => (
-        <CategoryProductsSectionSkeleton key={slug} title={label} />
+        <CategoryProductsSectionSkeleton key={slug} title={label} categorySlug={slug} />
       ))}
       <BestsellersSectionSkeleton />
     </div>

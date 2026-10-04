@@ -98,44 +98,36 @@ export function ProductGridCard({
 
         <div
           className={cn(
-            "relative z-20 -mt-6 flex items-center bg-white px-1.5 py-1",
-            hasWeight ? "min-h-12 sm:-mt-7 sm:min-h-[3.25rem] sm:px-2 sm:py-1.5" : "min-h-9 sm:-mt-6 sm:min-h-10"
+            "relative z-20 -mt-6 flex items-center gap-1 bg-white py-1 pl-1.5 pr-0.5",
+            hasWeight ? "min-h-12 sm:-mt-7 sm:min-h-[3.25rem] sm:pl-2 sm:py-1.5" : "min-h-9 sm:-mt-6 sm:min-h-10"
           )}
         >
           {hasWeight ? (
             <span
-              className={cn(
-                "min-w-0 flex-1 truncate pr-2 text-[10px] font-semibold text-stone-600 sm:pr-3 sm:text-[11px]",
-                "max-md:pr-[3.75rem] md:pr-[5.25rem]"
-              )}
+              className="min-w-0 flex-1 text-[10px] font-semibold leading-snug text-stone-600 line-clamp-2 sm:text-[11px]"
+              title={variantLabel}
             >
               {variantLabel}
             </span>
           ) : (
-            <span className="min-w-0 flex-1 max-md:pr-[3.75rem] md:pr-[5.25rem]" aria-hidden />
+            <span className="min-w-0 flex-1" aria-hidden />
           )}
-        </div>
-
-        <div
-          className={cn(
-            "absolute z-30 right-0 translate-x-[10%]",
-            hasWeight ? "bottom-2 sm:bottom-2.5" : "bottom-2.5 sm:bottom-3"
-          )}
-        >
-          <QuantityButton
-            chip
-            chipDense
-            inStock={inStock}
-            product={cartProduct}
-            className="mt-0 w-auto pt-0 md:hidden"
-          />
-          <QuantityButton
-            chip
-            chipProminent
-            inStock={inStock}
-            product={cartProduct}
-            className="mt-0 hidden w-auto pt-0 md:block"
-          />
+          <div className="relative z-30 shrink-0 translate-x-[10%]">
+            <QuantityButton
+              chip
+              chipDense
+              inStock={inStock}
+              product={cartProduct}
+              className="mt-0 w-auto pt-0 md:hidden"
+            />
+            <QuantityButton
+              chip
+              chipProminent
+              inStock={inStock}
+              product={cartProduct}
+              className="mt-0 hidden w-auto pt-0 md:block"
+            />
+          </div>
         </div>
       </div>
 

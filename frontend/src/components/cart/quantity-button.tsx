@@ -180,8 +180,8 @@ export const QuantityButton = memo(function QuantityButton({
 
             <span
               className={cn(
-                "min-w-[0.875rem] px-0.5 text-center font-bold tabular-nums leading-none text-[#0c831f]",
-                chipDense ? "text-[11px]" : "text-sm"
+                "shrink-0 px-0.5 text-center font-bold tabular-nums leading-none text-[#0c831f]",
+                chipDense ? "min-w-[1.125rem] text-[11px]" : "min-w-[1.25rem] text-sm"
               )}
               style={{ fontFamily: "var(--font-urja-serif), ui-serif, Georgia, serif" }}
             >

@@ -8,16 +8,19 @@ type CategoryProductCardProps = {
   product: CategoryProduct;
   categorySlug: string;
   className?: string;
+  homeGrid?: boolean;
 };
 
 export function CategoryProductCard({
   product,
   categorySlug,
   className,
+  homeGrid = false,
 }: CategoryProductCardProps) {
   if (isHamperListingCategory(categorySlug)) {
     return (
       <PremiumHamperProductCard
+        homeGrid={homeGrid}
         className={cn(className)}
         product={{
           slug: product.slug,

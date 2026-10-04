@@ -7,10 +7,16 @@ import {
   type BestsellerCardProduct,
 } from "@/components/bestseller-product-card";
 import { BestsellerProductCardSkeleton } from "@/components/bestseller-product-card-skeleton";
+import { CategoryProductCard } from "@/components/category-listing/category-product-card";
+import { PremiumHamperProductCardSkeleton } from "@/components/category-listing/premium-hamper-product-card-skeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchProducts } from "@/lib/api-products";
 import type { CategoryProduct } from "@/lib/category-product-types";
-import { PRODUCT_LISTING_GRID_CLASS } from "@/lib/product-grid-layout";
+import { isGiftHamperCategory, isHamperListingCategory } from "@/lib/fruit-basket";
+import {
+  HOME_HAMPER_PRODUCTS_GRID_CLASS,
+  PRODUCT_LISTING_GRID_CLASS,
+} from "@/lib/product-grid-layout";
 import { categoryPath } from "@/lib/shop-categories";
 
 type BadgeKind = "bestseller" | "discount";
@@ -25,12 +31,14 @@ type CategoryProductsSectionProps = {
   limit?: number;
 };
 
-function ShopCategoryLink({
+function ViewAllCategoryLink({
   categorySlug,
   className,
+  label = "View All",
 }: {
   categorySlug: string;
   className?: string;
+  label?: string;
 }) {
   return (
     <Link
@@ -40,7 +48,7 @@ function ShopCategoryLink({
         "text-urja-forest hover:text-urja-forest/85 inline-flex shrink-0 items-center gap-0.5 text-sm font-semibold hover:underline sm:text-base"
       }
     >
-      Shop
+      {label}
       <ChevronRight className="size-4 sm:size-[1.125rem]" strokeWidth={2} />
     </Link>
   );
@@ -66,7 +74,18 @@ function toCardProduct(p: CategoryProduct): BestsellerCardProduct {
   };
 }
 
-export function CategoryProductsSectionSkeleton({ title }: { title: string }) {
+export function CategoryProductsSectionSkeleton({
+  title,
+  categorySlug,
+}: {
+  title: string;
+  categorySlug: string;
+}) {
+  const premiumHomeGrid = isHamperListingCategory(categorySlug);
+  const gridClass = premiumHomeGrid
+    ? HOME_HAMPER_PRODUCTS_GRID_CLASS
+    : PRODUCT_LISTING_GRID_CLASS;
+
   return (
     <section
       className="bg-background mt-4 w-full min-w-0 sm:mt-5 md:mt-6"
@@ -78,10 +97,17 @@ export function CategoryProductsSectionSkeleton({ title }: { title: string }) {
           <Skeleton className="h-7 w-36 sm:h-8" />
           <Skeleton className="h-5 w-16" />
         </div>
-        <div className={PRODUCT_LISTING_GRID_CLASS}>
-          {Array.from({ length: HOME_CATEGORY_PRODUCTS_LIMIT }, (_, i) => (
-            <BestsellerProductCardSkeleton key={i} />
-          ))}
+        <div className={gridClass}>
+          {Array.from({ length: HOME_CATEGORY_PRODUCTS_LIMIT }, (_, i) =>
+            premiumHomeGrid ? (
+              <PremiumHamperProductCardSkeleton
+                key={i}
+                squareImage={isGiftHamperCategory(categorySlug)}
+              />
+            ) : (
+              <BestsellerProductCardSkeleton key={i} />
+            )
+          )}
         </div>
       </div>
     </section>
@@ -94,7 +120,10 @@ async function CategoryProductsSectionContent({
   limit = HOME_CATEGORY_PRODUCTS_LIMIT,
 }: CategoryProductsSectionProps) {
   const raw = await fetchProducts({ categorySlug, limit }).catch(() => []);
-  const products = raw.map(toCardProduct);
+  const premiumHomeGrid = isHamperListingCategory(categorySlug);
+  const gridClass = premiumHomeGrid
+    ? HOME_HAMPER_PRODUCTS_GRID_CLASS
+    : PRODUCT_LISTING_GRID_CLASS;
   const headingId = `${categorySlug}-heading`;
 
   return (
@@ -110,24 +139,40 @@ async function CategoryProductsSectionContent({
           >
             {title}
           </h2>
-          <ShopCategoryLink categorySlug={categorySlug} />
+          <ViewAllCategoryLink categorySlug={categorySlug} />
         </div>
 
-        {products.length === 0 ? (
+        {raw.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-neutral-50 px-4 py-8 text-center sm:py-10">
             <p className="text-muted-foreground text-sm">
               Browse our full {title.toLowerCase()} collection.
             </p>
-            <ShopCategoryLink
+            <ViewAllCategoryLink
               categorySlug={categorySlug}
+              label="View all products"
               className="bg-urja-forest hover:bg-urja-forest/90 inline-flex items-center gap-1 rounded-full px-4 py-2 text-sm font-semibold text-white no-underline hover:no-underline sm:px-5 sm:py-2.5 sm:text-base"
             />
           </div>
         ) : (
-          <div className={PRODUCT_LISTING_GRID_CLASS}>
-            {products.map((product) => (
-              <BestsellerProductCard key={product.slug} product={product} layout="grid" />
-            ))}
+          <div className={gridClass}>
+            {raw.map((product) =>
+              premiumHomeGrid ? (
+                <div key={product.slug} className="flex min-h-0 min-w-0 h-full">
+                  <CategoryProductCard
+                    product={product}
+                    categorySlug={categorySlug}
+                    homeGrid
+                    className="w-full"
+                  />
+                </div>
+              ) : (
+                <BestsellerProductCard
+                  key={product.slug}
+                  product={toCardProduct(product)}
+                  layout="grid"
+                />
+              )
+            )}
           </div>
         )}
       </div>
@@ -137,7 +182,11 @@ async function CategoryProductsSectionContent({
 
 export function CategoryProductsSection(props: CategoryProductsSectionProps) {
   return (
-    <Suspense fallback={<CategoryProductsSectionSkeleton title={props.title} />}>
+    <Suspense
+      fallback={
+        <CategoryProductsSectionSkeleton title={props.title} categorySlug={props.categorySlug} />
+      }
+    >
       <CategoryProductsSectionContent {...props} />
     </Suspense>
   );

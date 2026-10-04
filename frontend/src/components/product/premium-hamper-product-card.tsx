@@ -29,6 +29,8 @@ export type PremiumHamperProductCardData = {
 type PremiumHamperProductCardProps = {
   product: PremiumHamperProductCardData;
   className?: string;
+  /** Shorter card for home 2-column grid (image + title + price). */
+  homeGrid?: boolean;
 };
 
 function formatInr(n: number) {
@@ -40,6 +42,7 @@ const MAX_INCLUDED_ITEMS = 15;
 export function PremiumHamperProductCard({
   product,
   className,
+  homeGrid = false,
 }: PremiumHamperProductCardProps) {
   const inStock = product.inStock !== false;
   const categorySlug = product.categorySlug ?? "";
@@ -65,12 +68,15 @@ export function PremiumHamperProductCard({
     .slice(0, MAX_INCLUDED_ITEMS);
   const hasContentsList = includedItems.length > 0;
   const hasDescription = Boolean(description);
-  const showContentsSection = (isBasket || isHamper) && hasContentsList;
+  const showContentsSection =
+    !homeGrid && (isBasket || isHamper) && hasContentsList;
+  const showDescription = !homeGrid && hasDescription;
 
   return (
     <article
       className={cn(
-        "mx-auto flex h-full w-full max-w-2xl min-w-0 flex-col pb-1 sm:pb-1.5",
+        "flex h-full w-full min-w-0 flex-col pb-1 sm:pb-1.5",
+        homeGrid ? "mx-0 max-w-none" : "mx-auto max-w-2xl",
         className
       )}
     >
@@ -154,7 +160,7 @@ export function PremiumHamperProductCard({
             ) : null}
           </Link>
 
-          {hasDescription ? (
+          {showDescription ? (
             <p className="mt-2 text-[10px] leading-relaxed text-stone-600 sm:text-[11px]">
               {description}
             </p>

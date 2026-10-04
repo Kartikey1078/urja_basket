@@ -9,3 +9,7 @@ export const CATEGORY_PRODUCT_GRID_CLASS =
 /** Fruit basket & gift hamper — one premium card per row. */
 export const HAMPER_LISTING_GRID_CLASS =
   "grid w-full min-w-0 grid-cols-1 items-stretch gap-4 sm:gap-5 md:gap-6";
+
+/** Home page — larger hamper/basket cards in two columns. */
+export const HOME_HAMPER_PRODUCTS_GRID_CLASS =
+  "grid w-full min-w-0 grid-cols-2 items-stretch gap-3 sm:gap-4 md:gap-5 lg:gap-6";
