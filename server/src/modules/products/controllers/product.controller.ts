@@ -34,6 +34,7 @@ export async function list(req: Request, res: Response) {
   const minPriceRaw = typeof req.query.minPrice === "string" ? Number(req.query.minPrice) : NaN;
   const maxPriceRaw = typeof req.query.maxPrice === "string" ? Number(req.query.maxPrice) : NaN;
   const minRatingRaw = typeof req.query.minRating === "string" ? Number(req.query.minRating) : NaN;
+  const limitRaw = typeof req.query.limit === "string" ? Number(req.query.limit) : NaN;
 
   const data = await productService.listProductCards({
     categorySlug,
@@ -50,6 +51,7 @@ export async function list(req: Request, res: Response) {
     featured: truthy(req.query.featured),
     inStock: truthy(req.query.inStock),
     nutritionTags: parseNutritionTagsQuery(req),
+    limit: Number.isFinite(limitRaw) ? limitRaw : undefined,
   });
   res.json({ data });
 }

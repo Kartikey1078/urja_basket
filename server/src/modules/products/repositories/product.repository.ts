@@ -63,6 +63,8 @@ export type ProductCardFilters = {
   featured?: boolean;
   inStock?: boolean;
   nutritionTags?: string[];
+  /** Max rows returned (1–100). Omit for no limit. */
+  limit?: number;
 };
 
 const MIN_PRICE_SQL = `(
@@ -194,12 +196,20 @@ export async function findAllProductCards(
   const whereClause = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
   const orderClause = orderClauseForSort(filters.sort);
 
+  let limitClause = "";
+  if (filters.limit !== undefined && Number.isFinite(filters.limit)) {
+    const limit = Math.min(100, Math.max(1, Math.floor(filters.limit)));
+    limitClause = "LIMIT :limit";
+    params.limit = limit;
+  }
+
   const [rows] = await pool.query<ProductListRow[]>(
     `SELECT ${PRODUCT_CARD_SELECT}
      FROM products p
      INNER JOIN categories c ON c.id = p.category_id
      ${whereClause}
-     ${orderClause}`,
+     ${orderClause}
+     ${limitClause}`,
     params
   );
   return rows;
