@@ -48,7 +48,7 @@ export function HeroBannerSlider() {
             src={slide.src}
             alt={slide.alt}
             fill
-            sizes="(max-width: 768px) 148px, (max-width: 1280px) 420px, 560px"
+            sizes="(max-width: 768px) min(30vw, 9.5rem), (max-width: 1024px) min(44vw, 30rem), (max-width: 1536px) min(44vw, 34rem), 38rem"
             className="object-contain object-center drop-shadow-[0_12px_28px_rgba(11,43,30,0.18)]"
             priority={index === 0}
           />

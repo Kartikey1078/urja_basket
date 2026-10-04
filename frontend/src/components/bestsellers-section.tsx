@@ -21,6 +21,8 @@ type BestsellerItem = {
   inStock: boolean;
 };
 
+const HOME_BESTSELLERS_LIMIT = 10;
+
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&w=400&h=400&fit=crop&q=80";
 
@@ -45,12 +47,12 @@ function toBestsellerItem(p: ApiProduct): BestsellerItem {
 }
 
 async function BestsellersSectionContent() {
-  const raw = await fetchBestsellerProducts();
+  const raw = await fetchBestsellerProducts(HOME_BESTSELLERS_LIMIT);
   const products = raw.map(toBestsellerItem);
 
   return (
     <section
-      className="bg-background mt-4 w-full min-w-0 sm:mt-5 md:mt-6"
+      className="bg-background mt-4 w-full min-w-0 pb-12 sm:mt-5 sm:pb-14 md:mt-6 md:pb-16 lg:pb-20"
       aria-labelledby="bestsellers-heading"
     >
       <div className="mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 lg:px-6 xl:px-10">
@@ -88,7 +90,7 @@ async function BestsellersSectionContent() {
   );
 }
 
-/** Data from GET /api/v1/products?bestSeller=1 */
+/** Data from GET /api/v1/products?bestSeller=1&limit=10 */
 export function BestsellersSection() {
   return (
     <Suspense fallback={<BestsellersSectionSkeleton />}>

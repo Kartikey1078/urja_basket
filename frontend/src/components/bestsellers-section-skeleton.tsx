@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function BestsellersSectionSkeleton() {
   return (
     <section
-      className="bg-background mt-4 w-full min-w-0 sm:mt-5 md:mt-6"
+      className="bg-background mt-4 w-full min-w-0 pb-12 sm:mt-5 sm:pb-14 md:mt-6 md:pb-16 lg:pb-20"
       aria-busy="true"
       aria-label="Loading bestsellers"
     >

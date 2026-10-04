@@ -15,10 +15,13 @@ import { categoryPath } from "@/lib/shop-categories";
 
 type BadgeKind = "bestseller" | "discount";
 
+/** Home category rows: cap enforced via GET /api/v1/products?categorySlug=…&limit=6 */
+export const HOME_CATEGORY_PRODUCTS_LIMIT = 6;
+
 type CategoryProductsSectionProps = {
   categorySlug: string;
   title: string;
-  /** Max products in the horizontal rail / grid. */
+  /** Max products (API `limit`; default for home). */
   limit?: number;
 };
 
@@ -76,7 +79,7 @@ export function CategoryProductsSectionSkeleton({ title }: { title: string }) {
           <Skeleton className="h-5 w-16" />
         </div>
         <div className={PRODUCT_LISTING_GRID_CLASS}>
-          {Array.from({ length: 5 }, (_, i) => (
+          {Array.from({ length: HOME_CATEGORY_PRODUCTS_LIMIT }, (_, i) => (
             <BestsellerProductCardSkeleton key={i} />
           ))}
         </div>
@@ -88,10 +91,10 @@ export function CategoryProductsSectionSkeleton({ title }: { title: string }) {
 async function CategoryProductsSectionContent({
   categorySlug,
   title,
-  limit = 5,
+  limit = HOME_CATEGORY_PRODUCTS_LIMIT,
 }: CategoryProductsSectionProps) {
-  const raw = await fetchProducts({ categorySlug }).catch(() => []);
-  const products = raw.slice(0, limit).map(toCardProduct);
+  const raw = await fetchProducts({ categorySlug, limit }).catch(() => []);
+  const products = raw.map(toCardProduct);
   const headingId = `${categorySlug}-heading`;
 
   return (

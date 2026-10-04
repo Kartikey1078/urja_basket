@@ -62,10 +62,12 @@ export function CategoryRail() {
                     <Image
                       src={image}
                       alt=""
-                      width={280}
-                      height={280}
-                      sizes="(max-width: 640px) 42vw, (max-width: 1024px) 28vw, 160px"
+                      width={192}
+                      height={192}
+                      sizes="(max-width: 640px) min(33vw, 6.5rem), (max-width: 768px) min(28vw, 8rem), (max-width: 1024px) min(22vw, 9.5rem), (max-width: 1280px) min(18vw, 11rem), 12rem"
                       className="size-full object-cover object-center transition duration-200 group-active:scale-[0.98]"
+                      loading="lazy"
+                      decoding="async"
                       draggable={false}
                     />
                     <span

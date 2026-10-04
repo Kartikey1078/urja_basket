@@ -24,7 +24,6 @@ export type ApiProduct = {
   category: { name: string; slug: string };
   nutritionTags?: string[];
   basketFruits?: string[];
-  shortDescription?: string | null;
 };
 
 type ProductsResponse = { data: ApiProduct[] };
@@ -72,6 +71,7 @@ export async function fetchProducts(options?: {
   bestSellerOnly?: boolean;
   sort?: ProductSortValue;
   filters?: ProductFilters;
+  limit?: number;
 }): Promise<CategoryProduct[]> {
   const base = getApiBaseUrl();
   const params = new URLSearchParams();
@@ -79,6 +79,9 @@ export async function fetchProducts(options?: {
   if (options?.bestSellerOnly) params.set("bestSeller", "1");
   if (options?.sort) params.set("sort", options.sort);
   if (options?.filters) appendFiltersToSearchParams(params, options.filters);
+  if (options?.limit !== undefined && options.limit > 0) {
+    params.set("limit", String(Math.floor(options.limit)));
+  }
   const qs = params.toString();
   const url = `${base}/api/v1/products${qs ? `?${qs}` : ""}`;
   return safeProductsFetch(url);
@@ -109,9 +112,13 @@ export async function fetchNutritionTags(options?: {
   }
 }
 
-export async function fetchBestsellerProducts(): Promise<ApiProduct[]> {
+export async function fetchBestsellerProducts(limit?: number): Promise<ApiProduct[]> {
   const base = getApiBaseUrl();
-  const url = `${base}/api/v1/products?bestSeller=1`;
+  const params = new URLSearchParams({ bestSeller: "1" });
+  if (limit !== undefined && limit > 0) {
+    params.set("limit", String(Math.floor(limit)));
+  }
+  const url = `${base}/api/v1/products?${params.toString()}`;
   try {
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return [];
