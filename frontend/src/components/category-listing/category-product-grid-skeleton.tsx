@@ -10,18 +10,19 @@ import { PremiumHamperProductCardSkeleton } from "./premium-hamper-product-card-
 type CategoryProductGridSkeletonProps = {
   count?: number;
   variant?: "default" | "hamper";
+  /** Gift hamper cards use a 1:1 image area. */
+  squareHamperImage?: boolean;
   className?: string;
 };
 
 export function CategoryProductGridSkeleton({
   count = 8,
   variant = "default",
+  squareHamperImage = false,
   className,
 }: CategoryProductGridSkeletonProps) {
   const gridClass =
     variant === "hamper" ? HAMPER_LISTING_GRID_CLASS : CATEGORY_PRODUCT_GRID_CLASS;
-  const CardSkeleton =
-    variant === "hamper" ? PremiumHamperProductCardSkeleton : CategoryProductCardSkeleton;
 
   return (
     <ul
@@ -31,7 +32,11 @@ export function CategoryProductGridSkeleton({
     >
       {Array.from({ length: count }, (_, i) => (
         <li key={i}>
-          <CardSkeleton />
+          {variant === "hamper" ? (
+            <PremiumHamperProductCardSkeleton squareImage={squareHamperImage} />
+          ) : (
+            <CategoryProductCardSkeleton />
+          )}
         </li>
       ))}
     </ul>

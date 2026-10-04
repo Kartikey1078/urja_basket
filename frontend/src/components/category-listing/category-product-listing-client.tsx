@@ -13,7 +13,7 @@ import {
   type ProductFilters,
 } from "@/lib/category-filters";
 import type { ProductSortValue } from "@/lib/category-sort";
-import { isHamperListingCategory } from "@/lib/fruit-basket";
+import { isGiftHamperCategory, isHamperListingCategory } from "@/lib/fruit-basket";
 import {
   CATEGORY_PRODUCT_GRID_CLASS,
   HAMPER_LISTING_GRID_CLASS,
@@ -102,6 +102,7 @@ export function CategoryProductListingClient({
   const showGrid = !isError && (products.length > 0 || showLoadingGrid);
   const showEmpty = !isError && !isFetching && products.length === 0;
   const premiumHamperGrid = isHamperListingCategory(categorySlug);
+  const giftHamperSquareImages = isGiftHamperCategory(categorySlug);
   const gridClass = premiumHamperGrid
     ? HAMPER_LISTING_GRID_CLASS
     : CATEGORY_PRODUCT_GRID_CLASS;
@@ -172,6 +173,7 @@ export function CategoryProductListingClient({
             <CategoryProductGridSkeleton
               count={premiumHamperGrid ? 6 : 8}
               variant={premiumHamperGrid ? "hamper" : "default"}
+              squareHamperImage={giftHamperSquareImages}
             />
           ) : (
             <ul className={gridClass}>

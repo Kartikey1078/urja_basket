@@ -87,18 +87,31 @@ export function PremiumHamperProductCard({
           aria-hidden
         />
 
-        <div className="relative aspect-[15/14] w-full shrink-0 sm:aspect-[8/7]">
+        <div
+          className={cn(
+            "relative w-full shrink-0 overflow-hidden",
+            isHamper ? "aspect-square" : "aspect-[15/14] sm:aspect-[8/7]"
+          )}
+        >
           <Link
             href={`/products/${product.slug}`}
-            className="absolute inset-0 block bg-gradient-to-b from-[#faf8f5] via-white to-[#f3efe8]"
+            className={cn(
+              "absolute inset-0 block",
+              isHamper
+                ? "bg-[#f5f2ed]"
+                : "bg-gradient-to-b from-[#faf8f5] via-white to-[#f3efe8]"
+            )}
           >
             <Image
               src={product.image}
               alt={product.name}
               fill
-              sizes="(max-width: 768px) 100vw, 42rem"
+              sizes="(max-width: 768px) min(100vw, 42rem), 42rem"
               className={cn(
-                "object-contain object-center p-3 sm:p-4 md:p-5",
+                "object-center",
+                isHamper
+                  ? "object-cover"
+                  : "object-contain p-3 sm:p-4 md:p-5",
                 !inStock && "opacity-55 grayscale-[0.35]"
               )}
             />

@@ -5,11 +5,14 @@ type PremiumHamperProductCardSkeletonProps = {
   className?: string;
   /** When true, reserve space for description + contents (loading state). */
   withDetails?: boolean;
+  /** Gift hamper listing uses 1:1 product art. */
+  squareImage?: boolean;
 };
 
 export function PremiumHamperProductCardSkeleton({
   className,
   withDetails = false,
+  squareImage = false,
 }: PremiumHamperProductCardSkeletonProps) {
   return (
     <article
@@ -17,8 +20,18 @@ export function PremiumHamperProductCardSkeleton({
       aria-hidden
     >
       <div className="@container flex h-full flex-col overflow-hidden rounded-2xl border border-amber-200/50 bg-white ring-1 ring-amber-100/60">
-        <div className="relative aspect-[15/14] w-full bg-[#f5f2ed] sm:aspect-[8/7]">
-          <Skeleton className="absolute inset-3 rounded-xl sm:inset-4" />
+        <div
+          className={cn(
+            "relative w-full overflow-hidden bg-[#f5f2ed]",
+            squareImage ? "aspect-square" : "aspect-[15/14] sm:aspect-[8/7]"
+          )}
+        >
+          <Skeleton
+            className={cn(
+              "absolute",
+              squareImage ? "inset-0 rounded-none" : "inset-3 rounded-xl sm:inset-4"
+            )}
+          />
           <Skeleton className="absolute top-2.5 left-2.5 h-5 w-20 rounded-full" />
           <Skeleton className="absolute top-2.5 right-2.5 size-8 rounded-full" />
         </div>
